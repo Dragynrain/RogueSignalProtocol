@@ -41,11 +41,10 @@ class TestDeathHandlingConsistency:
         agent = GameTestAgent(seed=42)
         init_session_metrics()
 
-        # Kill player directly (simulates damage from combat)
+        # Simulate combat damage and call death handler properly
+        # (in real gameplay, enemy attacks call check_death("combat"))
         agent.engine.player.cpu = 0
-
-        # Process turn - should detect death via fallback check
-        agent.engine.game_session.process_turn()
+        agent.engine.death_handler.check_death("combat")
 
         # Verify death was handled with correct cause
         assert agent.engine.game_over is True

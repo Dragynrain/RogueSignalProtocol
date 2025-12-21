@@ -236,8 +236,17 @@ class GameLevelCoordinator:
                 logging.info(f"Unlocked {len(newly_unlocked)} achievements on victory")
 
             # Delete save on game completion (no continuing after winning)
-            SaveGameManager.delete_save()
-            self.game_engine.message_log.add_message("Mission complete - save data purged")
+            try:
+                if SaveGameManager.delete_save():
+                    self.game_engine.message_log.add_message(
+                        "Mission complete - save data purged"
+                    )
+                else:
+                    logging.warning("Victory: Save deletion returned False")
+                    self.game_engine.message_log.add_message("Mission complete")
+            except OSError as e:
+                logging.error(f"Victory: Failed to delete save file: {e}")
+                self.game_engine.message_log.add_message("Mission complete")
 
             # Unlock next ascension level and record victory
             from game_ascension import unlock_next_ascension
@@ -537,7 +546,15 @@ class GameLevelCoordinator:
                 self.game_engine.message_log.add_message(
                     "Network anomaly detected... Data fragment available"
                 )
-                break
+                logging.debug(
+                    f"Story fragment #{next_fragment_index} placed at ({x},{y}) on level 3"
+                )
+                return
+
+        # Failed to place fragment after 50 attempts
+        logging.warning(
+            f"Story fragment #{next_fragment_index} could not be placed after 50 attempts on level 3"
+        )
 
     def _place_permanent_upgrades(self, upgrade_count: int):
         """Place permanent upgrades throughout the level using network config."""

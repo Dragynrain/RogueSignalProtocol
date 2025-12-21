@@ -29,8 +29,12 @@ class TestTraceIncreaseRate:
         """Test trace increases every TRACE_INCREASE_INTERVAL turns."""
         engine = basic_game_engine
 
-        # Set initial trace
+        # Remove all enemies to prevent combat deaths during test
+        engine.enemies.clear()
+
+        # Set initial trace and make player invulnerable
         engine.player.trace_level = 10.0
+        engine.player.cpu = 1000  # High health to prevent death
         initial_trace = engine.player.trace_level
 
         # Process turns until we hit the increase interval

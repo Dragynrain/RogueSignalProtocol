@@ -159,11 +159,11 @@ class ColorThresholdManager:
             return Colors.YELLOW
 
         # Priority 3: Virus effect - Green
-        if player.temporary_effects.get("virus_turns", 0) > 0:
+        if player.has_active_effect("virus_turns"):
             return ColorManager.get("status_effects", "virus")
 
         # Priority 4: Slow effect - Cyan
-        if player.temporary_effects.get("movement_slowed_turns", 0) > 0:
+        if player.has_active_effect("movement_slowed_turns"):
             return Colors.CYAN
 
         # Default: White
@@ -186,9 +186,9 @@ class ColorThresholdManager:
             return "WARNING"
         elif player.is_invisible():
             return "CLOAKED"
-        elif player.temporary_effects.get("virus_turns", 0) > 0:
+        elif player.has_active_effect("virus_turns"):
             return "INFECTED"
-        elif player.temporary_effects.get("movement_slowed_turns", 0) > 0:
+        elif player.has_active_effect("movement_slowed_turns"):
             return "SLOWED"
         else:
             return "STABLE"

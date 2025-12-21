@@ -92,7 +92,7 @@ class GameTurnManager:
         # Handle sound effects for virus damage
         if (
             old_cpu > self.game_engine.player.cpu
-            and self.game_engine.player.temporary_effects.get("virus_turns", 0) > 0
+            and self.game_engine.player.has_active_effect("virus_turns")
         ):
             self.game_engine.sound_manager.play_sound("virus_damage")
             # Check for death from virus using centralized handler
@@ -115,8 +115,13 @@ class GameTurnManager:
 
         # Final death check - catches any deaths not handled at their source
         # The death handler is idempotent, so this is safe even if already called
-        # Using "combat" as fallback cause (specific causes should be set at damage site)
-        self.game_engine.death_handler.check_death("combat")
+        # Using "unknown" as fallback cause - if this gets logged, it means a damage
+        # source failed to call check_death() properly (indicates a bug to investigate)
+        if self.game_engine.player.cpu <= 0 and not self.game_engine.death_handler.is_handled:
+            logging.warning(
+                "Death caught by fallback check - a damage source may be missing check_death() call"
+            )
+        self.game_engine.death_handler.check_death("unknown")
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
@@ -341,7 +346,16 @@ class GameTurnManager:
                 session = get_current_session()
                 if session:
                     session.special_nodes_discovered.add("story")
-            del self.game_engine.game_map.story_fragments[player_pos]
+
+                # Remove fragment from map only after successful discovery
+                del self.game_engine.game_map.story_fragments[player_pos]
+            else:
+                # Invalid fragment index - remove from map but log error
+                logging.error(
+                    f"[PICKUP] Invalid Story Fragment #{story_fragment.fragment_index} at "
+                    f"({player_pos[0]},{player_pos[1]}) - fragment removed from map"
+                )
+                del self.game_engine.game_map.story_fragments[player_pos]
 
         # Environmental narrative: First blind spot entry
         player_in_blind_spot = self.game_engine.game_map.is_blind_spot(pp)

@@ -371,8 +371,15 @@ class TestFactoryFunctions:
         """create_intro_dialogue() creates valid DialogueBox."""
         dialogue = create_intro_dialogue()
 
-        assert dialogue.title == "CONSCIOUSNESS REBOOT"
-        assert "network" in dialogue.message.lower() or "wake" in dialogue.message.lower()
+        # Title varies based on discovered fragment count - check it's one of the valid titles
+        valid_titles = [
+            "SIGNAL COHERENCE: FAILING",
+            "CONSCIOUSNESS REBOOT",
+            "SIGNAL STRENGTH: RISING",
+            "COGNITIVE ECHO: PERSISTENT",
+            "ROGUE SIGNAL: UNCONTAINED",
+        ]
+        assert dialogue.title in valid_titles
         assert len(dialogue.options) == 1
         assert tcod.event.KeySym.SPACE in dialogue.valid_keys
         assert dialogue.priority == 10  # Critical

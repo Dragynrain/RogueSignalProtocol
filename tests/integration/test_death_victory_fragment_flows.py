@@ -695,3 +695,217 @@ class TestBumpAttackOverheat:
             # Heat at exactly max is fine - only exceeding max triggers damage
             assert engine.player.cpu == initial_cpu
             assert engine.player.heat == engine.player.max_heat
+
+
+class TestInvalidFragmentHandling:
+    """Tests for handling invalid or corrupted fragment data."""
+
+    def test_invalid_fragment_index_logs_error_and_removes_fragment(
+        self, basic_game_engine, caplog
+    ):
+        """Invalid fragment index should log error and still remove fragment from map."""
+        import logging
+
+        engine = basic_game_engine
+
+        # Place a fragment with an invalid index (999 is way out of bounds)
+        player_pos = (engine.player.x, engine.player.y)
+        invalid_fragment = StoryFragment(999)
+        engine.game_map.story_fragments[player_pos] = invalid_fragment
+
+        # Process special tiles
+        with caplog.at_level(logging.ERROR):
+            engine.game_session._process_special_tiles()
+
+        # Fragment should be removed from map (cleanup happens either way)
+        assert player_pos not in engine.game_map.story_fragments
+
+        # Error should be logged
+        assert any("Invalid Story Fragment #999" in record.message for record in caplog.records)
+
+    def test_valid_fragment_discovered_and_removed(self, basic_game_engine):
+        """Valid fragment index should be discovered and removed properly."""
+        engine = basic_game_engine
+
+        # Get next valid fragment index
+        next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
+        if next_index is None:
+            pytest.skip("All fragments already discovered")
+
+        # Place the valid fragment
+        player_pos = (engine.player.x, engine.player.y)
+        fragment = StoryFragment(next_index)
+        engine.game_map.story_fragments[player_pos] = fragment
+
+        # Process special tiles
+        engine.game_session._process_special_tiles()
+
+        # Fragment should be discovered
+        assert next_index in engine.story_fragment_manager.discovered_fragments
+
+        # Fragment should be removed from map
+        assert player_pos not in engine.game_map.story_fragments
+
+    def test_already_discovered_fragment_not_rediscovered(self, basic_game_engine):
+        """Re-walking over an already-discovered fragment index should not crash."""
+        engine = basic_game_engine
+        manager = engine.story_fragment_manager
+
+        # Discover fragment 0 manually
+        manager.discover_fragment(0)
+        assert 0 in manager.discovered_fragments
+
+        # Place same fragment index again
+        player_pos = (engine.player.x, engine.player.y)
+        fragment = StoryFragment(0)
+        engine.game_map.story_fragments[player_pos] = fragment
+
+        # Process should not crash - fragment should still be removed
+        engine.game_session._process_special_tiles()
+
+        # Fragment should be removed from map
+        assert player_pos not in engine.game_map.story_fragments
+
+
+class TestVictorySaveHandling:
+    """Tests for victory save file handling edge cases."""
+
+    def test_victory_handles_save_deletion_gracefully(self, basic_game_engine, monkeypatch):
+        """Victory should complete even if save deletion fails."""
+        from game_save import SaveGameManager
+
+        engine = basic_game_engine
+
+        # Track if delete was called
+        delete_called = []
+
+        def failing_delete():
+            delete_called.append(True)
+            raise OSError("Permission denied - simulated failure")
+
+        monkeypatch.setattr(SaveGameManager, "delete_save", failing_delete)
+
+        # Set to level 3 and trigger victory
+        engine.game_state.level = 3
+        engine.game_session.progress_to_next_level()
+
+        # Victory should complete despite save deletion failure
+        assert engine.game_over is True
+        assert engine.game_state.show_victory_screen is True
+
+        # Delete should have been attempted
+        assert len(delete_called) == 1
+
+    def test_victory_logs_save_deletion_failure(
+        self, basic_game_engine, monkeypatch, caplog
+    ):
+        """Victory should log error if save deletion fails."""
+        import logging
+        from game_save import SaveGameManager
+
+        engine = basic_game_engine
+
+        def failing_delete():
+            raise OSError("Permission denied")
+
+        monkeypatch.setattr(SaveGameManager, "delete_save", failing_delete)
+
+        # Trigger victory
+        engine.game_state.level = 3
+        with caplog.at_level(logging.ERROR):
+            engine.game_session.progress_to_next_level()
+
+        # Error should be logged
+        assert any(
+            "Failed to delete save file" in record.message for record in caplog.records
+        )
+
+    def test_victory_message_differs_on_save_failure(
+        self, basic_game_engine, monkeypatch
+    ):
+        """Victory message should not mention 'purged' if save deletion fails."""
+        from game_save import SaveGameManager
+
+        engine = basic_game_engine
+
+        def failing_delete():
+            raise OSError("Permission denied")
+
+        monkeypatch.setattr(SaveGameManager, "delete_save", failing_delete)
+
+        # Trigger victory
+        engine.game_state.level = 3
+        engine.game_session.progress_to_next_level()
+
+        # Check message log - should say "Mission complete" without "purged"
+        messages = [msg.text for msg in engine.message_log.messages]
+        assert any("Mission complete" in msg for msg in messages)
+        assert not any("purged" in msg for msg in messages)
+
+
+class TestFragmentPlacementEdgeCases:
+    """Tests for fragment placement edge cases."""
+
+    def test_fragment_not_placed_on_level_1_or_2(self, basic_game_engine):
+        """Story fragments should only be placed on level 3."""
+        engine = basic_game_engine
+        level_coordinator = engine.game_session.level_coordinator
+
+        # Ensure we're on level 1 or 2
+        for level in [1, 2]:
+            engine.game_state.level = level
+            engine.game_map.story_fragments.clear()
+
+            # Call placement method directly
+            level_coordinator._place_story_fragment()
+
+            # No fragments should be placed
+            assert len(engine.game_map.story_fragments) == 0
+
+    def test_fragment_placement_respects_spawn_chance(self, basic_game_engine, monkeypatch):
+        """Fragment placement should respect the spawn chance threshold."""
+        import random
+
+        engine = basic_game_engine
+        level_coordinator = engine.game_session.level_coordinator
+        engine.game_state.level = 3
+
+        # Mock random to always return value above threshold (no spawn)
+        monkeypatch.setattr(random, "random", lambda: 0.99)
+
+        engine.game_map.story_fragments.clear()
+        level_coordinator._place_story_fragment()
+
+        # No fragment should be placed (random returned 0.99, above any threshold)
+        assert len(engine.game_map.story_fragments) == 0
+
+    def test_fragment_placement_logs_on_success(self, basic_game_engine, monkeypatch, caplog):
+        """Successful fragment placement should be logged."""
+        import logging
+        import random
+
+        engine = basic_game_engine
+        level_coordinator = engine.game_session.level_coordinator
+        engine.game_state.level = 3
+
+        # Mock random to always return 0 (always spawn)
+        monkeypatch.setattr(random, "random", lambda: 0.0)
+        # Mock randint to return valid positions
+        monkeypatch.setattr(random, "randint", lambda a, b: 20)
+
+        # Ensure there's an undiscovered fragment
+        if engine.story_fragment_manager.get_next_undiscovered_fragment() is None:
+            pytest.skip("All fragments already discovered")
+
+        engine.game_map.story_fragments.clear()
+
+        with caplog.at_level(logging.DEBUG):
+            level_coordinator._place_story_fragment()
+
+        # Check if fragment was placed (placement might still fail due to position validation)
+        if len(engine.game_map.story_fragments) > 0:
+            # Success log should be present
+            assert any(
+                "Story fragment" in record.message and "placed at" in record.message
+                for record in caplog.records
+            )
