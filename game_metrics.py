@@ -39,6 +39,7 @@ def _get_progress_file_path() -> Path:
 
 # Global metrics instance (initialized by GameEngine)
 _current_session: Optional["SessionMetrics"] = None
+_session_finalized: bool = False  # Guard against double finalization
 
 
 @dataclass
@@ -352,10 +353,11 @@ class LifetimeMetrics:
 
 def init_session_metrics() -> SessionMetrics:
     """Initialize a new session metrics tracker."""
-    global _current_session
+    global _current_session, _session_finalized
 
     session_id = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     _current_session = SessionMetrics(session_id=session_id, timestamp_start=time.time())
+    _session_finalized = False  # Reset finalization guard for new session
 
     logging.info(f"Metrics tracking initialized for session: {session_id}")
     return _current_session
@@ -899,6 +901,9 @@ def finalize_and_save_session(
     3. Check achievements against lifetime stats
     4. Save newly unlocked achievements
 
+    This function is idempotent - calling it multiple times after the first
+    successful finalization will return an empty list without re-processing.
+
     Args:
         victory: Whether the player won
         death_cause: Cause of death if applicable
@@ -908,6 +913,13 @@ def finalize_and_save_session(
     Returns:
         List of newly unlocked achievement IDs (empty if none)
     """
+    global _session_finalized
+
+    # Guard against double finalization (e.g., victory then death race)
+    if _session_finalized:
+        logging.debug("finalize_and_save_session called but session already finalized")
+        return []
+
     metrics = finalize_session(
         victory=victory,
         death_cause=death_cause,
@@ -917,6 +929,9 @@ def finalize_and_save_session(
 
     if not metrics:
         return []
+
+    # Mark as finalized before saving (in case save crashes)
+    _session_finalized = True
 
     save_metrics(metrics)
 
@@ -1022,9 +1037,14 @@ def _cleanup_old_json_files() -> None:
 
 def load_session_metrics(save_data: dict[str, Any]) -> SessionMetrics | None:
     """Load session metrics from save data."""
+    global _session_finalized
+
     if "session_metrics" in save_data:
         try:
-            return SessionMetrics.from_dict(save_data["session_metrics"])
+            metrics = SessionMetrics.from_dict(save_data["session_metrics"])
+            # Reset finalization flag since we're loading an in-progress session
+            _session_finalized = False
+            return metrics
         except Exception as e:
             GameErrorHandler.handle_error(
                 e,

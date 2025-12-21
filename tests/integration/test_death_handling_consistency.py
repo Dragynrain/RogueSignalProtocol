@@ -54,19 +54,25 @@ class TestDeathHandlingConsistency:
 
     def test_overheat_death_sets_correct_death_cause(self):
         """Overheat death should set death_cause to 'overheat'."""
+        from game_characters import Enemy
+        from game_entities import Position
+
         agent = GameTestAgent(seed=42)
         init_session_metrics()
 
-        # Set heat at max so movement will trigger overheat damage
-        agent.engine.player.heat = agent.engine.player.max_heat
-        # Set CPU low so overheat damage (base 5) will kill
-        agent.engine.player.cpu = 3
+        # Set heat high so bump attack will exceed max and trigger overheat
+        # Bump attack generates 8+ heat. At 97 heat: 97 + 8 = 105 > 100
+        # Overheat damage = 105 - 100 = 5 (1:1 ratio, kills 5 CPU player)
+        agent.engine.player.heat = agent.engine.player.max_heat - 3  # 97 heat
+        agent.engine.player.cpu = 5
 
-        # Try to move in each direction until one succeeds
-        # Movement when overheated triggers overheat damage
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            if not agent.engine.game_over:
-                agent.engine.move_player(dx, dy)
+        # Place an enemy adjacent to player for bump attack
+        enemy_pos = Position(agent.engine.player.x + 1, agent.engine.player.y)
+        if agent.engine.game_map.is_valid_position(enemy_pos):
+            enemy = Enemy(enemy_pos, "scanner")
+            agent.engine.enemies.append(enemy)
+            # Bump attack should trigger overheat damage
+            agent.engine._perform_bump_attack(enemy)
 
         # Verify death was handled with correct cause
         assert agent.engine.game_over is True
@@ -148,20 +154,27 @@ class TestDeathCauseDetection:
         assert agent.engine.death_handler.death_event is not None
         assert agent.engine.death_handler.death_event.cause == "virus"
 
-    def test_overheat_detected_from_movement(self):
-        """Death from movement overheat should be classified as overheat."""
+    def test_overheat_detected_from_bump_attack(self):
+        """Death from bump attack overheat should be classified as overheat."""
+        from game_characters import Enemy
+        from game_entities import Position
+
         agent = GameTestAgent(seed=42)
         init_session_metrics()
 
-        # Set heat at max so movement triggers overheat damage
-        agent.engine.player.heat = agent.engine.player.max_heat
-        # Low CPU so overheat damage (base 5) will kill
-        agent.engine.player.cpu = 3
+        # Set heat high so bump attack will exceed max and trigger overheat
+        # Bump attack generates 8+ heat. At 97 heat: 97 + 8 = 105 > 100
+        # Overheat damage = 105 - 100 = 5 (1:1 ratio, kills 5 CPU player)
+        agent.engine.player.heat = agent.engine.player.max_heat - 3  # 97 heat
+        agent.engine.player.cpu = 5
 
-        # Try to move in each direction until one succeeds
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            if not agent.engine.game_over:
-                agent.engine.move_player(dx, dy)
+        # Place an enemy adjacent to player for bump attack
+        enemy_pos = Position(agent.engine.player.x + 1, agent.engine.player.y)
+        if agent.engine.game_map.is_valid_position(enemy_pos):
+            enemy = Enemy(enemy_pos, "scanner")
+            agent.engine.enemies.append(enemy)
+            # Bump attack should trigger overheat damage
+            agent.engine._perform_bump_attack(enemy)
 
         # Should be detected as overheat death
         assert agent.engine.game_over is True

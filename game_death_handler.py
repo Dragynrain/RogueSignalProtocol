@@ -95,6 +95,12 @@ class PlayerDeathHandler:
         if self._handled:
             return True  # Already handled this death
 
+        # Don't process death if victory was already achieved
+        # Victory takes precedence - player won, death UI should not appear
+        if self.game.game_state.show_victory_screen:
+            logging.debug("Death handler: Skipping death - victory already achieved")
+            return True  # Player is "dead" but we don't handle it (victory wins)
+
         # Build death event with full context
         player = self.game.player
         event = DeathEvent(

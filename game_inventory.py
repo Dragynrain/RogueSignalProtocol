@@ -272,18 +272,18 @@ class ExploitItem(InventoryItem):
 
 
 class StoryFragment(InventoryItem):
-    """Story fragment items that reveal narrative pieces."""
+    """
+    Story fragment items that reveal narrative pieces.
+
+    Note: Story fragments are never added to player inventory. They are
+    discovered directly when picked up (in _process_special_tiles) via
+    StoryFragmentManager.discover_fragment(). This class primarily serves
+    as a map item marker and for save/load serialization.
+    """
 
     def __init__(self, fragment_index: int):
         super().__init__("Story Fragment", "story_fragment", "A fragment of the truth...")
         self.fragment_index = fragment_index
-
-    def use(self, player, game) -> bool:
-        """Use story fragment - automatically triggers discovery screen."""
-        # The story fragment discovery and display is handled elsewhere
-        # This use method just removes it from inventory since it's consumed
-        player.inventory_manager.remove_item(self)
-        return True
 
 
 class InventoryManager:

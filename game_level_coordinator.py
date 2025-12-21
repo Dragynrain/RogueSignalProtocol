@@ -301,8 +301,8 @@ class GameLevelCoordinator:
         self.game_engine.game_map.story_fragments.clear()
         self.game_engine.game_map.explored_tiles.clear()
         self.game_engine.game_map.last_known_enemy_positions.clear()
-        if hasattr(self.game_engine.game_state, "revealed_special_nodes"):
-            self.game_engine.game_state.revealed_special_nodes.clear()
+        # revealed_special_nodes is initialized in GameStateManager.__init__
+        self.game_engine.game_state.revealed_special_nodes.clear()
         self.game_engine.enemy_manager.enemies.clear()
         # Invalidate transparency cache for FOV calculations
         self.game_engine.game_map.invalidate_transparency_cache()
@@ -530,10 +530,8 @@ class GameLevelCoordinator:
 
             if self._is_valid_patch_placement(position):
                 # Create and place the story fragment
+                # (story_fragments is initialized in GameMap.__init__ and cleared in _clear_map)
                 story_fragment = StoryFragment(next_fragment_index)
-                # Store it in the game map - we'll need to add this to the GameMap class
-                if not hasattr(self.game_engine.game_map, "story_fragments"):
-                    self.game_engine.game_map.story_fragments = {}
                 self.game_engine.game_map.story_fragments[(x, y)] = story_fragment
 
                 self.game_engine.message_log.add_message(

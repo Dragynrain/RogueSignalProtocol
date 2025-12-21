@@ -49,7 +49,6 @@ class TestBlindedTurnsSaveLoad:
             "blinded_turns": 5,
             "alert_timer": 0,
             "patrol_index": 0,
-            "last_target": None,
             "last_seen_player": None,
         }
 
@@ -87,7 +86,6 @@ class TestBlindedTurnsSaveLoad:
             # No blinded_turns field
             "alert_timer": 0,
             "patrol_index": 0,
-            "last_target": None,
             "last_seen_player": None,
         }
 

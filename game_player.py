@@ -341,3 +341,54 @@ class Player:
                 session.took_any_damage = True
 
         return actual_damage
+
+    def apply_overheat_damage(
+        self, new_heat: int, sound_manager, message_log, death_handler, source: str | None = None
+    ) -> bool:
+        """
+        Apply overheat damage if heat exceeds max.
+
+        Consolidates overheat logic used by both exploits and bump attacks:
+        - Damage = overheat_amount (1:1 ratio, no base damage)
+        - Heat capped at max (no cooldown)
+        - Plays "overclocking" sound
+        - Shows "OVERCLOCKING" message
+        - Checks for death
+
+        Args:
+            new_heat: The heat value after adding heat cost
+            sound_manager: For playing overheat sound
+            message_log: For displaying overheat message
+            death_handler: For checking death from overheat
+            source: Optional source for death tracking (e.g., exploit name)
+
+        Returns:
+            True if overheat damage was applied, False if heat was within limits
+        """
+        if new_heat <= self.max_heat:
+            # No overheat - just set the heat
+            self.heat = new_heat
+            return False
+
+        # Calculate and apply overheat damage (1:1 ratio)
+        overheat_amount = new_heat - self.max_heat
+        actual_damage = self.take_damage(overheat_amount)
+
+        logging.debug(
+            f"Player: OVERCLOCKING! overheat={overheat_amount}, damage={actual_damage}, heat capped at {self.max_heat}"
+        )
+        message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
+        sound_manager.play_sound("overclocking")
+
+        # Cap heat at max (no cooldown)
+        self.heat = self.max_heat
+
+        # Track overheat event
+        from game_metrics import track
+
+        track("overheating_events")
+
+        # Check for death from overheat
+        death_handler.check_death("overheat", source=source)
+
+        return True
