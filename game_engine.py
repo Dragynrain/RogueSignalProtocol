@@ -491,25 +491,6 @@ class GameEngine:
                     # Don't progress immediately - wait for dialogue confirmation
                     return
 
-                # Check for overheating
-                if self.player.heat >= self.player.max_heat:
-                    self.sound_manager.play_sound("player_overheat", priority=8)
-                    damage = 5 + (self.player.heat - self.player.max_heat)
-                    self.player.take_damage(damage)
-                    self.player.heat = max(
-                        GameBalance.OVERHEAT_MINIMUM_HEAT,
-                        self.player.max_heat - GameBalance.OVERHEAT_COOLDOWN_AMOUNT,
-                    )
-                    self.message_log.add_message(f"Overheating! {damage} CPU damage")
-
-                    # Track metrics
-                    from game_metrics import track
-
-                    track("overheating_events")
-
-                    # Check for death from overheat
-                    self.death_handler.check_death("overheat")
-
                 # Handle speed boost and turn processing only if move was successful
                 self.maybe_process_turn()
             else:
@@ -688,7 +669,16 @@ class GameEngine:
                 f"Attacking from same spot: +{heat_penalty} heat penalty", Colors.YELLOW
             )
 
-        self.player.heat = min(self.player.max_heat, self.player.heat + heat_generated)
+        # Add heat and apply overheat damage if exceeding max
+        # Uses shared helper for consistent behavior with exploits
+        new_heat = self.player.heat + heat_generated
+        self.player.apply_overheat_damage(
+            new_heat,
+            self.sound_manager,
+            self.message_log,
+            self.death_handler,
+            source="melee attack",
+        )
 
         # Track highest heat reached for achievements (cold_blooded, heat_master)
         from game_metrics import track_highest_heat

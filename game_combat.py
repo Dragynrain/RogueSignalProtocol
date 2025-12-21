@@ -227,23 +227,15 @@ class ExploitSystem:
                 session.used_any_exploits = True
                 session.unique_exploits_used_this_run.add(exploit_key)
 
-            # Check if this will cause overheating
-            if new_heat > self.game.player.max_heat:
-                # Apply overclock damage (confirmed via dialogue)
-                overheat_amount = new_heat - self.game.player.max_heat
-                actual_damage = self.game.player.take_damage(overheat_amount)
-                logging.debug(
-                    f"Combat: OVERCLOCKING! overheat={overheat_amount}, damage={actual_damage}, heat capped at {self.game.player.max_heat}"
-                )
-                self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
-                self.game.sound_manager.play_sound("overclocking")
-                # Set heat to max (not over)
-                self.game.player.heat = self.game.player.max_heat
-                # Check for death from overheat
-                self.game.death_handler.check_death("overheat", source=exploit.name)
-            else:
-                # Normal heat application
-                self.game.player.heat = new_heat
+            # Apply heat and overheat damage if exceeding max
+            # Uses shared helper for consistent behavior
+            self.game.player.apply_overheat_damage(
+                new_heat,
+                self.game.sound_manager,
+                self.game.message_log,
+                self.game.death_handler,
+                source=exploit.name,
+            )
 
             # Track highest heat reached for achievements (cold_blooded, heat_master)
             from game_metrics import track_highest_heat
@@ -636,7 +628,9 @@ class ExploitSystem:
             )
             logging.debug(f"Combat: System Crash self-damage: {actual_self_damage} CPU")
             # Check for death from self-damage
-            self.game.death_handler.check_death("self_damage", source="System Crash")
+            if self.game.death_handler.check_death("self_damage", source="System Crash"):
+                # Player died from self-damage - stop exploit execution
+                return True  # Return True since exploit was "used" (just killed the player)
 
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
@@ -737,7 +731,9 @@ class ExploitSystem:
             self.game.message_log.add_message(f"FRIENDLY FIRE: {actual_damage} damage!", Colors.RED)
             logging.debug(f"Combat: Logic Bomb friendly fire! Player took {actual_damage} damage")
             # Check for death from friendly fire
-            self.game.death_handler.check_death("self_damage", source="Logic Bomb")
+            if self.game.death_handler.check_death("self_damage", source="Logic Bomb"):
+                # Player died from friendly fire - stop exploit execution
+                return True  # Return True since exploit was "used" (just killed the player)
 
         # Show result message
         if enemy_count > 0:
@@ -909,10 +905,7 @@ class ExploitSystem:
         """
         self.game.sound_manager.play_sound("exploit_network_scan")
 
-        # Add all special nodes to revealed dict
-        if not hasattr(self.game.game_state, "revealed_special_nodes"):
-            self.game.game_state.revealed_special_nodes = {}
-
+        # revealed_special_nodes is initialized in GameStateManager.__init__
         # Count nodes on the map for debugging
         cooling_count = len(self.game.game_map.cooling_nodes)
         cpu_count = len(self.game.game_map.cpu_recovery_nodes)

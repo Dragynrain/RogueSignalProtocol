@@ -459,12 +459,8 @@ class GameStatePersistence:
             enemy.blinded_turns = enemy_data.get("blinded_turns", 0)
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
-            enemy.last_target = (
-                Position(enemy_data["last_target"]["x"], enemy_data["last_target"]["y"])
-                if enemy_data.get("last_target")
-                else None
-            )
 
+            # Restore last_seen_player (used for tracking where player was last spotted)
             if enemy_data.get("last_seen_player"):
                 enemy.last_seen_player = Position(
                     enemy_data["last_seen_player"]["x"], enemy_data["last_seen_player"]["y"]

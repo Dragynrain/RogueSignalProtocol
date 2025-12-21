@@ -452,11 +452,6 @@ class SaveGameManager:
                 "blinded_turns": e.blinded_turns,
                 "alert_timer": e.alert_timer,
                 "patrol_index": e.patrol_index,
-                "last_target": (
-                    {"x": e.last_target.x, "y": e.last_target.y}
-                    if getattr(e, "last_target", None)
-                    else None
-                ),
                 "last_seen_player": (
                     {"x": e.last_seen_player.x, "y": e.last_seen_player.y}
                     if getattr(e, "last_seen_player", None)

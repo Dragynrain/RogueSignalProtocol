@@ -45,8 +45,9 @@ class StoryFragmentManager:
 
     def __init__(self):
         # Initialize progress data with defaults (PersistentStorage moved to data_loading module)
-        storage = PersistentStorage()
-        self.progress_data = storage.load_data("rogue_signal_progress.json")
+        # Cache storage instance to avoid repeated instantiation on each fragment discovery
+        self._storage = PersistentStorage()
+        self.progress_data = self._storage.load_data("rogue_signal_progress.json")
         if not self.progress_data:
             self.progress_data = {"discovered_story_fragments": [], "version": "0.8.0 Alpha"}
         self.discovered_fragments: list[int] = self.progress_data.get(
@@ -93,10 +94,9 @@ class StoryFragmentManager:
         self.discovered_fragments.append(fragment_index)
         self.discovered_fragments.sort()  # Keep in order
 
-        # Save progress immediately
+        # Save progress immediately using cached storage instance
         self.progress_data["discovered_story_fragments"] = self.discovered_fragments
-        storage = PersistentStorage()
-        storage.save_data("rogue_signal_progress.json", self.progress_data)
+        self._storage.save_data("rogue_signal_progress.json", self.progress_data)
 
         return True
 

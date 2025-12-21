@@ -70,6 +70,11 @@ class GameTurnManager:
         Note: Speed boost grants 2 moves per enemy turn. This is processed
         at the start of each turn to ensure consistent move counting.
         """
+        # Skip turn processing if game is over (player dead or won)
+        # This prevents enemies from acting on a dead player
+        if self.game_engine.game_over:
+            return
+
         # Reset flags at start of turn
         self._enemies_alerted_played_this_turn = False
 
@@ -182,9 +187,7 @@ class GameTurnManager:
             self.game_engine.last_node_position = player_pos
 
             # Mark special nodes as discovered when first stepped on
-            if not hasattr(self.game_engine.game_state, "revealed_special_nodes"):
-                self.game_engine.game_state.revealed_special_nodes = {}
-
+            # (revealed_special_nodes is initialized in GameStateManager.__init__)
             if self.game_engine.game_map.is_cooling_node(self.game_engine.player.position):
                 self.game_engine.game_state.revealed_special_nodes[player_pos] = "cooling"
             elif self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
@@ -806,5 +809,12 @@ class GameTurnManager:
         Args:
             death_cause: Cause of death for analytics (e.g., "virus", "combat", "overheat")
         """
+        import warnings
+
+        warnings.warn(
+            "_handle_player_death is deprecated, use death_handler.check_death() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # Delegate to centralized handler (which is idempotent)
         self.game_engine.death_handler.check_death(death_cause)

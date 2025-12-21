@@ -50,7 +50,6 @@ class TestEnemyPatrolStateRoundtrip:
             "patrol_index": 2,
             "original_patrol_index": 0,
             "patrol_points": [{"x": 1, "y": 1}, {"x": 3, "y": 3}, {"x": 5, "y": 5}],
-            "last_target": None,
             "last_seen_player": {"x": 10, "y": 10},
         }
 
@@ -78,7 +77,6 @@ class TestEnemyPatrolStateRoundtrip:
             "disabled_turns": 0,
             "alert_timer": 0,
             "patrol_index": 1,
-            "last_target": None,
         }
 
         persistence = GameStatePersistence(basic_game_engine)
@@ -136,7 +134,6 @@ class TestVirusMovementTypeRoundtrip:
             "patrol_index": 0,
             "original_patrol_index": 0,
             "original_movement_type": EnemyMovement.STATIC.value,
-            "last_target": None,
             "last_seen_player": {"x": 10, "y": 10},
         }
 
@@ -183,7 +180,6 @@ class TestEnemyMaxCpuRoundtrip:
             "blinded_turns": 0,
             "alert_timer": 0,
             "patrol_index": 0,
-            "last_target": None,
         }
 
         persistence = GameStatePersistence(basic_game_engine)
@@ -212,7 +208,6 @@ class TestEnemyMaxCpuRoundtrip:
             "disabled_turns": 0,
             "alert_timer": 0,
             "patrol_index": 0,
-            "last_target": None,
         }
 
         persistence = GameStatePersistence(basic_game_engine)
