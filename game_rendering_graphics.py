@@ -16,7 +16,7 @@ from game_color_thresholds import ColorThresholdManager
 from game_config import GameConfig
 from game_data import GameData
 from game_entities import Colors, EnemyState, Position, TargetingMode
-from game_rendering_base import MapRendererBase
+from game_rendering_base import MapRendererBase, can_render_at_position
 from game_unicode_chars import GameGlyphs
 
 
@@ -56,12 +56,8 @@ class GraphicsMapRenderer(MapRendererBase):
                 console_x = viewport_x
                 console_y = viewport_y + GameConfig.STATUS_BAR_HEIGHT()
 
-                # Check visibility
-                if game.player.can_see_through_walls():
-                    distance = game.player.position.distance_to(world_pos)
-                    can_see = distance <= vision_range
-                else:
-                    can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+                # Check visibility using shared helper
+                can_see = can_render_at_position(game, world_pos, vision_range)
 
                 # Check if tile has been explored (for fog of war)
                 explored = (world_x, world_y) in game.game_map.explored_tiles
@@ -126,11 +122,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Code hacks
         for (world_x, world_y), code_hack in game.game_map.code_hacks.items():
             world_pos = Position(world_x, world_y)
-            if game.player.can_see_through_walls():
-                distance = game.player.position.distance_to(world_pos)
-                can_see = distance <= vision_range
-            else:
-                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+            can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 console_x, console_y = self._world_to_console(world_x, world_y, camera_offset)
@@ -162,11 +154,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Exploit pickups
         for (world_x, world_y), exploit_item in game.game_map.exploit_pickups.items():
             world_pos = Position(world_x, world_y)
-            if game.player.can_see_through_walls():
-                distance = game.player.position.distance_to(world_pos)
-                can_see = distance <= vision_range
-            else:
-                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+            can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -206,11 +194,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     continue
 
                 # Check visibility and discovery state
-                if game.player.can_see_through_walls():
-                    distance = game.player.position.distance_to(world_pos)
-                    can_see = distance <= vision_range
-                else:
-                    can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+                can_see = can_render_at_position(game, world_pos, vision_range)
 
                 pos_tuple = (world_x, world_y)
                 is_explored = pos_tuple in game.game_map.explored_tiles
@@ -259,11 +243,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Permanent upgrades
         for (world_x, world_y), upgrade_key in game.game_map.permanent_upgrades.items():
             world_pos = Position(world_x, world_y)
-            if game.player.can_see_through_walls():
-                distance = game.player.position.distance_to(world_pos)
-                can_see = distance <= vision_range
-            else:
-                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+            can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -285,11 +265,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Story fragments
         for (world_x, world_y), story_fragment in game.game_map.story_fragments.items():
             world_pos = Position(world_x, world_y)
-            if game.player.can_see_through_walls():
-                distance = game.player.position.distance_to(world_pos)
-                can_see = distance <= vision_range
-            else:
-                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+            can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -429,12 +405,8 @@ class GraphicsMapRenderer(MapRendererBase):
                     if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                         continue
 
-                    # Check visibility
-                    if game.player.can_see_through_walls():
-                        distance = game.player.position.distance_to(world_pos)
-                        can_see = distance <= vision_range
-                    else:
-                        can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+                    # Check visibility using shared helper
+                    can_see = can_render_at_position(game, world_pos, vision_range)
 
                     if can_see:
                         # Render special nodes

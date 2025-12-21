@@ -163,6 +163,31 @@ class GameStateManager:
         self.distraction_points: dict[Position, int] = {}
         self.revealed_special_nodes: dict[tuple[int, int], str] = {}  # position -> node_type
 
+    def reveal_special_node(self, position: Position, node_type: str) -> None:
+        """
+        Mark a special node as discovered at the given position.
+
+        This is used when the player first sees a special node (cooling, CPU, ghost)
+        to track that it should remain visible in memory even when out of FOV.
+
+        Args:
+            position: Position of the special node
+            node_type: Type identifier ("cooling", "cpu_recovery", "ghost")
+        """
+        self.revealed_special_nodes[position.to_tuple()] = node_type
+
+    def is_node_discovered(self, position: Position) -> bool:
+        """
+        Check if a special node at the given position has been discovered.
+
+        Args:
+            position: Position to check
+
+        Returns:
+            True if a special node at this position was previously revealed
+        """
+        return position.to_tuple() in self.revealed_special_nodes
+
     def advance_turn(self) -> None:
         """
         Advance to the next turn and update time-based effects.

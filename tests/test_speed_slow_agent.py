@@ -211,8 +211,8 @@ def test_speed_reduced_by_inhibitor():
 
     # After wait(1):
     # - Turn processor decrements speed_boost_turns by 1 (3 -> 2)
-    # - Inhibitor attacks and decrements by 1 more (2 -> 1)
-    expected_speed = initial_speed - 2  # -1 from turn processor, -1 from inhibitor
+    # - Inhibitor attacks and decrements by inhibitor_slow_turns (2) (2 -> 0)
+    expected_speed = initial_speed - 1 - 2  # -1 from turn processor, -2 from inhibitor
     logging.info(f"Expected: Speed reduced to {expected_speed} (turn decay + inhibitor attack)")
 
     assert (

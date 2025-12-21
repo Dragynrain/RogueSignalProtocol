@@ -288,3 +288,26 @@ class MapRendererBase:
             pass
         # Fallback to default resolution
         return (800, 600)
+
+
+def can_render_at_position(game, world_pos: Position, vision_range: int) -> bool:
+    """
+    Check if a position should be visible to the player for rendering.
+
+    This is a shared helper to reduce duplicated visibility check code across
+    rendering modules. It handles both normal vision and enhanced vision modes.
+
+    Args:
+        game: GameEngine instance with player and visible_tiles
+        world_pos: World position to check visibility for
+        vision_range: Player's current vision range
+
+    Returns:
+        True if the position should be rendered as visible
+    """
+    if game.player.can_see_through_walls():
+        # Enhanced vision mode - check distance only
+        distance = game.player.position.distance_to(world_pos)
+        return distance <= vision_range
+    # Normal vision - check if in FOV computed tiles
+    return (world_pos.x, world_pos.y) in game.visible_tiles

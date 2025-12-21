@@ -350,7 +350,8 @@ class Enemy:
         if self.type == "inhibitor":
             player.speed_moves_remaining = 0
             current_speed = player.temporary_effects["speed_boost_turns"]
-            net_effect = current_speed - 1
+            slow_turns = GameConfig._get_required("balance.inhibitor_slow_turns")
+            net_effect = current_speed - slow_turns
 
             if net_effect >= 0:
                 # Still have speed boost remaining - just reduce it
@@ -435,7 +436,7 @@ class Enemy:
         if self.blinded_turns > 0:
             self.blinded_turns -= 1
 
-        # 3. Ensure queue has moves
+        # 4. Ensure queue has moves
         if not self.move_queue:
             self._ensure_queue_full(game_map, player, game_engine)
 
@@ -443,10 +444,10 @@ class Enemy:
         if not self.move_queue:
             return False
 
-        # 4. Pop next move
+        # 5. Pop next move
         next_position = self.move_queue.pop(0)
 
-        # 5. Validate move
+        # 6. Validate move
         if not self._is_move_valid(next_position, game_map, player, game_engine):
             # Blocked - clear queue and replan next turn
             logging.debug(
@@ -455,13 +456,13 @@ class Enemy:
             self.move_queue.clear()
             return False
 
-        # 6. Execute move
+        # 7. Execute move
         self.position = next_position
 
-        # 7. Top up queue to maintain 3 moves
+        # 8. Top up queue to maintain 3 moves
         self._ensure_queue_full(game_map, player, game_engine)
 
-        # 8. Update cooldown
+        # 9. Update cooldown
         if self.get_movement_type() == EnemyMovement.STATIC:
             self.move_cooldown = GameConfig._get_required("balance.static_enemy_cooldown")
         else:

@@ -144,25 +144,6 @@ class EnemyManager:
         if enemy in self.enemies:
             self.enemies.remove(enemy)
 
-    def _resume_patrol_route(self, enemy: Enemy) -> None:
-        """Resume patrol route from the nearest patrol point."""
-        if not enemy.patrol_points:
-            return
-
-        # Find nearest patrol point (grid distance for gameplay)
-        distances = [
-            (i, enemy.position.grid_distance_to(p)) for i, p in enumerate(enemy.patrol_points)
-        ]
-        nearest_index, min_distance = min(distances, key=lambda x: x[1])
-
-        # Advance if already at nearest point
-        enemy.patrol_index = (
-            (nearest_index + 1) % len(enemy.patrol_points)
-            if min_distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD
-            else nearest_index
-        )
-        # patrol_stuck_counter removed in simplified movement system
-
     def _generate_patrol_route(self, start: Position) -> list[Position]:
         """
         Generate simple geometric patrol routes with 2-4 points.
