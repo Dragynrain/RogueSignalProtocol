@@ -384,18 +384,18 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             enemy = Enemy(Position(5, 5), "inhibitor")
             test_player = player()
 
-            # First hit
+            # First hit - applies inhibitor_slow_turns (default 2) turns of slow
             test_player.temporary_effects["movement_slowed_turns"] = 0
             enemy.attack_player(test_player)
             assert (
-                test_player.temporary_effects["movement_slowed_turns"] == 1
-            ), "First hit should apply 1 turn of slowdown"
+                test_player.temporary_effects["movement_slowed_turns"] == 2
+            ), "First hit should apply 2 turns of slowdown (config: inhibitor_slow_turns)"
 
-            # Second hit - should extend to 2
+            # Second hit - should extend to 4
             enemy.attack_player(test_player)
             assert (
-                test_player.temporary_effects["movement_slowed_turns"] == 2
-            ), "BUG FIX: Slowdown should stack by extending duration, not overwrite"
+                test_player.temporary_effects["movement_slowed_turns"] == 4
+            ), "Slowdown should stack by extending duration"
 
             # Keep hitting until cap
             for _ in range(10):  # Hit many more times

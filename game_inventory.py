@@ -220,6 +220,13 @@ class CodeHack(InventoryItem):
             )
             game.message_log.add_message(msg)
 
+        else:
+            # Unknown effect key - log warning and return False
+            import logging
+
+            logging.warning(f"CodeHack: Unknown effect key '{effect_key}' - item consumed with no effect")
+            return False
+
         return True
 
 

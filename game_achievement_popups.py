@@ -40,10 +40,6 @@ def get_popup_fade_duration():
     return GameConfig._get_required("ui.achievement_popup_fade_duration")
 
 
-def get_max_description_lines():
-    return GameConfig._get_required("ui.achievement_popup_max_description_lines")
-
-
 @dataclass
 class AchievementPopup:
     """Data structure for an achievement popup."""

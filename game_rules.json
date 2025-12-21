@@ -196,6 +196,7 @@
     "overheat_minimum_heat": 85,
     "shadow_damage_bonus": 10,
     "virus_increment_turns": 3,
+    "inhibitor_slow_turns": 2,
     "inhibitor_slowdown_cap": 5,
     "enemy_flee_health_threshold": 0.3,
     "patrol_spacing_min": 4,

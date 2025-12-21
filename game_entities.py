@@ -402,35 +402,6 @@ class ExploitDefinition:
     self_damage: int = 0  # Damage dealt to player when using exploit (system_crash)
     help_summary: str = ""  # Short help text shown in UI
 
-    def get_detail_lines(self) -> list[str]:
-        """
-        Build formatted detail lines for this exploit.
-
-        Returns a list of strings containing all exploit information,
-        used by both the examine command and hover tooltips.
-
-        Returns:
-            List of formatted detail strings
-        """
-        lines = []
-        lines.append(f"=== {self.name} ===")
-        lines.append(f"Category: {self.category.title()}")
-        lines.append(f"RAM Cost: {self.ram}")
-        lines.append(f"Heat Cost: {self.heat}")
-
-        if self.damage > 0:
-            lines.append(f"Damage: {self.damage}")
-        if self.self_damage > 0:
-            lines.append(f"Self-Damage: {self.self_damage} (HITS YOU!)")
-        if self.range > 0:
-            lines.append(f"Range: {self.range} tiles")
-
-        lines.append(f"Targeting: {self.targeting.name}")
-        lines.append(f"Effect: {self.description}")
-
-        return lines
-
-
 @dataclass
 class UpgradeDefinition:
     """Definition of an upgrade item."""
@@ -476,16 +447,6 @@ class PositionValidator:
     def is_within_bounds(position: Position, width: int, height: int) -> bool:
         """Check if position is within map bounds."""
         return 0 <= position.x < width and 0 <= position.y < height
-
-    @staticmethod
-    def is_not_on_border(position: Position, width: int, height: int) -> bool:
-        """Check if position is not on the map border."""
-        return (
-            position.x != 0
-            and position.x != width - 1
-            and position.y != 0
-            and position.y != height - 1
-        )
 
     @staticmethod
     def is_basic_valid_position(position: Position, game_map) -> bool:

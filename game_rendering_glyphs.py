@@ -16,7 +16,7 @@ from game_config import GameBalance, GameConfig
 from game_data import GameData, GameUpgrades
 from game_entities import Colors, EnemyState, Position, TargetingMode, ensure_color_tuple
 from game_errors import GameErrorHandler
-from game_rendering_base import MapRendererBase
+from game_rendering_base import MapRendererBase, can_render_at_position
 from game_ui import render_char_safe
 from game_unicode_chars import GameGlyphs
 
@@ -89,14 +89,8 @@ class GlyphsMapRenderer(MapRendererBase):
                 console_y = viewport_y + GameConfig.STATUS_BAR_HEIGHT()
 
                 if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                    # Check if player can see this position using TCOD FOV
-                    if game.player.can_see_through_walls():
-                        # Enhanced vision can see through walls within range
-                        distance = game.player.position.distance_to(world_pos)
-                        can_see = distance <= vision_range
-                    else:
-                        # Use cached FOV for massive performance gain
-                        can_see = (world_pos.x, world_pos.y) in game.visible_tiles
+                    # Check visibility using shared helper (handles enhanced vision mode)
+                    can_see = can_render_at_position(game, world_pos, vision_range)
 
                     # Check if this tile has been explored (memory system)
                     explored = (world_pos.x, world_pos.y) in game.game_map.explored_tiles
