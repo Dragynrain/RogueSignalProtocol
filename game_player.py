@@ -144,6 +144,28 @@ class Player:
 
         return exploits_list
 
+    def get_effect_duration(self, effect_name: str) -> int:
+        """Get remaining turns for a temporary effect.
+
+        Args:
+            effect_name: Name of the effect (e.g., "virus_turns", "speed_boost_turns")
+
+        Returns:
+            Remaining turns for the effect, or 0 if not active/unknown.
+        """
+        return self.temporary_effects.get(effect_name, 0)
+
+    def has_active_effect(self, effect_name: str) -> bool:
+        """Check if a temporary effect is currently active.
+
+        Args:
+            effect_name: Name of the effect (e.g., "virus_turns", "speed_boost_turns")
+
+        Returns:
+            True if the effect has turns remaining, False otherwise.
+        """
+        return self.temporary_effects.get(effect_name, 0) > 0
+
     def move(self, dx: int, dy: int, game_map) -> bool:
         """
         Move player with boundary and collision checking.

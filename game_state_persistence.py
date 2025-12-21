@@ -299,9 +299,9 @@ class GameStatePersistence:
                     logging.warning(
                         f"Saved exploit '{item_data['exploit_key']}' not found in game data, skipping"
                     )
-            elif item_data["type"] == "story_fragment":
-                item = StoryFragment(item_data["fragment_index"])
-                items.append(item)
+            # Note: StoryFragment items are never added to inventory - they're
+            # discovered directly via StoryFragmentManager. Map-placed fragments
+            # are restored separately in _restore_map_items().
 
         return items
 
