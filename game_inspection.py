@@ -316,15 +316,11 @@ class EntityInspector:
         """Check for special tiles (gateway, nodes)."""
 
         # Check for gateway
-        if (
-            game.game_map.gateway
-            and position.x == game.game_map.gateway.x
-            and position.y == game.game_map.gateway.y
-        ):
-            terrain_desc = EntityInspector._terrain_descriptions.get("gateway", {})
+        if game.game_map.gateway and position == game.game_map.gateway:
+            terrain_desc = EntityInspector._terrain_descriptions["gateway"]
             return {
-                "name": terrain_desc.get("name", "Network Gateway"),
-                "description": terrain_desc.get("description", "Exit to next network level"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "gateway",
                 "details": f"Level {game.level} exit",
                 "color": Colors.GATEWAY,
@@ -332,10 +328,10 @@ class EntityInspector:
 
         # Check for cooling node
         if game.game_map.is_cooling_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get("cooling_node", {})
+            terrain_desc = EntityInspector._terrain_descriptions["cooling_node"]
             return {
-                "name": terrain_desc.get("name", "Cooling Node"),
-                "description": terrain_desc.get("description", "Reduces heat"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "cooling_node",
                 "details": "Step on to activate",
                 "color": Colors.HEAT_RECOVERY,
@@ -343,10 +339,10 @@ class EntityInspector:
 
         # Check for CPU recovery node
         if game.game_map.is_cpu_recovery_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get("cpu_recovery_node", {})
+            terrain_desc = EntityInspector._terrain_descriptions["cpu_recovery_node"]
             return {
-                "name": terrain_desc.get("name", "CPU Recovery Node"),
-                "description": terrain_desc.get("description", "Restores CPU"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "cpu_recovery_node",
                 "details": "Step on to activate",
                 "color": Colors.CPU_RECOVERY,
@@ -354,10 +350,10 @@ class EntityInspector:
 
         # Check for ghost node
         if game.game_map.is_ghost_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get("ghost_node", {})
+            terrain_desc = EntityInspector._terrain_descriptions["ghost_node"]
             return {
-                "name": terrain_desc.get("name", "Ghost Node"),
-                "description": terrain_desc.get("description", "Reduces trace level"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "ghost_node",
                 "details": "Step on to activate; also acts as blind spot",
                 "color": Colors.CYAN,
@@ -371,10 +367,10 @@ class EntityInspector:
 
         # Check for wall
         if game.game_map.is_wall(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get("wall", {})
+            terrain_desc = EntityInspector._terrain_descriptions["wall"]
             return {
-                "name": terrain_desc.get("name", "Security Barrier"),
-                "description": terrain_desc.get("description", "Blocks movement and vision"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "wall",
                 "details": "",
                 "color": Colors.WALL,
@@ -382,20 +378,20 @@ class EntityInspector:
 
         # Check for blind spot
         if game.game_map.is_blind_spot(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get("blind_spot", {})
+            terrain_desc = EntityInspector._terrain_descriptions["blind_spot"]
             return {
-                "name": terrain_desc.get("name", "Blind Spot"),
-                "description": terrain_desc.get("description", "Reduces enemy vision"),
+                "name": terrain_desc["name"],
+                "description": terrain_desc["description"],
                 "entity_type": "blind_spot",
                 "details": "Stealth bonus when hiding here",
                 "color": Colors.BLIND_SPOT_VISIBLE,
             }
 
         # Default: floor
-        terrain_desc = EntityInspector._terrain_descriptions.get("floor", {})
+        terrain_desc = EntityInspector._terrain_descriptions["floor"]
         return {
-            "name": terrain_desc.get("name", "Data Corridor"),
-            "description": terrain_desc.get("description", "Open network pathway"),
+            "name": terrain_desc["name"],
+            "description": terrain_desc["description"],
             "entity_type": "floor",
             "details": "",
             "color": Colors.FLOOR,

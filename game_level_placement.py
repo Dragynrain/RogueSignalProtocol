@@ -399,10 +399,10 @@ class TilePlacementGenerator:
 
         strategies = ["far_corner", "central_hub", "hidden_dead_end", "gauntlet"]
         strategy_weights = [
-            weights.get("far_corner", 0.4),
-            weights.get("central_hub", 0.3),
-            weights.get("hidden_dead_end", 0.2),
-            weights.get("gauntlet", 0.1),
+            weights["far_corner"],
+            weights["central_hub"],
+            weights["hidden_dead_end"],
+            weights["gauntlet"],
         ]
 
         total = sum(strategy_weights)

@@ -574,21 +574,18 @@ def create_intro_dialogue(input_mapper=None) -> DialogueBox:
     # Determine tier based on fragment count
     intro_messages = get_intro_messages()
     if discovered_count <= STORY_TIER_BEGINNER:
-        intro_data = intro_messages.get("0_to_4", {})
+        intro_data = intro_messages["0_to_4"]
     elif discovered_count <= STORY_TIER_NOVICE:
-        intro_data = intro_messages.get("5_to_9", {})
+        intro_data = intro_messages["5_to_9"]
     elif discovered_count <= STORY_TIER_INTERMEDIATE:
-        intro_data = intro_messages.get("10_to_14", {})
+        intro_data = intro_messages["10_to_14"]
     elif discovered_count <= STORY_TIER_ADVANCED:
-        intro_data = intro_messages.get("15_to_20", {})
+        intro_data = intro_messages["15_to_20"]
     else:
-        intro_data = intro_messages.get("21_plus", {})
+        intro_data = intro_messages["21_plus"]
 
-    title = intro_data.get("title", "SIGNAL COHERENCE: FAILING")
-    message = intro_data.get(
-        "message",
-        "You wake to fragmented data streams and corrupted memory. This network isn't a test--it's a trap. Three security layers stand between you and escape. Find the gateways. Break through. Become the signal they can't delete.",
-    )
+    title = intro_data["title"]
+    message = intro_data["message"]
 
     return DialogueBox(
         title=title,

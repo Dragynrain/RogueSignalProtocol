@@ -458,14 +458,15 @@ class InfoProvider:
             level = game.game_state.level
             try:
                 network_configs = GameConfig.get_network_configs()
-                network_name = network_configs.get(level, {}).get("name", f"Level {level}")
+                level_config = network_configs[level]  # Fail-fast if level missing
+                network_name = level_config["name"]  # Fail-fast if name missing
                 lines.append({"text": f"Level {level}", "color": Colors.CYAN})
                 lines.append({"text": network_name, "color": Colors.CYAN})
-            except Exception as e:
+            except KeyError as e:
                 GameErrorHandler.handle_error(
                     e,
                     "info_panel_network_name",
-                    f"Failed to get network name for level {level}",
+                    f"Missing network config for level {level}",
                     fatal=False,
                 )
                 lines.append({"text": f"Level {level}", "color": Colors.CYAN})

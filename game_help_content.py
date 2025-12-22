@@ -384,13 +384,13 @@ class HelpContent:
         exploits_by_category = {"combat": [], "stealth": [], "utility": [], "emergency": []}
 
         for exploit_id, exploit_data in game_data["exploits"].items():
-            category = exploit_data.get("category", "utility")
+            category = exploit_data["category"]
 
             # Get color for this category
-            color = colors.get(category, colors["utility"])
+            color = colors[category]
 
-            # Use help_summary from JSON, fall back to description if missing
-            summary = exploit_data.get("help_summary", exploit_data.get("description", ""))
+            # Use help_summary from JSON (required field)
+            summary = exploit_data["help_summary"]
 
             # Special case: System Crash is labeled as emergency in utility category
             display_name = exploit_data["name"]
