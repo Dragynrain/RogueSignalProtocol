@@ -174,7 +174,7 @@ class GameTurnManager:
             for enemy_id, (ghost_pos, _) in gm.last_known_enemy_positions.items()
             if gm.can_see_position(self.game_engine.player.position, ghost_pos, vision_range)
             and not any(
-                e.id == enemy_id and e.position.distance_to(ghost_pos) == 0
+                e.id == enemy_id and e.position == ghost_pos
                 for e in self.game_engine.enemies
             )
         ]

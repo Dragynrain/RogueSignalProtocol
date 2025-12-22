@@ -135,7 +135,7 @@ class EnemyManager:
     def get_enemy_at_position(self, position: Position) -> Enemy | None:
         """Get enemy at the specified position."""
         return next(
-            (e for e in self.enemies if e.position.x == position.x and e.position.y == position.y),
+            (e for e in self.enemies if e.position == position),
             None,
         )
 
@@ -278,7 +278,7 @@ class EnemyManager:
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol (within bounds, not a wall)."""
         # Use centralized PositionValidator for consistency
-        margin = GameConfig.get("balance.patrol_validation_margin", 3)
+        margin = GameConfig._get_required("balance.patrol_validation_margin")
         return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=margin)
 
     def _validate_patrol_connectivity(self, route: list[Position]) -> bool:

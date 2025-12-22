@@ -145,52 +145,6 @@ class UIRenderer:
             alpha=255,
         )
 
-    def _render_overlay_menu(
-        self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30
-    ) -> tuple:
-        """
-        Render a centered overlay menu with title and options.
-
-        Draws a bordered, centered menu box with title and option list.
-        Used by story fragment and other overlay screens.
-
-        Args:
-            console: TCOD console to render to
-            title: Menu title text
-            options: List of option strings
-            menu_width: Width of menu box in characters (default 30)
-
-        Returns:
-            Tuple of (menu_x, menu_y, menu_height) for additional rendering
-        """
-        menu_height = 6 + len(options)  # Header + options + padding
-        menu_x = (GameConfig.SCREEN_WIDTH - menu_width) // 2
-        menu_y = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
-
-        # Menu background
-        for y in range(menu_y, menu_y + menu_height):
-            for x in range(menu_x, menu_x + menu_width):
-                render_char_safe(console, x, y, " ", fg=Colors.WHITE, bg=Colors.UI_BG)
-
-        # Menu borders (top and bottom)
-        for x in range(menu_x, menu_x + menu_width):
-            render_char_safe(console, x, menu_y, "═", fg=Colors.CYAN, bg=Colors.UI_BG)
-            render_char_safe(
-                console, x, menu_y + menu_height - 1, "═", fg=Colors.CYAN, bg=Colors.UI_BG
-            )
-
-        # Title (centered)
-        title_x = menu_x + (menu_width - len(title)) // 2
-        render_char_safe(console, title_x, menu_y + 2, title, fg=Colors.YELLOW, bg=Colors.UI_BG)
-
-        # Options
-        for i, option in enumerate(options):
-            render_char_safe(
-                console, menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG
-            )
-
-        return menu_x, menu_y, menu_height
-
     # === Help Screen ===
 
     def render_help_screen(self, console: tcod.console.Console, help_menu):

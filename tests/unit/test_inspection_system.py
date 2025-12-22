@@ -566,10 +566,12 @@ class TestSpecialTileInspection:
         game.game_map.story_fragments = {}
         game.level = 3
 
-        mock_gateway = Mock()
-        mock_gateway.x = 10
-        mock_gateway.y = 10
-        game.game_map.gateway = mock_gateway
+        # Use Position object for gateway (not Mock) so equality works
+        game.game_map.gateway = Position(10, 10)
+        # Mock node checks to return False (so we hit gateway branch)
+        game.game_map.is_cooling_node = Mock(return_value=False)
+        game.game_map.is_cpu_recovery_node = Mock(return_value=False)
+        game.game_map.is_ghost_node = Mock(return_value=False)
 
         # Mock terrain descriptions
         EntityInspector._terrain_descriptions = {

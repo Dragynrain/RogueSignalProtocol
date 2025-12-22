@@ -118,6 +118,11 @@ class Enemy:
     def y(self, value: int) -> None:
         self.position.y = value
 
+    @property
+    def is_disabled(self) -> bool:
+        """Check if enemy is currently disabled (stunned)."""
+        return self.disabled_turns > 0
+
     # Ascension modifier properties
     damage_multiplier: float = 1.0  # Set by apply_ascension_modifiers
     _vision_bonus: int = 0  # Set by apply_ascension_modifiers

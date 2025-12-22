@@ -54,7 +54,7 @@ class AutoWalk:
             True if path found and auto-walk started, False if no path exists
         """
         # Can't walk to current position
-        if player_pos.x == target_pos.x and player_pos.y == target_pos.y:
+        if player_pos == target_pos:
             return False
 
         # Can't walk to walls
@@ -179,7 +179,7 @@ class AutoWalk:
 
             # Enemy blocking check
             for enemy in game_engine.enemies:
-                if enemy.x == next_pos.x and enemy.y == next_pos.y:
+                if enemy.position == next_pos:
                     return True, "Path blocked by enemy"
 
         # 4. Reached destination

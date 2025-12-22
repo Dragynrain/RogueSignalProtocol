@@ -175,8 +175,11 @@ class PersistentStorage:
             logging.debug(f"Save file not found: {filename} (normal for new games)")
             return {}
         except json.JSONDecodeError as e:
-            # Handle corrupted save files
-            logging.warning(f"Invalid JSON in save file {filename}: {e}")
+            # Handle corrupted save files - log as error for visibility
+            # NOTE: Returns empty dict which treats corrupted save as new game.
+            # This is intentional for permadeath roguelike design, but user
+            # should ideally be notified their progress was lost.
+            logging.error(f"CORRUPTED SAVE FILE {filename}: {e} - treating as new game")
             return {}
 
 

@@ -103,7 +103,9 @@ def _load_ascension_config() -> dict:
     with open(game_rules_path, encoding="utf-8") as f:
         rules = json.load(f)
 
-    _ascension_config_cache = rules.get("ascension", {})
+    if "ascension" not in rules:
+        raise KeyError("Required 'ascension' section missing from game_rules.json")
+    _ascension_config_cache = rules["ascension"]
     return _ascension_config_cache
 
 
@@ -126,10 +128,13 @@ def calculate_ascension_modifiers(level: int) -> AscensionModifiers:
         return mods
 
     config = _load_ascension_config()
-    modifiers_config = config.get("modifiers", {})
+    if "modifiers" not in config:
+        raise KeyError("Required 'modifiers' section missing from ascension config")
+    modifiers_config = config["modifiers"]
 
     # Apply modifiers cumulatively from 1 to level
     for lvl in range(1, level + 1):
+        # Missing level configs are OK - not all levels have modifiers
         lvl_config = modifiers_config.get(str(lvl), {})
 
         # A1: Scanner vision
@@ -246,7 +251,7 @@ def unlock_next_ascension(current_level: int, highest_unlocked: int) -> int:
         New highest_unlocked value
     """
     config = _load_ascension_config()
-    max_level = config.get("max_level", 20)
+    max_level = config["max_level"]
 
     if current_level >= highest_unlocked and highest_unlocked < max_level:
         return highest_unlocked + 1
@@ -257,4 +262,4 @@ def unlock_next_ascension(current_level: int, highest_unlocked: int) -> int:
 def get_max_ascension_level() -> int:
     """Get the maximum ascension level from config."""
     config = _load_ascension_config()
-    return config.get("max_level", 20)
+    return config["max_level"]

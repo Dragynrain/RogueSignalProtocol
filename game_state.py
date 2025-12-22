@@ -163,6 +163,11 @@ class GameStateManager:
         self.distraction_points: dict[Position, int] = {}
         self.revealed_special_nodes: dict[tuple[int, int], str] = {}  # position -> node_type
 
+    @property
+    def is_threat_scan_active(self) -> bool:
+        """Check if threat scan effect is currently active."""
+        return self.threat_scan_turns > 0
+
     def reveal_special_node(self, position: Position, node_type: str) -> None:
         """
         Mark a special node as discovered at the given position.

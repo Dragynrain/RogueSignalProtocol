@@ -41,10 +41,26 @@ from game_mouse_utils import MenuMouseHandler  # noqa: E402
 from game_rendering_core import GameRenderer  # noqa: E402
 from game_ui import render_char_safe  # noqa: E402
 
+# Module-level reference to current game engine for crash reporting
+_current_game_engine = None
+
+
+def set_current_game_engine(engine):
+    """Set the current game engine for crash reporting."""
+    global _current_game_engine
+    _current_game_engine = engine
+
+
+def get_current_game_engine():
+    """Get the current game engine for crash reporting."""
+    return _current_game_engine
+
 
 def log_exception(e: Exception, context: str, level: str = "error"):
     """
     Centralized exception logging with traceback details.
+
+    For critical errors, automatically exports a crash report package.
 
     Args:
         e: The exception to log
@@ -60,6 +76,18 @@ def log_exception(e: Exception, context: str, level: str = "error"):
     log_func(f"Exception: {str(e)}")
     log_func(f"Exception type: {type(e).__name__}")
     traceback.print_exc()
+
+    # Auto-export crash report for critical errors
+    if level == "critical":
+        try:
+            from debug_export import export_crash_report
+
+            game_engine = get_current_game_engine()
+            zip_path = export_crash_report(e, game_engine=game_engine)
+            if zip_path:
+                logging.critical(f"Crash report saved: {zip_path}")
+        except Exception as export_error:
+            logging.error(f"Failed to export crash report: {export_error}")
 
 
 def load_tileset(settings: GameSettings = None):
@@ -968,6 +996,9 @@ def main():
                         active_game_session,
                         initial_controllers,
                     )
+
+                    # Track game engine for crash reporting
+                    set_current_game_engine(game)
 
                     if should_exit:
                         # Cleanup background before exit
