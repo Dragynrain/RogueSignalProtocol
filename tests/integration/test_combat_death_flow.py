@@ -2,7 +2,7 @@
 Integration tests for combat death handling flow.
 
 Tests that enemy attack -> death -> save deletion works correctly
-through the canonical _handle_player_death() path.
+through the centralized death_handler.check_death() path.
 """
 
 import pytest
@@ -52,7 +52,7 @@ class TestCombatDeathFlow:
         assert agent.engine.pending_death_dialogue is True
 
     def test_enemy_attack_death_deletes_save(self, tmp_path, monkeypatch):
-        """Enemy attack death should delete save file via _handle_player_death."""
+        """Enemy attack death should delete save file via death_handler.check_death()."""
         from game_save import SaveGameManager
 
         # Patch save path
@@ -85,7 +85,7 @@ class TestCombatDeathFlow:
         # Process turn - enemy should attack and kill player
         agent.engine.game_session.process_turn()
 
-        # Save should be deleted by _handle_player_death
+        # Save should be deleted by death_handler.check_death()
         assert not test_save.exists()
 
     def test_attack_player_returns_damage_only(self):
@@ -196,7 +196,7 @@ class TestDeathPreventsDuplicateProcessing:
             call_count["count"] += 1
             return orig_finalize(*args, **kwargs)
 
-        # Patch at the source module (function is imported locally in _handle_player_death)
+        # Patch at the source module (function is imported locally in death_handler)
         monkeypatch.setattr(game_metrics, "finalize_session", counting_finalize)
 
         agent = GameTestAgent(seed=42)

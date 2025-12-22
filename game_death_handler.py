@@ -89,11 +89,13 @@ class PlayerDeathHandler:
         Returns:
             True if player is dead (whether just now or already handled)
         """
-        if self.game.player.cpu > 0:
-            return False
-
+        # Check idempotency first - if already handled, always return True
+        # This prevents any edge cases where healing during death could cause issues
         if self._handled:
             return True  # Already handled this death
+
+        if self.game.player.cpu > 0:
+            return False
 
         # Don't process death if victory was already achieved
         # Victory takes precedence - player won, death UI should not appear

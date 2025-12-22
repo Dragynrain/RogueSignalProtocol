@@ -13,7 +13,7 @@ Manages all exploit execution including:
 import logging
 
 # Import required modules
-from game_config import GameBalance, GameConfig
+from game_config import GameConfig
 from game_data import GameData
 from game_entities import (
     Colors,
@@ -229,13 +229,19 @@ class ExploitSystem:
 
             # Apply heat and overheat damage if exceeding max
             # Uses shared helper for consistent behavior
-            self.game.player.apply_overheat_damage(
+            did_overheat = self.game.player.apply_overheat_damage(
                 new_heat,
                 self.game.sound_manager,
                 self.game.message_log,
                 self.game.death_handler,
                 source=exploit.name,
             )
+
+            # Trigger overheating narrative if damage was applied
+            if did_overheat:
+                overheat_msg = self.game.narrative_manager.trigger_overheating()
+                if overheat_msg:
+                    self.game.message_log.add_message(overheat_msg)
 
             # Track highest heat reached for achievements (cold_blooded, heat_master)
             from game_metrics import track_highest_heat
@@ -464,42 +470,13 @@ class ExploitSystem:
             True (always succeeds)
         """
         if enemy.take_damage(damage):
-            # Enemy destroyed
-            is_admin = enemy.type == "admin"
-            self.game.sound_manager.play_sound("enemy_death")
-
-            # Trigger particle explosion effect
-            self.game.trigger_death_particles(enemy.type, enemy.x, enemy.y)
-
-            self.game.enemies.remove(enemy)
-            self.game.player.cpu = min(
-                self.game.player.max_cpu,
-                self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD,
-            )
-            self.game.message_log.add_message(
-                f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
-            )
-
-            # Track kill metrics using consolidated helper
-            from game_metrics import track_enemy_kill
-
-            track_enemy_kill(
-                enemy_type=enemy.type,
+            # Enemy destroyed - use consolidated helper
+            self.game.handle_enemy_elimination(
+                enemy=enemy,
                 damage=damage,
                 was_stealth=(enemy.state == EnemyState.UNAWARE),
-                is_admin=is_admin,
                 from_blind_spot=self.game.game_map.is_blind_spot(self.game.player.position),
-                enemies_remaining=len(self.game.enemies),
-                game=self.game,
             )
-
-            # Add environmental narrative for first combat or admin defeat
-            if is_admin:
-                env_msg = self.game.narrative_manager.trigger_admin_defeated()
-            else:
-                env_msg = self.game.narrative_manager.trigger_first_combat()
-            if env_msg:
-                self.game.message_log.add_message(env_msg)
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             enemy.make_hostile(self.game.player.position)
@@ -687,7 +664,13 @@ class ExploitSystem:
         # If player is in blast and not confirmed, show warning
         if player_in_blast and not self.game.friendly_fire_confirmed:
             # Calculate potential damage to player (includes shadow bonus)
-            remaining_cpu = self.game.player.cpu - damage
+            # Also account for overheat damage that will occur after exploit executes
+            heat_cost = self._calculate_heat_cost(exploit)
+            overheat_damage = 0
+            if self.game.player.heat + heat_cost > self.game.player.max_heat:
+                overheat_damage = (self.game.player.heat + heat_cost) - self.game.player.max_heat
+            total_damage = damage + overheat_damage
+            remaining_cpu = self.game.player.cpu - total_damage
 
             # Store pending exploit info
             self.game.friendly_fire_exploit = "logic_bomb"
@@ -701,7 +684,7 @@ class ExploitSystem:
 
             dialogue = create_friendly_fire_warning_dialogue(
                 exploit_name=exploit.name,
-                damage=damage,
+                damage=total_damage,  # Show total including overheat
                 remaining_cpu=remaining_cpu,
                 max_cpu=self.game.player.max_cpu,
                 input_mapper=input_mapper,

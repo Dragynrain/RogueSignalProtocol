@@ -479,6 +479,12 @@ class GameEngine:
                     and self.player.position.grid_distance_to(self.game_map.gateway) == 0
                 ):
                     self.sound_manager.play_sound("ui_menu_open")
+
+                    # Trigger gateway approach narrative
+                    gateway_msg = self.narrative_manager.trigger_gateway_approach()
+                    if gateway_msg:
+                        self.message_log.add_message(gateway_msg)
+
                     # Show dialogue - level transition happens on confirmation
                     from game_dialogue_system import create_gateway_dialogue
 
@@ -595,43 +601,16 @@ class GameEngine:
         self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
 
         # Apply damage
+        from game_entities import EnemyState
+
         if target_enemy.take_damage(total_damage):
-            # Enemy destroyed
-            is_admin = target_enemy.type == "admin"
-            self.sound_manager.play_sound("enemy_death")
-
-            # Trigger particle explosion effect
-            self.trigger_death_particles(target_enemy.type, target_enemy.x, target_enemy.y)
-
-            self.enemy_manager.remove_enemy(target_enemy)
-            self.player.cpu = min(
-                self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD
-            )  # Small CPU recovery
-            self.message_log.add_message(
-                f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
-            )
-
-            # Track kill metrics using consolidated helper
-            from game_entities import EnemyState
-            from game_metrics import track_enemy_kill
-
-            track_enemy_kill(
-                enemy_type=target_enemy.type,
+            # Enemy destroyed - use consolidated helper
+            self.handle_enemy_elimination(
+                enemy=target_enemy,
                 damage=total_damage,
                 was_stealth=(target_enemy.state == EnemyState.UNAWARE),
-                is_admin=is_admin,
                 from_blind_spot=self.game_map.is_blind_spot(self.player.position),
-                enemies_remaining=len(self.enemies),
-                game=self,
             )
-
-            # Add environmental narrative for first combat or admin defeat
-            if is_admin:
-                env_msg = self.narrative_manager.trigger_admin_defeated()
-            else:
-                env_msg = self.narrative_manager.trigger_first_combat()
-            if env_msg:
-                self.message_log.add_message(env_msg)
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(
@@ -672,13 +651,19 @@ class GameEngine:
         # Add heat and apply overheat damage if exceeding max
         # Uses shared helper for consistent behavior with exploits
         new_heat = self.player.heat + heat_generated
-        self.player.apply_overheat_damage(
+        did_overheat = self.player.apply_overheat_damage(
             new_heat,
             self.sound_manager,
             self.message_log,
             self.death_handler,
             source="melee attack",
         )
+
+        # Trigger overheating narrative if damage was applied
+        if did_overheat:
+            overheat_msg = self.narrative_manager.trigger_overheating()
+            if overheat_msg:
+                self.message_log.add_message(overheat_msg)
 
         # Track highest heat reached for achievements (cold_blooded, heat_master)
         from game_metrics import track_highest_heat
@@ -716,6 +701,69 @@ class GameEngine:
                 GameErrorHandler.handle_error(
                     e, "particle_effect", "Particle effect failed", fatal=False
                 )
+
+    def handle_enemy_elimination(
+        self, enemy: Enemy, damage: int, was_stealth: bool, from_blind_spot: bool
+    ) -> None:
+        """
+        Handle enemy elimination with all side effects.
+
+        Consolidates the common logic used by both bump attacks and exploit damage:
+        - Play death sound
+        - Trigger particle effects
+        - Remove enemy from game
+        - Grant CPU reward
+        - Log elimination message
+        - Track kill metrics
+        - Trigger narrative events
+
+        Args:
+            enemy: The eliminated enemy
+            damage: Amount of damage that killed the enemy
+            was_stealth: Whether the enemy was unaware when killed
+            from_blind_spot: Whether player was in a blind spot
+        """
+        is_admin = enemy.type == "admin"
+        self.sound_manager.play_sound("enemy_death")
+
+        # Trigger particle explosion effect
+        self.trigger_death_particles(enemy.type, enemy.x, enemy.y)
+
+        # Remove enemy (use enemy_manager if available, else direct removal)
+        if hasattr(self, "enemy_manager") and self.enemy_manager is not None:
+            self.enemy_manager.remove_enemy(enemy)
+        elif enemy in self.enemies:
+            self.enemies.remove(enemy)
+
+        # Grant CPU reward
+        self.player.cpu = min(
+            self.player.max_cpu,
+            self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD,
+        )
+        self.message_log.add_message(
+            f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
+        )
+
+        # Track kill metrics
+        from game_metrics import track_enemy_kill
+
+        track_enemy_kill(
+            enemy_type=enemy.type,
+            damage=damage,
+            was_stealth=was_stealth,
+            is_admin=is_admin,
+            from_blind_spot=from_blind_spot,
+            enemies_remaining=len(self.enemies),
+            game=self,
+        )
+
+        # Trigger narrative events
+        if is_admin:
+            env_msg = self.narrative_manager.trigger_admin_defeated()
+        else:
+            env_msg = self.narrative_manager.trigger_first_combat()
+        if env_msg:
+            self.message_log.add_message(env_msg)
 
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""

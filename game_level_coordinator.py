@@ -289,9 +289,10 @@ class GameLevelCoordinator:
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
                 line_no = tb[-1].lineno if tb else "?"
-                logging.error(f"Session: Level generation FAILED: {str(e)[:50]} at line {line_no}")
+                # Log full error for debugging, truncate only for UI display
+                logging.error(f"Session: Level generation FAILED: {e} at line {line_no}")
                 self.game_engine.message_log.add_message(
-                    f"Network error: {str(e)[:15]} (line {line_no})"
+                    f"Network error: {str(e)[:30]}..."
                 )
                 self.game_engine.level -= 1
                 logging.debug(f"Session: Rolled back to level {self.game_engine.level}")
