@@ -195,8 +195,8 @@ class CodeHack(InventoryItem):
         elif effect_key == "enhanced_vision":
             from game_config import GameConfig
 
-            turns_to_add = GameConfig.get("balance.enhanced_vision_turns", 5)
-            current = player.temporary_effects.get("enhanced_vision_turns", 0)
+            turns_to_add = GameConfig._get_required("balance.enhanced_vision_turns")
+            current = player.get_effect_duration("enhanced_vision_turns")
             new_turns = max(current + turns_to_add, turns_to_add)
             player.temporary_effects["enhanced_vision_turns"] = new_turns
             msg = (
@@ -209,8 +209,8 @@ class CodeHack(InventoryItem):
         elif effect_key == "exploit_efficiency":
             from game_config import GameConfig
 
-            turns_to_add = GameConfig.get("balance.exploit_efficiency_turns", 8)
-            current = player.temporary_effects.get("exploit_efficiency_turns", 0)
+            turns_to_add = GameConfig._get_required("balance.exploit_efficiency_turns")
+            current = player.get_effect_duration("exploit_efficiency_turns")
             new_turns = max(current + turns_to_add, turns_to_add)
             player.temporary_effects["exploit_efficiency_turns"] = new_turns
             msg = (

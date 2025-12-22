@@ -113,6 +113,11 @@ class GameTurnManager:
         # NOTE: Passive trace level increase is handled in TurnProcessor._process_trace_increase()
         # which applies ascension modifiers (A3 trace gain multiplier)
 
+        # Occasional atmospheric flavor text (10% chance, reduced from 15% to avoid spam)
+        atmo_msg = self.game_engine.narrative_manager.trigger_random_atmospheric(chance=0.10)
+        if atmo_msg:
+            self.game_engine.message_log.add_message(atmo_msg)
+
         # Final death check - catches any deaths not handled at their source
         # The death handler is idempotent, so this is safe even if already called
         # Using "unknown" as fallback cause - if this gets logged, it means a damage
@@ -233,7 +238,11 @@ class GameTurnManager:
                 )
                 if actual_benefit > 0:
                     restored = node.use(actual_benefit)
-                    self.game_engine.player.cpu += restored
+                    # Cap CPU to max_cpu to prevent overflow
+                    self.game_engine.player.cpu = min(
+                        self.game_engine.player.max_cpu,
+                        self.game_engine.player.cpu + restored,
+                    )
                     if restored > 0 and should_play_sound:
                         self.game_engine.sound_manager.play_sound("node_activate")
                     # Track restoration node usage for floor_is_lava achievement
@@ -813,22 +822,3 @@ class GameTurnManager:
         # No valid position found - admin won't spawn
         return None
 
-    def _handle_player_death(self, death_cause: str):
-        """
-        Handle player death - delegates to centralized PlayerDeathHandler.
-
-        DEPRECATED: This method exists for backwards compatibility.
-        New code should use game_engine.death_handler.check_death() directly.
-
-        Args:
-            death_cause: Cause of death for analytics (e.g., "virus", "combat", "overheat")
-        """
-        import warnings
-
-        warnings.warn(
-            "_handle_player_death is deprecated, use death_handler.check_death() instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        # Delegate to centralized handler (which is idempotent)
-        self.game_engine.death_handler.check_death(death_cause)

@@ -252,17 +252,14 @@ class GameSettings:
             self.save_settings()
 
     def get_ui_color_rgb(self) -> tuple:
-        """Get RGB values for current UI color from ui_themes in game_rules.json."""
-        import logging
+        """Get RGB values for current UI color from ui_themes in game_rules.json.
 
+        Raises KeyError if the color is not found - this indicates a config error
+        that should be fixed, not silently ignored.
+        """
         from game_color_manager import ColorManager
 
-        try:
-            return ColorManager.get("ui_themes", self.ui_color)
-        except KeyError:
-            # Fallback to neon_cyan if theme not found
-            logging.warning(f"UI theme '{self.ui_color}' not found, using default")
-            return ColorManager.get("basic", "neon_cyan")
+        return ColorManager.get("ui_themes", self.ui_color)
 
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""

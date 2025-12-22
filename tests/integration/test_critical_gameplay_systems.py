@@ -83,13 +83,13 @@ class TestCombatSystemIntegration:
         # Manually trigger player death to test integration
         basic_game_engine.player.cpu = 0
 
-        # Test if basic_game_engine has death handling method
-        if hasattr(basic_game_engine, "_handle_player_death"):
-            basic_game_engine._handle_player_death()
+        # Use centralized death handler to process death
+        basic_game_engine.death_handler.check_death("test")
 
-        # Check game over integration (basic_game_engine may handle death differently)
+        # Check game over integration
         # The main integration test is that the system doesn't crash
         assert basic_game_engine.player.cpu <= 0  # Player should be dead
+        assert basic_game_engine.game_over is True  # Game over should be triggered
 
         # Verify the game basic_game_engine still functions
         assert hasattr(basic_game_engine, "game_over")

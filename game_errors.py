@@ -48,18 +48,6 @@ class GameErrorHandler:
             raise error
 
     @staticmethod
-    def handle_warning(message: str, context: str) -> None:
-        """
-        Handle a warning with consistent logging pattern.
-
-        Args:
-            message: Warning message
-            context: Context where warning occurred
-        """
-        warning_msg = f"{context}: {message}"
-        logging.warning(f"WARNING: {warning_msg}")
-
-    @staticmethod
     def handle_safe_operation(
         operation_func, context: str, fallback_value: Any = None, user_message: str | None = None
     ) -> Any:
@@ -83,18 +71,6 @@ class GameErrorHandler:
             )
             GameErrorHandler.handle_error(e, context, user_message)
             return fallback_value
-
-    @staticmethod
-    def log_game_event(message: str, level: str = "info") -> None:
-        """
-        Log a game event for debugging (not user-visible errors).
-
-        Args:
-            message: Message to log
-            level: Logging level (debug, info, warning, error)
-        """
-        log_func = getattr(logging, level.lower(), logging.info)
-        log_func(f"Game Event: {message}")
 
     @staticmethod
     def handle_config_error(operation: str, exception: Exception) -> None:
@@ -122,22 +98,3 @@ class GameErrorHandler:
             raise KeyError(f"{operation} - required key missing") from exception
         else:
             raise type(exception)(f"{operation}: {str(exception)}") from exception
-
-    @staticmethod
-    def handle_data_error(data_type: str, exception: Exception) -> None:
-        """
-        Handle data loading errors consistently.
-
-        Args:
-            data_type: Type of data being loaded (e.g., "enemy data", "exploit config")
-            exception: The exception that occurred
-
-        Raises:
-            The same exception type with enhanced message
-        """
-        error_msg = f"Failed to load {data_type}"
-        logging.error(error_msg)
-        logging.error(f"Exception: {str(exception)}")
-
-        # Re-raise with context
-        raise type(exception)(f"Failed to load {data_type}: {str(exception)}") from exception

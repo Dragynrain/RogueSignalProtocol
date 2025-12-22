@@ -38,6 +38,8 @@ class TestCodeHackUnknownEffect:
             "virus_turns": 0,
         }
         player.inventory_manager = MagicMock()
+        # Add get_effect_duration method for CodeHack effects
+        player.get_effect_duration = lambda key: player.temporary_effects.get(key, 0)
         return player
 
     @pytest.fixture
