@@ -698,5 +698,99 @@ class TestPatrolRestorationIntegration:
             ), f"Expected patrol_index to be restored to 2, but got {enemy.patrol_index}"
 
 
+class TestEnemyStateHelpers(TestEnemyAIBehavior):
+    """Tests for enemy state helper methods (apply_stun, apply_blind)."""
+
+    def test_apply_stun_sets_disabled_turns(self):
+        """apply_stun should add to disabled_turns."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.disabled_turns = 0
+
+        enemy.apply_stun(3)
+
+        assert enemy.disabled_turns == 3
+
+    def test_apply_stun_stacks_duration(self):
+        """apply_stun should stack with existing disabled_turns."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.disabled_turns = 2
+
+        enemy.apply_stun(3)
+
+        assert enemy.disabled_turns == 5
+
+    def test_apply_stun_resets_state_to_unaware(self):
+        """apply_stun should reset state to UNAWARE."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.state = EnemyState.HOSTILE
+
+        enemy.apply_stun(2)
+
+        assert enemy.state == EnemyState.UNAWARE
+
+    def test_apply_stun_clears_alert_timer(self):
+        """apply_stun should clear alert timer."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.alert_timer = 5
+
+        enemy.apply_stun(2)
+
+        assert enemy.alert_timer == 0
+
+    def test_apply_stun_clears_move_queue(self):
+        """apply_stun should clear move queue."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.move_queue = [Position(6, 5), Position(7, 5)]
+
+        enemy.apply_stun(2)
+
+        assert enemy.move_queue == []
+
+    def test_apply_blind_sets_blinded_turns(self):
+        """apply_blind should set blinded_turns."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.blinded_turns = 0
+
+        enemy.apply_blind(3)
+
+        assert enemy.blinded_turns == 3
+
+    def test_apply_blind_resets_state_to_unaware(self):
+        """apply_blind should reset state to UNAWARE."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.state = EnemyState.HOSTILE
+
+        enemy.apply_blind(2)
+
+        assert enemy.state == EnemyState.UNAWARE
+
+    def test_apply_blind_clears_last_seen_player(self):
+        """apply_blind should clear last_seen_player."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.last_seen_player = Position(10, 10)
+
+        enemy.apply_blind(2)
+
+        assert enemy.last_seen_player is None
+
+    def test_apply_blind_clears_alert_timer(self):
+        """apply_blind should clear alert timer."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.alert_timer = 5
+
+        enemy.apply_blind(2)
+
+        assert enemy.alert_timer == 0
+
+    def test_apply_blind_clears_move_queue(self):
+        """apply_blind should clear move queue."""
+        enemy = Enemy(Position(5, 5), "scanner")
+        enemy.move_queue = [Position(6, 5), Position(7, 5)]
+
+        enemy.apply_blind(2)
+
+        assert enemy.move_queue == []
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

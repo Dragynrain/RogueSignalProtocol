@@ -149,3 +149,23 @@ class NarrativeManager:
         if random.random() < chance:
             return self.get_message("random_atmospheric")
         return ""
+
+    def trigger_fragment_found(self) -> str:
+        """Trigger message when player finds a data fragment."""
+        return self.get_message("fragment_found")
+
+    def trigger_stealth_kill(self) -> str:
+        """Trigger message when player kills from stealth/blind spot."""
+        return self.get_message("stealth_kill")
+
+    def trigger_enemy_spotted_you(self) -> str:
+        """Trigger message when enemy detects the player."""
+        return self.get_message("enemy_spotted_you")
+
+    def trigger_upgrade_found(self) -> str:
+        """Trigger message when player finds an upgrade."""
+        return self.get_message("upgrade_found")
+
+    def trigger_virus_infected(self) -> str:
+        """Trigger message when player gets infected by virus."""
+        return self.get_message("virus_infected")

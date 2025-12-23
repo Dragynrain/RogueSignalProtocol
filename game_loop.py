@@ -800,6 +800,8 @@ def _handle_game_input_events_impl(event, game, input_handler):
         # Handle mouse motion events (cursor updates, hover effects)
         input_handler.handle_mouse_motion(event)
     elif isinstance(event, tcod.event.MouseButtonDown):
+        # Mouse click - clear the UI-just-closed flag
+        game._ui_just_closed = False
         # Handle mouse click events
         should_continue = input_handler.handle_mouse_click(event)
         if should_continue is not None and not should_continue:
@@ -815,6 +817,8 @@ def _handle_game_input_events_impl(event, game, input_handler):
         # Handle controller connection/disconnection events
         input_handler.handle_controller_device(event)
     elif isinstance(event, tcod.event.ControllerButton):
+        # Controller button - clear the UI-just-closed flag
+        game._ui_just_closed = False
         # Handle controller button press/release events (GameController API only)
         # SDL sends BOTH Controller* and Joy* - we only handle Controller* to avoid duplicates
         should_continue = input_handler.handle_controller_button(event)
@@ -856,7 +860,14 @@ def _handle_game_input_events_impl(event, game, input_handler):
                 or game.targeting_mode
             ):
                 input_handler._handle_escape()
+                # Set flag to prevent key-repeat ESC from immediately going to menu
+                game._ui_just_closed = True
+                return True, game  # Return immediately after closing UI state
             else:
+                # Prevent key-repeat from going to menu right after closing UI
+                # Keep the flag set to block ALL repeated ESCs in this batch
+                if getattr(game, "_ui_just_closed", False):
+                    return True, game  # Consume this ESC, don't go to menu
                 # Don't allow ESC to menu if player is dead or dying
                 if (
                     game.player.cpu <= 0
@@ -873,6 +884,8 @@ def _handle_game_input_events_impl(event, game, input_handler):
                 AchievementManager.clear_pending_popups()
                 return True, None  # Return to main menu
         else:
+            # Non-ESC key pressed - clear the UI-just-closed flag
+            game._ui_just_closed = False
             should_continue = input_handler.handle_keydown(event)
             if not should_continue:
                 # Player is dead and pressed ESC - return to main menu

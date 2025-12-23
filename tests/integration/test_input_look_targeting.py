@@ -963,6 +963,70 @@ class TestTargetingModeComprehensive:
         # Should exit targeting mode without executing
         assert engine.targeting_mode is False
 
+    def test_escape_key_via_game_loop_cancels_targeting(self, targeting_mode_engine):
+        """ESC key via game_loop: Cancels targeting and continues game (not menu).
+
+        Regression test: ESC during targeting should cancel targeting and continue
+        gameplay, NOT exit to main menu. This tests the actual game_loop path.
+        """
+        from game_loop import handle_game_input_events
+
+        engine = targeting_mode_engine
+
+        # Verify targeting mode is active
+        assert engine.targeting_mode is True
+
+        # Create ESC key event
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE,
+        )
+
+        # Process event through game loop
+        should_continue, result_game = handle_game_input_events(event, engine, engine.input_handler)
+
+        # Should continue game (not exit)
+        assert should_continue is True
+        # Should return game object (not None which means menu)
+        assert result_game is engine, "ESC during targeting should continue game, not go to menu"
+        # Targeting should be cancelled
+        assert engine.targeting_mode is False
+
+    def test_escape_key_repeat_doesnt_go_to_menu(self, targeting_mode_engine):
+        """ESC key repeat: Multiple ESC events should not go to menu.
+
+        Regression test: Key repeat can send multiple ESC events. The first should
+        cancel targeting, subsequent ones should NOT go to main menu.
+        """
+        from game_loop import handle_game_input_events
+
+        engine = targeting_mode_engine
+
+        # Verify targeting mode is active
+        assert engine.targeting_mode is True
+
+        # Create ESC key event
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE,
+        )
+
+        # Simulate key repeat: process multiple ESC events
+        for i in range(3):
+            should_continue, result_game = handle_game_input_events(
+                event, engine, engine.input_handler
+            )
+
+            # Should ALWAYS continue game (not exit)
+            assert should_continue is True, f"ESC #{i+1} should continue"
+            # Should NEVER return None (which means menu)
+            assert result_game is engine, f"ESC #{i+1} should not go to menu"
+
+        # Targeting should be cancelled after first ESC
+        assert engine.targeting_mode is False
+
     def test_face_button_b_cancels(self, targeting_mode_engine):
         """Face button B: Cancels targeting."""
         engine = targeting_mode_engine

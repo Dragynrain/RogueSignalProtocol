@@ -122,8 +122,8 @@ class MessageLog:
                     if color_values:
                         return ensure_color_tuple(color_values)
 
-        # Return default color if no pattern matches
-        default_color = message_colors.get("default", [144, 238, 144])
+        # Return default color if no pattern matches - fail-fast on missing config
+        default_color = message_colors["default"]
         return ensure_color_tuple(default_color)
 
     def get_recent_messages(self, count: int) -> list[Message]:
@@ -341,6 +341,8 @@ class TurnProcessor:
                     elif effect_name == "traffic_masquerade_turns":
                         self.message_log.add_message("Traffic Masquerade invisibility expired")
                     elif effect_name == "speed_boost_turns":
+                        # Clear any remaining speed moves when boost expires
+                        player.speed_moves_remaining = 0
                         self.message_log.add_message("Speed boost expired")
                     elif effect_name == "movement_slowed_turns":
                         self.message_log.add_message("Movement returns to normal")

@@ -8,7 +8,6 @@ These tests cover critical bugs that were found during code review:
 3. GameStateManager.is_threat_scan_active property
 """
 
-import pytest
 
 from game_position import Position
 

@@ -189,6 +189,44 @@ class Enemy:
         if self.state != old_state:
             self.move_queue.clear()
 
+    def apply_stun(self, duration: int) -> None:
+        """
+        Apply stun effect - disables enemy and resets awareness.
+
+        Stun effects:
+        - Adds to disabled_turns (stuns stack additively)
+        - Resets state to UNAWARE
+        - Clears alert timer
+        - Invalidates movement queue
+
+        Args:
+            duration: Number of turns to stun
+        """
+        self.disabled_turns += duration
+        self.state = EnemyState.UNAWARE
+        self.alert_timer = 0
+        self.move_queue.clear()
+
+    def apply_blind(self, duration: int) -> None:
+        """
+        Apply blindness effect - prevents enemy from seeing player.
+
+        Blind effects:
+        - Sets blinded_turns to duration
+        - Resets state to UNAWARE
+        - Clears last known player position
+        - Clears alert timer
+        - Invalidates movement queue
+
+        Args:
+            duration: Number of turns of blindness
+        """
+        self.state = EnemyState.UNAWARE
+        self.last_seen_player = None
+        self.alert_timer = 0
+        self.blinded_turns = duration
+        self.move_queue.clear()
+
     def get_color(self) -> tuple[int, int, int]:
         """
         Get the color for rendering this enemy (glyph mode).
@@ -565,8 +603,14 @@ class Enemy:
 
         # Random movement - fill with random moves (but only if not hostile/admin)
         # Hostile and admin enemies always use pathfinding, regardless of base movement type
+        # Blinded SEEK enemies also use random movement since they can't track
+        is_blinded_seek = (
+            movement_type == EnemyMovement.SEEK
+            and self.blinded_turns > 0
+            and self.state != EnemyState.HOSTILE
+        )
         if (
-            movement_type == EnemyMovement.RANDOM
+            (movement_type == EnemyMovement.RANDOM or is_blinded_seek)
             and self.type != "admin"
             and self.state != EnemyState.HOSTILE
         ):
@@ -600,7 +644,7 @@ class Enemy:
                 pos = Position(path[i][1], path[i][0])
 
                 # NEVER queue the player's exact position
-                if pos.x == player.position.x and pos.y == player.position.y:
+                if pos == player.position:
                     break
 
                 # Add the move
@@ -821,20 +865,18 @@ class Enemy:
                 continue
 
             # NEVER queue player's exact position
-            if next_pos.x == player.position.x and next_pos.y == player.position.y:
+            if next_pos == player.position:
                 continue
 
             # Skip positions blocked by other enemies
             enemy_blocking = any(
-                e.position.x == next_pos.x and e.position.y == next_pos.y
-                for e in game_engine.enemies
-                if e.id != self.id
+                e.position == next_pos for e in game_engine.enemies if e.id != self.id
             )
             if enemy_blocking:
                 continue
 
             # Skip positions already in queue (avoid loops)
-            if any(q.x == next_pos.x and q.y == next_pos.y for q in self.move_queue):
+            if any(q == next_pos for q in self.move_queue):
                 continue
 
             # Calculate distance to target from this position (grid distance for gameplay)

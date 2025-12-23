@@ -44,6 +44,7 @@ class TestEntityInspectorPriority:
         game.game_map.width = 50
         game.game_map.height = 50
         game.player = Mock()
+        game.player.position = Position(10, 10)  # Use Position for equality comparison
         game.player.x = 10
         game.player.y = 10
         game.player.cpu = 100
@@ -146,6 +147,7 @@ class TestPlayerInspection:
         game.game_map.width = 50
         game.game_map.height = 50
         game.player = Mock()
+        game.player.position = Position(10, 10)  # Use Position for equality comparison
         game.player.x = 10
         game.player.y = 10
         game.player.cpu = 75
@@ -177,6 +179,7 @@ class TestPlayerInspection:
         game.game_map.width = 50
         game.game_map.height = 50
         game.player = Mock()
+        game.player.position = Position(10, 10)  # Use Position for equality comparison
         game.player.x = 10
         game.player.y = 10
         game.player.cpu = 100
@@ -207,6 +210,7 @@ class TestPlayerInspection:
         game.game_map.width = 50
         game.game_map.height = 50
         game.player = Mock()
+        game.player.position = Position(10, 10)  # Use Position for equality comparison
         game.player.x = 10
         game.player.y = 10
         game.player.cpu = 100
@@ -236,6 +240,7 @@ class TestPlayerInspection:
         game.game_map.width = 50
         game.game_map.height = 50
         game.player = Mock()
+        game.player.position = Position(10, 10)  # Use Position for equality comparison
         game.player.x = 10
         game.player.y = 10
         game.player.cpu = 100

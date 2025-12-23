@@ -6,8 +6,9 @@ Tests that narrative methods (trigger_gateway_approach, trigger_overheating)
 are properly called at the right game events.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from game_engine import GameEngine
 from game_entities import Position

@@ -13,6 +13,7 @@ This ensures the game works in both portable installations (USB drives, user fol
 and system installations (C:\\Program Files, /usr/local/games, etc.).
 """
 
+import logging
 import sys
 from pathlib import Path
 
@@ -181,7 +182,8 @@ def show_fatal_error_and_exit(message: str, title: str = "Rogue Signal Protocol 
         try:
             title_font = pygame.font.Font(None, 36)
             message_font = pygame.font.Font(None, 24)
-        except Exception:
+        except Exception as e:
+            logging.debug(f"Default font failed, falling back to system font: {e}")
             title_font = pygame.font.SysFont("arial", 28)
             message_font = pygame.font.SysFont("arial", 18)
 
@@ -236,8 +238,9 @@ def show_fatal_error_and_exit(message: str, title: str = "Rogue Signal Protocol 
 
         pygame.quit()
 
-    except Exception:
+    except Exception as e:
         # Fallback to console print if pygame fails
+        logging.warning(f"Pygame error dialog failed: {e}, falling back to console")
         print(f"\n{'=' * 60}")
         print(f"FATAL ERROR: {title}")
         print(f"{'=' * 60}")

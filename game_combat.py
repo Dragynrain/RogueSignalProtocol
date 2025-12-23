@@ -92,7 +92,11 @@ class ExploitSystem:
             self.game.targeting_mode = True
             self.game.targeting_exploit = exploit_key
             self.game.cursor_position = Position(self.game.player.x, self.game.player.y)
-            self.game.message_log.add_message(f"Targeting {exploit.name}")
+            # System Hop needs a more specific message to clarify valid targets
+            if exploit_key == "system_hop":
+                self.game.message_log.add_message("Select a blind spot tile to hop to")
+            else:
+                self.game.message_log.add_message(f"Targeting {exploit.name}")
             return True
 
         # Execute non-targeting exploits immediately
@@ -355,7 +359,8 @@ class ExploitSystem:
             return False
 
         # Must have line of sight (can't teleport through walls)
-        if not self.game.game_map.has_line_of_sight(self.game.player.position, target):
+        # Use Bresenham for more intuitive targeting (matches rendering highlights)
+        if not self.game.game_map.has_line_of_sight_bresenham(self.game.player.position, target):
             self.game.message_log.add_message("No line of sight")
             return False
 
@@ -417,6 +422,7 @@ class ExploitSystem:
                     # so _restore_patrol can return them to correct waypoint
                     if enemy.patrol_points:
                         enemy.original_patrol_index = enemy.patrol_index
+                    enemy.last_seen_player = target  # Set decoy location for investigation
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = exploit.alert_duration_patrol
                 else:
@@ -616,22 +622,31 @@ class ExploitSystem:
         # Calculate damage with shadow bonus once (not per enemy)
         damage = self._calculate_exploit_damage(exploit.damage)
 
-        count = 0
+        stunned_count = 0
+        killed_count = 0
         for enemy in self.game.enemies[:]:  # Iterate over copy to avoid skipping when enemies die
             # Use grid distance for AoE radius (diagonals = 1)
             if enemy.position.grid_distance_to(player_pos) <= exploit.effect_radius:
                 # Deal damage first
                 if damage > 0:
                     self._damage_enemy(enemy, damage)
-                # Then apply stun (enemy might be dead, but that's OK - damage_enemy handles removal)
-                if enemy in self.game.enemies:  # Check if enemy still exists after damage
-                    enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
-                    enemy.state = EnemyState.UNAWARE
-                    enemy.alert_timer = 0
-                    # Clear move queue - stunned enemy shouldn't follow old pursuit plan
-                    enemy.move_queue.clear()
-                count += 1
-        self.game.message_log.add_message(f"System crash: {count} affected")
+                # Then apply stun if enemy survived
+                if enemy in self.game.enemies:
+                    enemy.apply_stun(exploit.effect_duration)
+                    stunned_count += 1
+                else:
+                    killed_count += 1
+        # Report results accurately
+        if killed_count > 0 and stunned_count > 0:
+            self.game.message_log.add_message(
+                f"System crash: {killed_count} eliminated, {stunned_count} stunned"
+            )
+        elif killed_count > 0:
+            self.game.message_log.add_message(f"System crash: {killed_count} eliminated")
+        elif stunned_count > 0:
+            self.game.message_log.add_message(f"System crash: {stunned_count} stunned")
+        else:
+            self.game.message_log.add_message("System crash: no targets in range")
         return True
 
     def _execute_logic_bomb(self, exploit: ExploitDefinition, target: Position) -> bool:
@@ -830,11 +845,7 @@ class ExploitSystem:
         count = 0
         for enemy in self.game.enemies:
             if enemy.position.grid_distance_to(target) <= exploit.effect_radius:
-                enemy.disabled_turns += exploit.effect_duration
-                enemy.state = EnemyState.UNAWARE
-                enemy.alert_timer = 0
-                # Clear move queue - disabled enemy shouldn't follow old pursuit plan
-                enemy.move_queue.clear()
+                enemy.apply_stun(exploit.effect_duration)
                 count += 1
 
         self.game.message_log.add_message(f"DoS: {count} disabled")
@@ -863,12 +874,7 @@ class ExploitSystem:
         for enemy in self.game.enemies:
             # Use grid distance for AoE radius (diagonals = 1)
             if enemy.position.grid_distance_to(target) <= exploit.effect_radius:
-                enemy.state = EnemyState.UNAWARE
-                enemy.last_seen_player = None
-                enemy.alert_timer = 0
-                enemy.blinded_turns = exploit.effect_duration
-                # Clear move queue - blinded enemy shouldn't follow old pursuit plan
-                enemy.move_queue.clear()
+                enemy.apply_blind(exploit.effect_duration)
                 count += 1
 
         msg = f"Memory Leak: {count} enemies blinded" if count > 0 else "No enemies in range"

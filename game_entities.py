@@ -402,6 +402,7 @@ class ExploitDefinition:
     self_damage: int = 0  # Damage dealt to player when using exploit (system_crash)
     help_summary: str = ""  # Short help text shown in UI
 
+
 @dataclass
 class UpgradeDefinition:
     """Definition of an upgrade item."""
@@ -516,11 +517,11 @@ class PositionValidator:
     ) -> bool:
         """Check if position is valid for enemy placement."""
         return (
-            (position.x != player_position.x or position.y != player_position.y)
+            position != player_position
             and PositionValidator.is_valid_for_placement(
                 position, game_map, 12.0, check_existing_items
             )
-            and (position.x, position.y) not in {(e.x, e.y) for e in enemies_list}
+            and position not in {e.position for e in enemies_list}
         )
 
     @staticmethod
@@ -533,16 +534,12 @@ class PositionValidator:
             return False
 
         # Can't move to player position
-        if position.x == player_position.x and position.y == player_position.y:
+        if position == player_position:
             return False
 
         # Can't move to a position occupied by another enemy
         for other_enemy in enemies_list:
-            if (
-                other_enemy != current_enemy
-                and other_enemy.x == position.x
-                and other_enemy.y == position.y
-            ):
+            if other_enemy != current_enemy and other_enemy.position == position:
                 return False
 
         return True

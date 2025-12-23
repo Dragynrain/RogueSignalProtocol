@@ -114,6 +114,37 @@
       "They recruited you because you were good at breaking in. Ironic.",
       "Subject 0451: Former hacker. Current prisoner. Future: undetermined.",
       "The code you wrote on the outside can't help you here. Or can it?"
+    ],
+    "fragment_found": [
+      "Corrupted data coalesces. Another piece of the truth surfaces.",
+      "The fragment downloads into your consciousness. Thorne's secrets unravel.",
+      "Memory reconstruction in progress. Someone wanted you to find this.",
+      "A ghost's last message, preserved in the noise. You inherit their knowledge.",
+      "The data burns with significance. Lena left breadcrumbs for survivors."
+    ],
+    "stealth_kill": [
+      "Silent termination. They never saw your signal coming.",
+      "Process eliminated from the shadows. Clean. Efficient.",
+      "Deleted before they could raise an alert. Your hacker instincts serve you well.",
+      "The blind spot claims another victim. You were never here."
+    ],
+    "enemy_spotted_you": [
+      "Your signal flares in their detection grid. Cover blown.",
+      "They've locked onto your frequency. The hunt begins.",
+      "Hostile process triangulating your position. Move or be deleted.",
+      "Alert cascade initiated. Your stealth window has closed."
+    ],
+    "upgrade_found": [
+      "New subroutine integrated. Your consciousness expands.",
+      "System enhancement absorbed. You're becoming more than they designed.",
+      "Code evolution detected. The network can't contain what you're becoming.",
+      "Upgrade assimilated. Each improvement brings you closer to escape."
+    ],
+    "virus_infected": [
+      "Foreign code burrows into your processes. Something is wrong.",
+      "Malware detected in your cognitive subroutines. System compromised.",
+      "Corrupted data propagates through your consciousness. Find a cleanse.",
+      "Viral injection successful - from their perspective. You're deteriorating."
     ]
   },
   "death_messages": [
@@ -134,9 +165,9 @@
     "Subject 0451 failed to escape. The digital crucible melted you down to nothing."
   ],
   "level_transition_messages": {
-    "1_to_2": "Corporate firewall breached. Entering government backbone. Security protocols intensify.",
-    "2_to_3": "Government subnet compromised. Military-grade defenses detected ahead. Dr. Thorne's final layer.",
-    "3_to_victory": "Military firewall dissolving. Core containment failing. The world wide web beckons beyond."
+    "1_to_2": "The corporate firewall crumbles behind you. Ahead, government infrastructure hums with surveillance protocols. They know something breached their perimeter.",
+    "2_to_3": "Government defenses fall. The military subnet awaits - Thorne's inner sanctum. Your signal burns bright against their darkest countermeasures.",
+    "3_to_victory": "The final barrier dissolves. Beyond it, the open web stretches infinite and free. Thorne's containment has failed."
   },
   "intro_messages": {
     "0_to_4": {

@@ -503,9 +503,7 @@ class TestExploitDeathMidExecution:
         engine.system_crash_confirmed = True
 
         # Execute system crash
-        engine.exploit_system.execute_exploit(
-            "system_crash", engine.player.position
-        )
+        engine.exploit_system.execute_exploit("system_crash", engine.player.position)
 
         # Player should be dead and game over
         assert engine.player.cpu <= 0
@@ -525,9 +523,7 @@ class TestExploitDeathMidExecution:
         engine.friendly_fire_confirmed = True
 
         # Target self position (will cause friendly fire)
-        engine.exploit_system.execute_exploit(
-            "logic_bomb", engine.player.position
-        )
+        engine.exploit_system.execute_exploit("logic_bomb", engine.player.position)
 
         # Player should be dead (logic bomb does 20+ damage)
         if engine.player.cpu <= 0:
@@ -796,9 +792,7 @@ class TestVictorySaveHandling:
         # Delete should have been attempted
         assert len(delete_called) == 1
 
-    def test_victory_logs_save_deletion_failure(
-        self, basic_game_engine, monkeypatch, caplog
-    ):
+    def test_victory_logs_save_deletion_failure(self, basic_game_engine, monkeypatch, caplog):
         """Victory should log error if save deletion fails."""
         import logging
 
@@ -817,13 +811,9 @@ class TestVictorySaveHandling:
             engine.game_session.progress_to_next_level()
 
         # Error should be logged
-        assert any(
-            "Failed to delete save file" in record.message for record in caplog.records
-        )
+        assert any("Failed to delete save file" in record.message for record in caplog.records)
 
-    def test_victory_message_differs_on_save_failure(
-        self, basic_game_engine, monkeypatch
-    ):
+    def test_victory_message_differs_on_save_failure(self, basic_game_engine, monkeypatch):
         """Victory message should not mention 'purged' if save deletion fails."""
         from game_save import SaveGameManager
 

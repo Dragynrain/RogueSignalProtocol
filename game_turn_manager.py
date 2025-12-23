@@ -90,9 +90,8 @@ class GameTurnManager:
         self.game_engine.turn_processor.process_turn(self.game_engine.player)
 
         # Handle sound effects for virus damage
-        if (
-            old_cpu > self.game_engine.player.cpu
-            and self.game_engine.player.has_active_effect("virus_turns")
+        if old_cpu > self.game_engine.player.cpu and self.game_engine.player.has_active_effect(
+            "virus_turns"
         ):
             self.game_engine.sound_manager.play_sound("virus_damage")
             # Check for death from virus using centralized handler
@@ -174,8 +173,7 @@ class GameTurnManager:
             for enemy_id, (ghost_pos, _) in gm.last_known_enemy_positions.items()
             if gm.can_see_position(self.game_engine.player.position, ghost_pos, vision_range)
             and not any(
-                e.id == enemy_id and e.position == ghost_pos
-                for e in self.game_engine.enemies
+                e.id == enemy_id and e.position == ghost_pos for e in self.game_engine.enemies
             )
         ]
 
@@ -189,7 +187,8 @@ class GameTurnManager:
         pp = self.game_engine.player.position
 
         # Check if player is on any special node and if it's a new position
-        is_on_node = gm.is_cooling_node(pp) or gm.is_cpu_recovery_node(pp) or gm.is_ghost_node(pp)
+        node_type = gm.get_special_node_type(pp)
+        is_on_node = node_type is not None
         should_play_sound = is_on_node and self.game_engine.last_node_position != player_pos
 
         # Update last node position and track discoveries
@@ -198,12 +197,7 @@ class GameTurnManager:
 
             # Mark special nodes as discovered when first stepped on
             # (revealed_special_nodes is initialized in GameStateManager.__init__)
-            if self.game_engine.game_map.is_cooling_node(self.game_engine.player.position):
-                self.game_engine.game_state.revealed_special_nodes[player_pos] = "cooling"
-            elif self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
-                self.game_engine.game_state.revealed_special_nodes[player_pos] = "cpu"
-            elif self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
-                self.game_engine.game_state.revealed_special_nodes[player_pos] = "ghost"
+            self.game_engine.game_state.revealed_special_nodes[player_pos] = node_type
         else:
             self.game_engine.last_node_position = None
 
@@ -307,6 +301,10 @@ class GameTurnManager:
                     self.game_engine.sound_manager.play_sound("item_pickup_upgrade")
                     self.game_engine.message_log.add_message(f"Integrated {upgrade.name}!")
                     self.game_engine.message_log.add_message(upgrade.description)
+                    # Add atmospheric narrative message
+                    upg_msg = self.game_engine.narrative_manager.trigger_upgrade_found()
+                    if upg_msg:
+                        self.game_engine.message_log.add_message(upg_msg)
                     logging.info(
                         f"[PICKUP] Permanent Upgrade: {upgrade.name} ({upgrade_key}) at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}"
                     )
@@ -327,6 +325,10 @@ class GameTurnManager:
             ):
                 self.game_engine.sound_manager.play_sound("item_pickup_story")
                 self.game_engine.message_log.add_message("Data fragment recovered!")
+                # Add atmospheric narrative message
+                frag_msg = self.game_engine.narrative_manager.trigger_fragment_found()
+                if frag_msg:
+                    self.game_engine.message_log.add_message(frag_msg)
                 logging.info(
                     f"[PICKUP] Story Fragment #{story_fragment.fragment_index} at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}"
                 )
@@ -450,6 +452,10 @@ class GameTurnManager:
                         f"{enemy.type_data.name} infected you! (Virus: {virus_turns} turns)",
                         Colors.YELLOW,
                     )
+                    # Add atmospheric narrative message
+                    virus_msg = self.game_engine.narrative_manager.trigger_virus_infected()
+                    if virus_msg:
+                        self.game_engine.message_log.add_message(virus_msg)
                 elif enemy.type == "inhibitor":
                     self.game_engine.message_log.add_message(
                         f"{enemy.type_data.name} inhibited your movement!", Colors.YELLOW
@@ -599,7 +605,7 @@ class GameTurnManager:
                 if random.random() < 0.15:
                     if enemy.type == "admin":
                         enemy.state = EnemyState.ALERT
-                        enemy.alert_timer = 0
+                        enemy.alert_timer = 1  # Give grace period before re-escalation
                     else:
                         enemy.state = EnemyState.UNAWARE
                         enemy.last_seen_player = None
@@ -621,6 +627,10 @@ class GameTurnManager:
 
         self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, "trace_alert_to_hostile")
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
+        # Add atmospheric narrative message
+        spot_msg = self.game_engine.narrative_manager.trigger_enemy_spotted_you()
+        if spot_msg:
+            self.game_engine.message_log.add_message(spot_msg)
         self.game_engine.sound_manager.play_sound("enemy_hostile")
         self._alert_nearby_enemies(enemy)
 
@@ -821,4 +831,3 @@ class GameTurnManager:
 
         # No valid position found - admin won't spawn
         return None
-

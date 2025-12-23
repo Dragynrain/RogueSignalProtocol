@@ -9,8 +9,6 @@ Per CLAUDE.md: "Fail-fast on missing game_content.json, game_rules.json,
 narrative_content.json. ONLY user_settings.json defaults. No hardcoded fallbacks."
 """
 
-import pytest
-
 
 class TestAscensionConfigFailFast:
     """Test that ascension config loading fails fast on missing sections."""

@@ -239,7 +239,8 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
 
     def test_get_status_outline_color_returns_rgb_tuple(self):
         """Test that _get_status_outline_color returns valid RGB tuple."""
-        color = self.renderer._get_status_outline_color("stun")
+        # Use a status type that exists in game_rules.json status_effects
+        color = self.renderer._get_status_outline_color("virus")
 
         # Should return 3-tuple of ints
         self.assertEqual(len(color), 3)

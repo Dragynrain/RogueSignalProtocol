@@ -347,6 +347,53 @@ class TestLineOfSight:
             result = game_map.can_see_position(start, end, vision_range)
             assert result
 
+    def test_bresenham_los_clear_path(self):
+        """has_line_of_sight_bresenham returns True for clear paths."""
+        game_map = GameMap(50, 30)
+        start = Position(10, 10)
+        end = Position(15, 10)  # Same row, clear line
+
+        assert game_map.has_line_of_sight_bresenham(start, end) is True
+
+    def test_bresenham_los_blocked_by_wall(self):
+        """has_line_of_sight_bresenham returns False when wall blocks."""
+        game_map = GameMap(50, 30)
+        start = Position(10, 10)
+        end = Position(15, 10)
+
+        # Add wall between positions
+        game_map.walls.add((12, 10))
+
+        assert game_map.has_line_of_sight_bresenham(start, end) is False
+
+    def test_bresenham_los_diagonal(self):
+        """has_line_of_sight_bresenham works for diagonal lines."""
+        game_map = GameMap(50, 30)
+        start = Position(5, 5)
+        end = Position(10, 10)  # Diagonal path
+
+        assert game_map.has_line_of_sight_bresenham(start, end) is True
+
+        # Add wall on diagonal
+        game_map.walls.add((7, 7))
+        assert game_map.has_line_of_sight_bresenham(start, end) is False
+
+    def test_bresenham_los_same_position(self):
+        """has_line_of_sight_bresenham returns True for same position."""
+        game_map = GameMap(50, 30)
+        pos = Position(10, 10)
+
+        assert game_map.has_line_of_sight_bresenham(pos, pos) is True
+
+    def test_bresenham_los_invalid_positions(self):
+        """has_line_of_sight_bresenham returns False for invalid positions."""
+        game_map = GameMap(50, 30)
+        valid = Position(10, 10)
+        invalid = Position(-1, 10)
+
+        assert game_map.has_line_of_sight_bresenham(valid, invalid) is False
+        assert game_map.has_line_of_sight_bresenham(invalid, valid) is False
+
 
 class TestTransparencyCache:
     """Test transparency caching system."""
