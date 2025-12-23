@@ -59,7 +59,7 @@ class EntityInspector:
             }
 
         # 1. Check for player
-        if game.player.x == position.x and game.player.y == position.y:
+        if game.player.position == position:
             return EntityInspector._inspect_player(game)
 
         # 2. Check for enemies

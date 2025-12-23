@@ -155,7 +155,16 @@ class TestColorFailFast:
     def test_all_valid_ui_colors_work(self):
         """Verify all documented UI colors are valid."""
         settings = GameSettings()
-        valid_colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
+        valid_colors = [
+            "cyan",
+            "purple",
+            "magenta",
+            "golden",
+            "crimson",
+            "azure",
+            "emerald",
+            "ivory",
+        ]
 
         for color_name in valid_colors:
             settings.ui_color = color_name
@@ -286,8 +295,10 @@ class TestSpeedAndSlowdownMechanics:
         engine.player.speed_moves_remaining = 0
 
         # Simulate turn start logic from game_turn_manager
-        if (engine.player.temporary_effects["speed_boost_turns"] > 0
-            and engine.player.speed_moves_remaining == 0):
+        if (
+            engine.player.temporary_effects["speed_boost_turns"] > 0
+            and engine.player.speed_moves_remaining == 0
+        ):
             engine.player.speed_moves_remaining = 2
 
         assert engine.player.speed_moves_remaining == 2
@@ -333,7 +344,10 @@ class TestSpeedAndSlowdownMechanics:
         )
 
         # Should be capped
-        assert engine.player.temporary_effects["movement_slowed_turns"] <= GameBalance.INHIBITOR_SLOWDOWN_CAP
+        assert (
+            engine.player.temporary_effects["movement_slowed_turns"]
+            <= GameBalance.INHIBITOR_SLOWDOWN_CAP
+        )
 
 
 class TestEnemyEliminationHelper:
@@ -355,7 +369,9 @@ class TestEnemyEliminationHelper:
             from_blind_spot=False,
         )
 
-        expected_cpu = min(engine.player.max_cpu, initial_cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
+        expected_cpu = min(
+            engine.player.max_cpu, initial_cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD
+        )
         assert engine.player.cpu == expected_cpu
 
     def test_elimination_removes_enemy(self, basic_game_engine):
@@ -599,5 +615,8 @@ class TestInhibitorSpeedInteraction:
         engine.player.temporary_effects["movement_slowed_turns"] = new_slow
 
         # Slowdown should stack but be capped
-        assert engine.player.temporary_effects["movement_slowed_turns"] <= GameBalance.INHIBITOR_SLOWDOWN_CAP
+        assert (
+            engine.player.temporary_effects["movement_slowed_turns"]
+            <= GameBalance.INHIBITOR_SLOWDOWN_CAP
+        )
         assert engine.player.temporary_effects["movement_slowed_turns"] >= current_slow

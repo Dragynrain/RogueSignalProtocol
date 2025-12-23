@@ -5,11 +5,12 @@ Graphics Tile Manager - Sprite Loading and Management System
 Handles loading, caching, and serving PNG sprites for graphics mode rendering.
 Supports transparency, dynamic scaling, and window resize handling.
 
-Rendering Modes:
+Rendering Modes (mutually exclusive, selected in settings):
 - GRAPHICS: High-res PNG sprites (512x512 scaled to tile size)
-- GLYPH: CP437 characters via TCOD tileset (fallback in classic mode)
+- GLYPH: CP437 characters via TCOD tileset (classic console mode)
 
 This module is only active when graphics_mode == "graphics" in settings.
+In glyph mode, GlyphsMapRenderer handles all rendering instead.
 """
 
 import json
@@ -34,7 +35,7 @@ class TileManager:
     - Cache textures for performance
     - Track which sprites are tintable (color_mod) vs non-tintable (outline boxes)
     - Handle window resize events (reload textures at new scale)
-    - Graceful fallback when sprites missing
+    - Fail-fast on missing required sprites (no silent degradation)
     """
 
     def __init__(self, context, settings):
@@ -92,7 +93,7 @@ class TileManager:
         try:
             if not os.path.exists(mapping_file):
                 logging.warning(f"Tile mapping file not found: {mapping_file}")
-                logging.warning("Graphics mode will use glyph fallbacks for all entities")
+                logging.warning("Graphics mode will fail - no sprite mappings available")
                 return
 
             with open(mapping_file, encoding="utf-8") as f:
@@ -109,13 +110,9 @@ class TileManager:
             )
 
         except json.JSONDecodeError as e:
-            GameErrorHandler.handle_error(
-                e, "tile_mapping_load", f"Failed to parse {mapping_file}, using glyph fallbacks"
-            )
+            GameErrorHandler.handle_error(e, "tile_mapping_load", f"Failed to parse {mapping_file}")
         except Exception as e:
-            GameErrorHandler.handle_error(
-                e, "tile_mapping_load", "Error loading tile mappings, using glyph fallbacks"
-            )
+            GameErrorHandler.handle_error(e, "tile_mapping_load", "Error loading tile mappings")
 
     def _extract_tintable_flags(self, data: dict):
         """

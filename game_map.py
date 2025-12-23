@@ -169,6 +169,43 @@ class GameMap:
         """Check if position contains a ghost node (trace level reduction)."""
         return (position.x, position.y) in self.ghost_nodes
 
+    def get_special_node_type(self, position: Position) -> str | None:
+        """
+        Get the type of special node at position, if any.
+
+        Consolidates the repeated OR-chain pattern found in rendering and turn
+        processing code into a single helper method.
+
+        Args:
+            position: Position to check
+
+        Returns:
+            'cooling', 'cpu', 'ghost', or None if no special node
+        """
+        pos_tuple = (position.x, position.y)
+        if pos_tuple in self.cooling_nodes:
+            return "cooling"
+        if pos_tuple in self.cpu_recovery_nodes:
+            return "cpu"
+        if pos_tuple in self.ghost_nodes:
+            return "ghost"
+        return None
+
+    def is_special_node(self, position: Position) -> bool:
+        """
+        Check if position has any special node.
+
+        Consolidates the repeated pattern:
+            is_cooling_node(pos) or is_cpu_recovery_node(pos) or is_ghost_node(pos)
+
+        Args:
+            position: Position to check
+
+        Returns:
+            True if any special node exists at position
+        """
+        return self.get_special_node_type(position) is not None
+
     def get_code_hack(self, position: Position) -> CodeHack | None:
         """Get code at position."""
         return self.code_hacks.get((position.x, position.y))
@@ -234,6 +271,58 @@ class GameMap:
 
         # Check if end position is visible (TCOD array is indexed as [y, x])
         return fov[end.y, end.x]
+
+    def has_line_of_sight_bresenham(self, start: Position, end: Position) -> bool:
+        """
+        Check line of sight using Bresenham's line algorithm.
+
+        More permissive than FOV-based LOS - simply checks if any wall blocks
+        the straight line between two points. Better for targeting where you
+        want intuitive "can I see that tile" behavior.
+
+        Args:
+            start: Starting position (viewer)
+            end: Target position
+
+        Returns:
+            True if no wall blocks the line between start and end
+        """
+        if not (start.is_valid(self.width, self.height) and end.is_valid(self.width, self.height)):
+            return False
+
+        # Same position is always visible
+        if start == end:
+            return True
+
+        # Bresenham's line algorithm
+        x0, y0 = start.x, start.y
+        x1, y1 = end.x, end.y
+
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx - dy
+
+        x, y = x0, y0
+        while True:
+            # Skip start position, check all others including endpoint
+            if (x, y) != (x0, y0):
+                # If we hit a wall before reaching the end, no LOS
+                if self.is_wall(Position(x, y)):
+                    return False
+
+            # Reached the end
+            if x == x1 and y == y1:
+                return True
+
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x += sx
+            if e2 < dx:
+                err += dx
+                y += sy
 
     def _get_transparency_map(self):
         """Get transparency map for FOV calculations (cached for performance).

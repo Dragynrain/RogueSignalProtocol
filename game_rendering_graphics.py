@@ -8,7 +8,6 @@ import logging
 import math
 import time
 
-import tcod
 from tcod.sdl.render import BlendMode
 
 from game_color_manager import ColorManager
@@ -17,7 +16,9 @@ from game_config import GameConfig
 from game_data import GameData
 from game_entities import Colors, EnemyState, Position, TargetingMode
 from game_rendering_base import MapRendererBase, can_render_at_position
-from game_unicode_chars import GameGlyphs
+
+# Module-level constant for resetting texture color_mod after tinting
+NORMAL_TINT = Colors.PURE_WHITE
 
 
 class GraphicsMapRenderer(MapRendererBase):
@@ -112,11 +113,10 @@ class GraphicsMapRenderer(MapRendererBase):
                         tile_rect = self._get_tile_rect(console_x, console_y)
                         # Dim the texture for fog of war effect
                         explored_tint = ColorManager.get_tint_color("explored")
-                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         texture.color_mod = explored_tint
                         renderer.copy(texture, dest=tile_rect)
                         # Reset color mod
-                        texture.color_mod = normal_tint
+                        texture.color_mod = NORMAL_TINT
 
         # LAYER 2A: Render item sprites with tinting for tintable items
         # Code hacks
@@ -148,8 +148,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("codehack"):
-                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
-                        texture.color_mod = normal_tint
+                        texture.color_mod = NORMAL_TINT
 
         # Exploit pickups
         for (world_x, world_y), exploit_item in game.game_map.exploit_pickups.items():
@@ -178,8 +177,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("exploit"):
-                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
-                        texture.color_mod = normal_tint
+                        texture.color_mod = NORMAL_TINT
 
         # Resource nodes (cooling, CPU, ghost)
         for screen_x in range(viewport_width):
@@ -234,11 +232,10 @@ class GraphicsMapRenderer(MapRendererBase):
                             tile_rect = self._get_tile_rect(screen_x, render_screen_y)
                             # Dim the texture for fog of war effect
                             explored_tint = ColorManager.get_tint_color("explored")
-                            normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                             texture.color_mod = explored_tint
                             renderer.copy(texture, dest=tile_rect)
                             # Reset color mod
-                            texture.color_mod = normal_tint
+                            texture.color_mod = NORMAL_TINT
 
         # Permanent upgrades
         for (world_x, world_y), upgrade_key in game.game_map.permanent_upgrades.items():
@@ -324,13 +321,12 @@ class GraphicsMapRenderer(MapRendererBase):
                     texture = self.tile_manager.get_tile("gateway")
                     if texture:
                         dimmed_tint = ColorManager.get_tint_color("dimmed")
-                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         # Use color_mod to dim the sprite (70% brightness for memory)
                         texture.color_mod = dimmed_tint
                         renderer.copy(texture, dest=tile_rect)
                         # Reset color_mod
-                        texture.color_mod = normal_tint
+                        texture.color_mod = NORMAL_TINT
 
         # LAYER 2B: Render entity sprites (enemies with HP tinting, player)
         # Enemies
@@ -379,53 +375,6 @@ class GraphicsMapRenderer(MapRendererBase):
             if texture:
                 tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
                 renderer.copy(texture, dest=tile_rect)
-
-    def render_glyphs_layer(self, console: tcod.console.Console, game):
-        """
-        Render glyphs for elements that should appear over sprites.
-        This includes special nodes, movement predictions, targeting cursor, etc.
-
-        In graphics mode, renders directly to SDL using GlyphManager.
-        In glyph mode, renders to console traditionally.
-        """
-        camera_offset = self._calculate_camera_offset(game.player, game)
-        vision_range = game.player.get_vision_range()
-
-        # Check if we're in graphics mode
-        use_graphics = self._should_use_graphics() and self.glyph_manager is not None
-
-        # Render special nodes as glyphs (only in glyph mode - sprites are used in graphics mode)
-        if not use_graphics:
-            for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
-                for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                    world_x = screen_x + camera_offset.x
-                    world_y = screen_y - 1 + camera_offset.y
-                    world_pos = Position(world_x, world_y)
-
-                    if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                        continue
-
-                    # Check visibility using shared helper
-                    can_see = can_render_at_position(game, world_pos, vision_range)
-
-                    if can_see:
-                        # Render special nodes
-                        glyph = None
-                        color = None
-
-                        if game.game_map.is_cooling_node(world_pos):
-                            glyph = ord(GameGlyphs.COOLING_NODE)  # Hollow diamond
-                            color = Colors.CYAN
-                        elif game.game_map.is_cpu_recovery_node(world_pos):
-                            glyph = ord(GameGlyphs.CPU_NODE)  # Hollow heart
-                            color = Colors.RED
-                        elif game.game_map.is_ghost_node(world_pos):
-                            glyph = ord(GameGlyphs.GHOST_NODE)  # Hollow spade
-                            color = Colors.ELECTRIC_PURPLE
-
-                        if glyph and color:
-                            # Glyph mode: render to console
-                            console.rgb[screen_x, screen_y] = (glyph, color, (0, 0, 0))
 
     def render_overlay_layer(self, game):
         """
@@ -661,13 +610,12 @@ class GraphicsMapRenderer(MapRendererBase):
             # Graphics mode: Render targeting cursor sprite
             texture = self.tile_manager.get_tile("targeting")
             if texture:
-                normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                 tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
                 # Tint based on mode (red for targeting, cyan for look)
                 texture.color_mod = cursor_color
                 renderer.copy(texture, dest=tile_rect)
                 # Reset color_mod
-                texture.color_mod = normal_tint
+                texture.color_mod = NORMAL_TINT
 
     def _render_targeting_range_graphics(
         self,
@@ -705,8 +653,8 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Skip if not valid position (wall or out of bounds)
                         if not game.game_map.is_valid_position(target):
                             continue
-                        # Skip if no line of sight
-                        if not game.game_map.has_line_of_sight(center, target):
+                        # Skip if no line of sight - use Bresenham for more intuitive targeting
+                        if not game.game_map.has_line_of_sight_bresenham(center, target):
                             continue
                         # Skip if occupied by enemy
                         if game._get_enemy_at(target):
@@ -807,11 +755,8 @@ class GraphicsMapRenderer(MapRendererBase):
         Returns:
             RGB color tuple for the outline
         """
-        try:
-            return ColorManager.get("status_effects", status_type)
-        except KeyError:
-            # Fallback to white if status type not found
-            return Colors.PURE_WHITE
+        # Fail-fast: missing status effect colors indicate config errors
+        return ColorManager.get("status_effects", status_type)
 
     def _draw_corner_brackets(
         self,
@@ -1041,10 +986,8 @@ class GraphicsMapRenderer(MapRendererBase):
                 for i, point in enumerate(next_positions):
                     # Skip rendering arrow if there's a character (player or enemy) at this position
                     # Don't draw arrows over the player or other enemies
-                    player_at_point = game.player.x == point.x and game.player.y == point.y
-                    enemy_at_point = any(
-                        e.position.x == point.x and e.position.y == point.y for e in game.enemies
-                    )
+                    player_at_point = game.player.position == point
+                    enemy_at_point = any(e.position == point for e in game.enemies)
 
                     if player_at_point or enemy_at_point:
                         prev_pos = point  # Update prev_pos for next iteration
@@ -1057,7 +1000,6 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Get directional arrow sprite (tintable)
                         texture = self.tile_manager.get_tile("arrow")
                         if texture:
-                            normal_tint = Colors.PURE_WHITE
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
 
                             # Calculate rotation angle from previous position to this position
@@ -1082,7 +1024,7 @@ class GraphicsMapRenderer(MapRendererBase):
                             renderer.copy(texture, dest=tile_rect, angle=angle)
 
                             # Reset color_mod
-                            texture.color_mod = normal_tint
+                            texture.color_mod = NORMAL_TINT
                         else:
                             logging.warning("_render_movement_prediction: arrow texture not found!")
 

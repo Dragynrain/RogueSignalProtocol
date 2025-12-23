@@ -361,15 +361,8 @@ class GlyphsMapRenderer(MapRendererBase):
                     exploit_category = (
                         exploit_def.category
                     )  # Fixed: was exploit_class, should be category
-                    # Get color from config
-                    try:
-                        color_tuple = ColorManager.get_exploit_color(exploit_category)
-                    except KeyError:
-                        # Fallback to magenta if category not found - visible but not crashing
-                        logging.warning(
-                            f"Missing exploit color for category: {exploit_category}"
-                        )
-                        color_tuple = Colors.MAGENTA
+                    # Get color from config - fail-fast on missing colors
+                    color_tuple = ColorManager.get_exploit_color(exploit_category)
 
                     render_char_safe(
                         console,
@@ -724,10 +717,8 @@ class GlyphsMapRenderer(MapRendererBase):
                 for i, point in enumerate(next_positions):
                     # Skip rendering arrow if there's a character (player or enemy) at this position
                     # Don't draw arrows over the player or other enemies
-                    player_at_point = game.player.x == point.x and game.player.y == point.y
-                    enemy_at_point = any(
-                        e.position.x == point.x and e.position.y == point.y for e in game.enemies
-                    )
+                    player_at_point = game.player.position == point
+                    enemy_at_point = any(e.position == point for e in game.enemies)
 
                     if player_at_point or enemy_at_point:
                         prev_pos = point  # Update prev_pos for next iteration
@@ -1088,8 +1079,8 @@ class GlyphsMapRenderer(MapRendererBase):
                         # Skip if not valid position (wall or out of bounds)
                         if not game.game_map.is_valid_position(target):
                             continue
-                        # Skip if no line of sight
-                        if not game.game_map.has_line_of_sight(center, target):
+                        # Skip if no line of sight - use Bresenham for more intuitive targeting
+                        if not game.game_map.has_line_of_sight_bresenham(center, target):
                             continue
                         # Skip if occupied by enemy
                         if game._get_enemy_at(target):

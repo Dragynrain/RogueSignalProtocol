@@ -201,7 +201,11 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.auto_save.assert_not_called()
 
     def test_escape_with_targeting_mode_closes_targeting(self):
-        """Test ESC with targeting mode open closes it."""
+        """Test ESC with targeting mode open closes it without going to menu.
+
+        Regression test: ESC during targeting should cancel targeting and
+        continue gameplay, NOT exit to main menu.
+        """
         self.game.targeting_mode = True
 
         # Use real TCOD event (isinstance checks require real type, not mock)
@@ -217,6 +221,9 @@ class TestGameInputEventHandling(unittest.TestCase):
 
         self.input_handler._handle_escape.assert_called_once()
         self.game.auto_save.assert_not_called()
+        # Verify game continues (not going to menu)
+        self.assertTrue(should_continue)
+        self.assertEqual(result_game, self.game)  # Game continues, not None (menu)
 
     def test_escape_with_no_ui_open_saves_and_returns_to_menu(self):
         """Test ESC with no UI open triggers auto-save and menu."""

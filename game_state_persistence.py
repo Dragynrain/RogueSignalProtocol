@@ -407,19 +407,11 @@ class GameStatePersistence:
         # A13+: Restore node capacity state
         if "node_capacity" in map_data:
             node_capacity = map_data["node_capacity"]
-            self._restore_node_capacity(
-                node_capacity.get("cooling", {}), game_map.cooling_nodes
-            )
-            self._restore_node_capacity(
-                node_capacity.get("cpu", {}), game_map.cpu_recovery_nodes
-            )
-            self._restore_node_capacity(
-                node_capacity.get("ghost", {}), game_map.ghost_nodes
-            )
+            self._restore_node_capacity(node_capacity.get("cooling", {}), game_map.cooling_nodes)
+            self._restore_node_capacity(node_capacity.get("cpu", {}), game_map.cpu_recovery_nodes)
+            self._restore_node_capacity(node_capacity.get("ghost", {}), game_map.ghost_nodes)
 
-    def _restore_node_capacity(
-        self, capacity_data: dict[str, int], node_collection: dict
-    ) -> None:
+    def _restore_node_capacity(self, capacity_data: dict[str, int], node_collection: dict) -> None:
         """
         Restore used_capacity for nodes from save data.
 
@@ -484,9 +476,7 @@ class GameStatePersistence:
             if "original_movement_type" in enemy_data:
                 from game_entities import EnemyMovement
 
-                enemy.original_movement_type = EnemyMovement(
-                    enemy_data["original_movement_type"]
-                )
+                enemy.original_movement_type = EnemyMovement(enemy_data["original_movement_type"])
 
             # Re-apply ascension modifiers for vision and damage (A4 damage, A1/A5 vision)
             # We DON'T want HP bonus to be re-applied since we restore from saved state

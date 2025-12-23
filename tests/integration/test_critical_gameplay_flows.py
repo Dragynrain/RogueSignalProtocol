@@ -442,7 +442,6 @@ class TestDeathDialogueQueuing:
         """Test that death attempts to close any active dialogue."""
         engine = basic_game_engine
 
-
         import tcod.event
 
         from game_dialogue_system import DialogueBox

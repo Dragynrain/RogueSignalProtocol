@@ -34,6 +34,8 @@ CRITICAL RULES:
 3. NEVER mix the two - they use different math!
 """
 
+import logging
+
 from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Position
@@ -123,8 +125,8 @@ class MapRendererBase:
                     output_size = self.context.sdl_renderer.output_size
                     if output_size:
                         return output_size
-                except (AttributeError, TypeError):
-                    pass
+                except (AttributeError, TypeError) as e:
+                    logging.debug(f"Could not get SDL renderer output size: {e}")
         return (None, None)
 
     def _is_in_viewport(self, world_x: int, world_y: int, camera_offset: Position) -> bool:
@@ -284,8 +286,8 @@ class MapRendererBase:
         try:
             if hasattr(self.context, "sdl_window") and self.context.sdl_window:
                 return self.context.sdl_window.size
-        except (AttributeError, TypeError):
-            pass
+        except (AttributeError, TypeError) as e:
+            logging.debug(f"Could not get SDL window size: {e}")
         # Fallback to default resolution
         return (800, 600)
 

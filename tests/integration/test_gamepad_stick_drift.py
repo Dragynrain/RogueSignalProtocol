@@ -72,6 +72,14 @@ class TestDeadzoneFiltering:
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
 
+        # Explicitly reset analog handler state for test isolation
+        analog.left_x = 0
+        analog.left_y = 0
+        analog.last_gameplay_move_time = -1.0
+        analog.gameplay_is_repeating = False
+        analog.last_gameplay_direction = (0, 0)
+        analog._settling_start_time = -1.0
+
         # Oscillate between below deadzone (14%) and above threshold (35%)
         # Deadzone: 15%, Threshold after scaling: 20%
         # To pass threshold: raw >= 0.15 + (0.20 * 0.85) = 0.32 = 32%

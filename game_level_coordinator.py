@@ -44,9 +44,13 @@ class GameLevelCoordinator:
         """
         self.game_engine = game_engine
 
-    def generate_procedural_level(self):
+    def generate_procedural_level(self, skip_level_start_message: bool = False):
         """
         Generate a complete level with map structure and gameplay elements.
+
+        Args:
+            skip_level_start_message: If True, skip atmospheric level_start message
+                (used when a richer transition message was already shown).
 
         Generation pipeline:
         1. Clear previous map data and enemies
@@ -138,10 +142,11 @@ class GameLevelCoordinator:
 
         self.game_engine.message_log.add_message(f"{config['name']} loaded")
 
-        # Add atmospheric level start message
-        env_message = self.game_engine.narrative_manager.trigger_level_start()
-        if env_message:
-            self.game_engine.message_log.add_message(env_message)
+        # Add atmospheric level start message (unless transition message was shown)
+        if not skip_level_start_message:
+            env_message = self.game_engine.narrative_manager.trigger_level_start()
+            if env_message:
+                self.game_engine.message_log.add_message(env_message)
 
     def progress_to_next_level(self):
         """
@@ -238,9 +243,7 @@ class GameLevelCoordinator:
             # Delete save on game completion (no continuing after winning)
             try:
                 if SaveGameManager.delete_save():
-                    self.game_engine.message_log.add_message(
-                        "Mission complete - save data purged"
-                    )
+                    self.game_engine.message_log.add_message("Mission complete - save data purged")
                 else:
                     logging.warning("Victory: Save deletion returned False")
                     self.game_engine.message_log.add_message("Mission complete")
@@ -275,12 +278,14 @@ class GameLevelCoordinator:
 
             transition_messages = get_level_transition_messages()
             transition_key = f"{old_level}_to_{self.game_engine.level}"
-            if transition_key in transition_messages:
+            showed_transition = transition_key in transition_messages
+            if showed_transition:
                 self.game_engine.message_log.add_message(transition_messages[transition_key])
 
             try:
                 logging.debug(f"Session: Generating level {self.game_engine.level}")
-                self.generate_procedural_level()
+                # Skip level_start message if we already showed a richer transition message
+                self.generate_procedural_level(skip_level_start_message=showed_transition)
                 # Auto-save after successful level generation
                 self.game_engine.auto_save()
                 logging.debug(
@@ -291,9 +296,7 @@ class GameLevelCoordinator:
                 line_no = tb[-1].lineno if tb else "?"
                 # Log full error for debugging, truncate only for UI display
                 logging.error(f"Session: Level generation FAILED: {e} at line {line_no}")
-                self.game_engine.message_log.add_message(
-                    f"Network error: {str(e)[:30]}..."
-                )
+                self.game_engine.message_log.add_message(f"Network error: {str(e)[:30]}...")
                 self.game_engine.level -= 1
                 logging.debug(f"Session: Rolled back to level {self.game_engine.level}")
 

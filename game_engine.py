@@ -760,6 +760,8 @@ class GameEngine:
         # Trigger narrative events
         if is_admin:
             env_msg = self.narrative_manager.trigger_admin_defeated()
+        elif was_stealth or from_blind_spot:
+            env_msg = self.narrative_manager.trigger_stealth_kill()
         else:
             env_msg = self.narrative_manager.trigger_first_combat()
         if env_msg:

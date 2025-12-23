@@ -801,7 +801,8 @@ class GameConfig:
                     value = value[k]
                 return value
             except (KeyError, TypeError):
-                pass
+                # Log at debug level - this is expected for optional config with defaults
+                logging.debug(f"Config key '{key}' not found, using default: {default}")
 
         return default
 
