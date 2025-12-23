@@ -19,7 +19,7 @@ import tcod.event
 import tcod.sdl.joystick
 
 from game_config import GameConfig, GameSettings
-from game_entities import Colors
+from game_entities import Colors, clamp
 from game_help_hints import (
     get_controls_hub_help,
     get_gamepad_binding_instructions,
@@ -809,7 +809,7 @@ class BaseBindingsMenu(BaseMenu, ABC):
             return
 
         new_index = self.selected_index + direction
-        new_index = max(0, min(new_index, len(self.selectable_indices) - 1))
+        new_index = int(clamp(new_index, 0, len(self.selectable_indices) - 1))
         self.selected_index = new_index
 
     def _close_conflict_dialog(self):
@@ -1201,7 +1201,7 @@ class GamepadSettingsMenu(BaseMenu):
                 filled = int(bar_width * (value - option["min"]) / range_size)
             else:
                 filled = 0
-            filled = max(0, min(bar_width, filled))  # Clamp to valid range
+            filled = int(clamp(filled, 0, bar_width))  # Clamp to valid range
             bar = "[" + "=" * filled + "-" * (bar_width - filled) + "]"
 
             slider_text = f"< {bar} > {percent}%"

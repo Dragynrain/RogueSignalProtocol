@@ -17,6 +17,8 @@ We DO NOT test:
 import unittest
 from unittest.mock import Mock, patch
 
+import pygame
+
 # Import game modules
 from game_audio import SoundManager
 from game_config import GameSettings
@@ -37,7 +39,7 @@ class TestSoundManagerAvailability(unittest.TestCase):
     def test_sound_manager_when_pygame_init_fails(self):
         """Test SoundManager handles pygame initialization exceptions."""
         with patch("game_audio.AUDIO_AVAILABLE", True):
-            with patch("pygame.mixer.init", side_effect=Exception("Init failed")):
+            with patch("pygame.mixer.init", side_effect=pygame.error("Init failed")):
                 settings = GameSettings()
                 sound_manager = SoundManager(settings)
 
@@ -217,7 +219,7 @@ class TestMusicPlayback(unittest.TestCase):
     @patch("pygame.mixer.music.load")
     def test_play_music_exception_resets_state(self, mock_load):
         """Test music playback exception handling resets state."""
-        mock_load.side_effect = Exception("Load error")
+        mock_load.side_effect = pygame.error("Load error")
 
         self.sound_manager.enabled = True
 

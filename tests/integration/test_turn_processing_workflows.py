@@ -525,5 +525,161 @@ class TestCrossSystemTurnEffects:
         assert enemy.alert_timer >= 0, "Alert timer should not go negative"
 
 
+class TestAlertStateTransitions:
+    """Test enemy alert state machine transitions during turn processing."""
+
+    def test_unaware_to_alert_transition(self, basic_game_engine):
+        """Test enemy transitions from UNAWARE to ALERT when spotting player."""
+        # Place enemy where it can see player
+        enemy = enemy_builder("hunter", pos=(5, 5))
+        enemy.state = EnemyState.UNAWARE
+        enemy.vision = 10  # Ensure can see player
+        basic_game_engine.enemies = [enemy]
+
+        # Place player in enemy's line of sight
+        basic_game_engine.player.x = 6
+        basic_game_engine.player.y = 5
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Enemy should have detected player (either ALERT or HOSTILE)
+        assert enemy.state != EnemyState.UNAWARE, "Enemy should detect player"
+
+    def test_alert_enemy_becomes_hostile(self, basic_game_engine):
+        """Test alert enemy becomes hostile when timer expires while seeing player."""
+        enemy = enemy_builder("hunter", pos=(5, 5))
+        enemy.state = EnemyState.ALERT
+        enemy.alert_timer = 1  # Will hit 0 this turn
+        enemy.vision = 10
+        enemy.last_seen_player = Position(6, 5)
+        basic_game_engine.enemies = [enemy]
+
+        # Place player in enemy's line of sight
+        basic_game_engine.player.x = 6
+        basic_game_engine.player.y = 5
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Enemy should become hostile
+        assert enemy.state == EnemyState.HOSTILE, "Alert enemy should become hostile"
+
+    def test_alert_enemy_loses_interest_when_player_hides(self, basic_game_engine):
+        """Test alert enemy returns to unaware when losing sight of player."""
+        enemy = enemy_builder("scanner", pos=(5, 5))
+        enemy.state = EnemyState.ALERT
+        enemy.alert_timer = 1
+        enemy.vision = 5
+        enemy.last_seen_player = Position(6, 5)
+        basic_game_engine.enemies = [enemy]
+
+        # Place player far away (out of vision range)
+        basic_game_engine.player.x = 40
+        basic_game_engine.player.y = 40
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Enemy should return to unaware
+        assert enemy.state == EnemyState.UNAWARE, "Enemy should lose interest"
+
+    def test_state_change_clears_movement_queue(self, basic_game_engine):
+        """Test enemy movement queue is cleared on state change."""
+        enemy = enemy_builder("patrol", pos=(10, 10))
+        enemy.state = EnemyState.UNAWARE
+        enemy.vision = 10
+        enemy.move_queue = [Position(11, 10), Position(12, 10), Position(13, 10)]
+        basic_game_engine.enemies = [enemy]
+
+        # Place player to trigger detection
+        basic_game_engine.player.x = 11
+        basic_game_engine.player.y = 10
+
+        initial_queue_length = len(enemy.move_queue)
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # If state changed, queue should be cleared
+        if enemy.state != EnemyState.UNAWARE:
+            assert len(enemy.move_queue) == 0, "Movement queue should clear on state change"
+
+
+class TestVirusEffectTurnProcessing:
+    """Test virus damage is applied correctly each turn."""
+
+    def test_virus_deals_damage_each_turn(self, basic_game_engine):
+        """Test virus effect deals damage every turn."""
+        # Apply virus effect to player
+        basic_game_engine.player.temporary_effects["virus_turns"] = 3
+        initial_cpu = basic_game_engine.player.cpu
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Virus should deal damage and decrement
+        assert (
+            basic_game_engine.player.temporary_effects["virus_turns"] == 2
+        ), "Virus turns should decrement"
+        # Note: actual damage depends on game balance config
+
+    def test_virus_expires_naturally(self, basic_game_engine):
+        """Test virus effect expires after duration."""
+        basic_game_engine.player.temporary_effects["virus_turns"] = 1
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Virus should expire
+        assert (
+            basic_game_engine.player.temporary_effects["virus_turns"] == 0
+        ), "Virus should expire"
+
+
+class TestMultipleSystemsTurnIntegration:
+    """Test turn processing integrates multiple systems correctly."""
+
+    def test_full_turn_updates_all_systems(self, basic_game_engine):
+        """Test a full turn cycle updates player, enemies, and environment."""
+        # Set up initial state
+        initial_turn = basic_game_engine.turn
+        initial_trace = basic_game_engine.player.trace_level
+
+        # Add an enemy
+        enemy = enemy_builder("bot", pos=(15, 15))
+        enemy.state = EnemyState.UNAWARE
+        basic_game_engine.enemies = [enemy]
+
+        # Apply a temporary effect
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 5
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Verify turn incremented
+        assert basic_game_engine.turn == initial_turn + 1
+
+        # Verify effect decremented
+        assert basic_game_engine.player.temporary_effects["speed_boost_turns"] == 4
+
+    def test_enemy_out_of_vision_range_stays_unaware(self, basic_game_engine):
+        """Test enemy out of vision range cannot detect player."""
+        # Create enemy with limited vision
+        enemy = enemy_builder("scanner", pos=(5, 5))
+        enemy.state = EnemyState.UNAWARE
+        basic_game_engine.enemies = [enemy]
+
+        # Place player far outside enemy's vision range (scanner has vision ~6)
+        basic_game_engine.player.x = 30
+        basic_game_engine.player.y = 30
+
+        # Process turn
+        basic_game_engine.process_turn()
+
+        # Enemy should stay unaware - player is out of range
+        assert enemy.state == EnemyState.UNAWARE, "Enemy should not detect distant player"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

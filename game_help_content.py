@@ -282,55 +282,50 @@ class HelpContent:
         Load enemy data from game_content.json.
 
         Returns dict with enemy stats, behavior type, and descriptions.
+        Raises exception on load failure (fail-fast).
         """
-        try:
-            from data_loading import DataLoader
+        from data_loading import DataLoader
 
-            game_data = DataLoader.load_game_data()
+        game_data = DataLoader.load_game_data()
 
-            # Manual descriptions for each enemy
-            descriptions = {
-                "Scanner": "Static (alerts!)",
-                "Firewall": "Static wall guard",
-                "Patrol": "Patrol routes",
-                "Bot": "Wanders randomly",
-                "Hunter": "Chases you!",
-                "Virus": "Infects (no dmg)!",
-                "Inhibitor": "Slows (no dmg)!",
-                "Admin Avatar": "BOSS!",
+        # Manual descriptions for each enemy
+        descriptions = {
+            "Scanner": "Static (alerts!)",
+            "Firewall": "Static wall guard",
+            "Patrol": "Patrol routes",
+            "Bot": "Wanders randomly",
+            "Hunter": "Chases you!",
+            "Virus": "Infects (no dmg)!",
+            "Inhibitor": "Slows (no dmg)!",
+            "Admin Avatar": "BOSS!",
+        }
+
+        # Behavior type mapping
+        behavior_map = {
+            "Scanner": "static",
+            "Firewall": "static",
+            "Patrol": "mobile",
+            "Bot": "mobile",
+            "Hunter": "aggressive",
+            "Virus": "aggressive",
+            "Inhibitor": "aggressive",
+            "Admin Avatar": "aggressive",
+        }
+
+        result = {}
+        for enemy_id, enemy_data in game_data["enemy_types"].items():
+            # Capitalize the name for display
+            enemy_name = enemy_data["name"]
+            result[enemy_name] = {
+                "cpu": enemy_data["cpu"],
+                "vision": enemy_data["vision"],
+                "damage": enemy_data["damage"],
+                "behavior": behavior_map.get(enemy_name, "mobile"),
+                "description": descriptions.get(enemy_name, ""),
+                "glyph": enemy_data["symbol"],
             }
 
-            # Behavior type mapping
-            behavior_map = {
-                "Scanner": "static",
-                "Firewall": "static",
-                "Patrol": "mobile",
-                "Bot": "mobile",
-                "Hunter": "aggressive",
-                "Virus": "aggressive",
-                "Inhibitor": "aggressive",
-                "Admin Avatar": "aggressive",
-            }
-
-            result = {}
-            for enemy_id, enemy_data in game_data["enemy_types"].items():
-                # Capitalize the name for display
-                enemy_name = enemy_data["name"]
-                result[enemy_name] = {
-                    "cpu": enemy_data["cpu"],
-                    "vision": enemy_data["vision"],
-                    "damage": enemy_data["damage"],
-                    "behavior": behavior_map.get(enemy_name, "mobile"),
-                    "description": descriptions.get(enemy_name, ""),
-                    "glyph": enemy_data["symbol"],
-                }
-
-            return result
-
-        except Exception as e:
-            logging.error(f"Failed to load enemy data: {e}")
-            # Return empty dict on error - help menu will handle gracefully
-            return {}
+        return result
 
     @staticmethod
     def get_power_ups() -> list[tuple[str, str, str, Any]]:
@@ -367,18 +362,12 @@ class HelpContent:
 
         Loads help summaries from game_content.json to ensure
         they stay in sync with actual exploit stats.
+        Raises exception on load failure (fail-fast).
         """
+        from data_loading import DataLoader
+
         colors = HelpContent.EXPLOIT_COLORS
-
-        # Load exploit data from JSON
-        try:
-            from data_loading import DataLoader
-
-            game_data = DataLoader.load_game_data()
-        except Exception as e:
-            logging.error(f"Failed to load exploit data: {e}")
-            # Return empty dict on error - help menu will handle gracefully
-            return {"combat": [], "stealth": [], "utility": [], "emergency": []}
+        game_data = DataLoader.load_game_data()
 
         # Organize by category
         exploits_by_category = {"combat": [], "stealth": [], "utility": [], "emergency": []}

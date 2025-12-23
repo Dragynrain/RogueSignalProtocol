@@ -8,7 +8,7 @@ Shared rendering utilities for all screen types (menus, in-game overlays, etc.)
 import tcod
 
 from game_config import GameConfig
-from game_entities import Colors
+from game_entities import Colors, clamp
 from game_ui import render_char_safe
 
 
@@ -440,7 +440,7 @@ class ScrollableListManager:
 
         # Clamp scroll offset
         max_scroll = max(0, self.total_items - self.visible_height)
-        self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
+        self.scroll_offset = int(clamp(self.scroll_offset, 0, max_scroll))
 
     def get_visible_range(self) -> tuple[int, int]:
         """
@@ -486,7 +486,7 @@ class ScrollableListManager:
 
         # Re-clamp scroll offset if needed
         max_scroll = max(0, self.total_items - self.visible_height)
-        self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
+        self.scroll_offset = int(clamp(self.scroll_offset, 0, max_scroll))
 
     def get_scroll_offset(self) -> int:
         """
@@ -505,4 +505,4 @@ class ScrollableListManager:
             offset: Desired scroll offset
         """
         max_scroll = max(0, self.total_items - self.visible_height)
-        self.scroll_offset = max(0, min(offset, max_scroll))
+        self.scroll_offset = int(clamp(offset, 0, max_scroll))
