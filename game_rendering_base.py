@@ -11,7 +11,7 @@ COORDINATE SYSTEMS USED IN THIS CODEBASE:
    - Characters rendered at 10x16 pixels (tileset size)
    - Example: render_char_safe(console, 10, 5, "text")
 
-2. GAME VIEWPORT COORDINATES (27x21 tiles in graphics mode)
+2. GAME VIEWPORT COORDINATES (55x44 glyph / ~27x21 graphics mode)
    - Used for: Game map tile positions during gameplay
    - Calculated by: GameConfig.VIEWPORT_WIDTH/HEIGHT(graphics_mode)
    - Scaled to fit window using TileManager.tile_width/height

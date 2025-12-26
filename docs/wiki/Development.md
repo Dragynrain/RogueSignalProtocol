@@ -109,7 +109,7 @@ All game data is loaded from JSON:
 
 The game uses three distinct coordinate systems:
 1. **Console chars** (80x50) - Text/UI
-2. **Game viewport** (27x21) - In-game tiles
+2. **Game viewport** (55x44 glyph / ~27x21 graphics) - In-game tiles
 3. **SDL pixels** - Sprite rendering
 
 See `.claude/TCOD_GUIDE.md` and `.claude/RENDERING_ARCHITECTURE.md` for details.

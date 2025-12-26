@@ -2,7 +2,7 @@
 Unit tests for viewport rendering bounds in graphics mode.
 
 These tests ensure that items are only rendered when within the viewport bounds,
-preventing rendering bugs when switching between glyph mode (53x48) and graphics mode (27x21).
+preventing rendering bugs when switching between glyph mode (55x44) and graphics mode (~27x21).
 """
 
 from unittest.mock import Mock, patch

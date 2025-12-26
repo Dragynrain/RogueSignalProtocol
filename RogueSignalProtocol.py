@@ -6,6 +6,7 @@ Main entry point that imports modular components and initializes the game.
 Sets up logging configuration for both console and file output.
 """
 
+import atexit
 import logging
 import os
 import sys
@@ -72,6 +73,7 @@ if DEBUG_MODE:
     log_file = open(
         str(log_dir / "game_debug.log"), mode="w", buffering=1, encoding="utf-8", errors="replace"
     )  # Truncate mode for fresh logs each session
+    atexit.register(log_file.close)  # Ensure file handle is closed on exit
     file_handler = logging.StreamHandler(log_file)
     file_handler.setLevel(logging.DEBUG)
 

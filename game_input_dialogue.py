@@ -328,6 +328,10 @@ class DialogueInputManager:
 
         coords = self.game.dialogue_state.last_render_coords
 
+        # Validate event has position attribute
+        if not hasattr(event, "position") or event.position is None:
+            return False
+
         # Convert pixel coordinates to console tile coordinates
         window_w, window_h = InputCoordinateConverter.get_window_dimensions(
             self.renderer, self.game
@@ -380,6 +384,10 @@ class DialogueInputManager:
         if not dialogue:
             return False
 
+        # Validate event has position attribute
+        if not hasattr(event, "position") or event.position is None:
+            return True  # Event handled but no action taken
+
         # Convert pixel coordinates to console tile coordinates
         window_w, window_h = InputCoordinateConverter.get_window_dimensions(
             self.renderer, self.game
@@ -400,6 +408,7 @@ class DialogueInputManager:
         option_index = UnifiedRenderer.get_option_at_click(self.game.dialogue_state, tile_x, tile_y)
 
         # Determine action based on which option was clicked
+        action = None  # Initialize to avoid potential unbound variable
         if option_index is not None and option_index < len(dialogue.valid_keys):
             # Clicked on a specific option - use that option's key
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[option_index])
@@ -417,6 +426,7 @@ class DialogueInputManager:
                 # Ignore clicks outside buttons for death/victory dialogues
                 return True
             # Other dialogues: use first/default option (allows click-to-dismiss)
+            # Note: valid_keys is guaranteed non-empty here (checked in elif above)
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[0])
 
         # Process the action (same logic as keyboard input)

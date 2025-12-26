@@ -20,7 +20,7 @@
 ## 2. Build & Test
 
 **Build:** `build\build.bat [alpha|release]` (needs 7zip at `C:\Program Files\7-Zip\7z.exe`)
-- Outputs: `dist\RogueSignalProtocol.exe` (37MB), `releases\..._[type]_[date].zip` (103MB)
+- Outputs: `dist\RogueSignalProtocol.exe` (~39MB), `releases\..._[type]_[date].zip` (~195MB)
 **Test:** Pre-commit hook auto-runs. Quick: `pytest tests/unit/test_<module>.py -v`, Iterate: `pytest --lf --tb=short`
 See `.claude/TESTING_GUIDE.md`
 
@@ -58,7 +58,7 @@ See `.claude/gamepad.md`
 ## 8. Rendering
 
 **Layers:** Backgrounds (SDL) → Sprites (SDL) → Console (transparent). Can't use `context.present()` (clears sprites).
-**Coords:** Console (80x50), Viewport (27x21), SDL pixels - don't mix!
+**Coords:** Console (80x50), Viewport (55x44 glyph / ~27x21 graphics), SDL pixels - don't mix!
 **Transparency:** `UnifiedRenderer.render()` or `CoordinateHelpers.set_alpha_region()`
 See `.claude/RENDERING_ARCHITECTURE.md`
 

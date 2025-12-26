@@ -71,7 +71,7 @@ This is an **Alpha release** focusing on core gameplay and feedback collection.
 - Complete story content (20+ fragments)
 
 ### Known Limitations
-- Windows only
+- Primary support: Windows 10/11 (Linux/Steam Deck supported via GitHub releases)
 - No tutorial scenario (help menu is comprehensive)
 
 ---
@@ -123,6 +123,7 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 - **Look Mode**: L key to examine entities and terrain
 - **Lore Fragments**: F key to view discovered story fragments
 - **Achievements**: V key to view unlocked achievements
+- **Ascension**: N key to toggle ascension progression system
 - **Help**: ? (Shift+/) for complete controls reference
 - **Pause**: ESC key
 - **Confirm**: Enter key for dialogues and menus
@@ -180,7 +181,7 @@ RogueSignalProtocol/
 ├── game_content.json            # Items, exploits, loot tables
 ├── game_rules.json              # Balance, colors, gameplay rules
 ├── graphics_tiles.json          # Sprite mappings
-├── story_content.json           # Narrative fragments
+├── narrative_content.json       # Narrative fragments
 │
 ├── Assets:
 ├── graphics/                    # PNG sprites (150+ files)
@@ -384,7 +385,7 @@ Maps entities to sprite variants:
 - Restart game to see changes
 
 **Modify story:**
-- Edit `story_content.json`
+- Edit `narrative_content.json`
 - Add/edit fragments
 - Changes appear immediately
 
@@ -504,7 +505,7 @@ console.rgba["bg"][x, y, 3] = 255  # BUG! Should be [y, x]!
 
 **Three separate coordinate systems:**
 1. **Console chars (80x50)** - Text rendering
-2. **Game viewport (27x21)** - In-game tiles
+2. **Game viewport (55x44 glyph / ~27x21 graphics)** - In-game tiles
 3. **SDL pixels (window size)** - Direct sprite rendering
 
 **Don't mix them!** See TCOD_GUIDE.md for conversion formulas.
@@ -621,7 +622,7 @@ python test_commands.py full
 2. **Required files**:
    - `game_content.json` - Items, exploits, loot
    - `game_rules.json` - Balance, colors, rules
-   - `story_content.json` - Narrative content
+   - `narrative_content.json` - Narrative content
    - `graphics_tiles.json` - Sprite mappings
 3. **Optional file**:
    - `user_settings.json` - User preferences (created if missing)
