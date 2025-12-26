@@ -6,7 +6,7 @@
 
 **Platform Status**:
 - **Current**: Windows + Linux (Steam Deck compatible) - code complete, awaiting distribution
-- **Target**: Publish Linux packages with 0.8.0 Beta release
+- **Target**: Publish Linux packages with 0.9.0 Beta release
 - **Future**: macOS (deferred - see Future Considerations section)
 
 **Current Constraints**:
@@ -170,9 +170,9 @@ Create distribution packages (AppImage, Flatpak, AUR).
 ### Phase 5: Distribution & Publishing (Low-Medium Complexity) - DEFERRED
 Submit to package repositories and configure auto-updates.
 - Complexity: Low-Medium (mostly administrative)
-- Dependencies: Phase 4 complete, PLAN_ASCENSION complete, ready for 0.8.0 Beta release
+- Dependencies: Phase 4 complete, PLAN_ASCENSION complete, ready for 0.9.0 Beta release
 - Risk: Low (approval processes take time but are straightforward)
-- Status: **DEFERRED** - Will complete when ready for official 0.8.0 Beta release
+- Status: **DEFERRED** - Will complete when ready for official 0.9.0 Beta release
 
 ### Phase 6: Testing & Verification (High Complexity)
 Test on Linux VMs across multiple distros.
@@ -539,7 +539,7 @@ AppDir:
   app_info:
     id: com.dragynrain.RogueSignalProtocol
     name: Rogue Signal Protocol
-    version: 0.8.0
+    version: 0.9.0-beta
     icon: rogue-signal-protocol
     exec: usr/bin/RogueSignalProtocol
 
@@ -573,7 +573,7 @@ AppImage:
   update-information: guess
 ```
 
-**Output**: `RogueSignalProtocol-0.8.0-x86_64.AppImage`
+**Output**: `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
 **Distribution**: Upload to GitHub Releases + itch.io
 
 **Complexity**: Low
@@ -616,7 +616,7 @@ modules:
       - chmod +x /app/bin/RogueSignalProtocol
     sources:
       - type: archive
-        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.8.0/RogueSignalProtocol-linux.tar.gz
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/RogueSignalProtocol-Linux.tar.gz
         sha256: CHECKSUM_HERE  # Generate with sha256sum after build
 ```
 
@@ -626,6 +626,13 @@ modules:
 **Review Time**: Typically 1-7 days
 **Complexity**: Medium (manifest creation + review)
 
+**Beta Channel Notes**:
+- For 0.9.0 Beta: Submit to Flathub **beta branch** (not stable)
+- Beta apps won't appear on flathub.org main listings
+- Users install via: `flatpak remote-add flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo`
+- Then: `flatpak install flathub-beta com.dragynrain.roguesignalprotocol`
+- When ready for 1.0 stable: Submit new PR to stable branch (users must reinstall)
+
 ### Linux: AUR Package
 
 **Tool**: PKGBUILD script
@@ -634,7 +641,7 @@ modules:
 ```bash
 # Maintainer: Your Name <your@email.com>
 pkgname=rogue-signal-protocol-bin
-pkgver=0.8.0
+pkgver=0.9.0_beta
 pkgrel=1
 pkgdesc="Cyberpunk roguelike game (binary release)"
 arch=('x86_64')
@@ -1072,7 +1079,7 @@ find . -type f | sort -f | uniq -di
 | 5 | Distribution | Published packages | **DEFERRED** |
 | 6 | Testing | Verified cross-distro stability | DONE |
 
-**Note:** Phase 5 (Distribution) deferred until after PLAN_ASCENSION and ready for 0.8.0 Beta release.
+**Note:** Phase 5 (Distribution) deferred until after PLAN_ASCENSION and ready for 0.9.0 Beta release.
 
 ---
 
@@ -1259,10 +1266,10 @@ These items verify Phase 2 changes work on Linux before building:
 - [ ] ~~Test AUR package on Arch VM~~ - DEFERRED (Steam Deck is Arch-based, covered by Deck testing)
 - [x] **TDD**: Create manual test checklist - `packaging/linux/TEST_CHECKLIST.md`
 
-**Phase 5: Distribution** - DEFERRED (until 0.8.0 Beta release after PLAN_ASCENSION)
-- [ ] Upload AppImage to itch.io + GitHub Releases
-- [ ] Submit Flatpak to Flathub (PR)
-- [ ] Upload AUR PKGBUILD
+**Phase 5: Distribution** - DEFERRED (until 0.9.0 Beta release after PLAN_ASCENSION)
+- [ ] Upload AppImage to itch.io + GitHub Releases (mark as pre-release)
+- [ ] Submit Flatpak to Flathub **beta branch** (PR to beta, not stable)
+- [ ] Upload AUR PKGBUILD (pkgdesc notes "beta release")
 - [x] Update README with platform install instructions - DONE
 - [ ] Update itch.io page with Linux screenshots
 

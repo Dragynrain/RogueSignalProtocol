@@ -80,10 +80,11 @@
   </screenshots>
 
   <releases>
-    <release version="0.8.0" date="2024-12-11">
+    <release version="0.9.0-beta" date="2025-01-15" type="development">
       <description>
-        <p>Alpha release with Linux support.</p>
+        <p>Beta release - feature complete, seeking community testing.</p>
         <ul>
+          <li>Ascension mode with meta-progression</li>
           <li>Cross-platform support (Windows, Linux)</li>
           <li>Steam Deck compatible</li>
           <li>Full gamepad support with remapping</li>
