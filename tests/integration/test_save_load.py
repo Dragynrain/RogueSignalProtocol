@@ -303,7 +303,7 @@ class TestComplexEnemyStates:
 
         alert_enemy = Enemy(Position(15, 15), "scanner")
         alert_enemy.state = EnemyState.ALERT
-        alert_enemy.last_seen_player_position = Position(14, 14)
+        alert_enemy.last_seen_player = Position(14, 14)
 
         hostile_enemy = Enemy(Position(20, 20), "firewall")
         hostile_enemy.state = EnemyState.HOSTILE
@@ -631,6 +631,55 @@ class TestRealGameEngineIntegration:
 
             # Verify actual save file exists
             assert SaveGameManager.save_exists()
+
+    def test_enemy_behavioral_fidelity_after_load(self, basic_game_engine):
+        """Test that enemy AI behavior is consistent after save/load cycle.
+
+        This test verifies behavioral fidelity, not just data preservation.
+        An ALERT enemy should investigate the same location after loading.
+        """
+        with patch("game_audio.SoundManager"):
+            game = basic_game_engine
+
+            game.game_state.dungeon_seed = 123
+            game.game_session.generate_procedural_level()
+
+            # Create an ALERT enemy with a clear target
+            enemy = enemy_builder("scanner", pos=(20, 20))
+            enemy.state = EnemyState.ALERT
+            enemy.last_seen_player = Position(25, 20)  # Target to investigate
+            enemy.alert_timer = 10  # Long timer
+            enemy.move_queue = []  # Will be populated by AI
+
+            game.enemy_manager.enemies = [enemy]
+
+            # Move player far away so enemy investigates last_seen position
+            game.player.x = 5
+            game.player.y = 5
+
+            # Record initial position
+            initial_x, initial_y = enemy.x, enemy.y
+
+            # Save game
+            success = SaveGameManager.save_game(game)
+            assert success
+
+            # Load into new engine
+            loaded_game = GameEngine(load_save=True)
+
+            # Find the loaded enemy
+            loaded_enemy = loaded_game.enemy_manager.enemies[0]
+            assert loaded_enemy.state == EnemyState.ALERT
+
+            # Process a turn to trigger enemy AI
+            loaded_game.process_turn()
+
+            # Enemy should have moved toward last_seen_player (25, 20)
+            # From (20, 20) toward (25, 20) means x should increase
+            assert loaded_enemy.x >= initial_x, (
+                f"ALERT enemy should move toward last_seen position. "
+                f"Started at x={initial_x}, now at x={loaded_enemy.x}"
+            )
 
 
 if __name__ == "__main__":

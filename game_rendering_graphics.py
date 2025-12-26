@@ -156,8 +156,7 @@ class GraphicsMapRenderer(MapRendererBase):
             can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
-                screen_x = world_x - camera_offset.x
-                screen_y = world_y - camera_offset.y + 1
+                screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                 # All exploits use the same "exploit" sprite, tinted by category
                 texture = self.tile_manager.get_tile("exploit")
@@ -243,8 +242,7 @@ class GraphicsMapRenderer(MapRendererBase):
             can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
-                screen_x = world_x - camera_offset.x
-                screen_y = world_y - camera_offset.y + 1
+                screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                 # Map upgrade key to sprite name
                 upgrade_sprite_map = {
@@ -265,8 +263,7 @@ class GraphicsMapRenderer(MapRendererBase):
             can_see = can_render_at_position(game, world_pos, vision_range)
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
-                screen_x = world_x - camera_offset.x
-                screen_y = world_y - camera_offset.y + 1
+                screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                 # Render story fragment sprite
                 texture = self.tile_manager.get_tile("story_fragment")
@@ -286,8 +283,9 @@ class GraphicsMapRenderer(MapRendererBase):
         if game.game_map.gateway and self._is_in_viewport(
             game.game_map.gateway.x, game.game_map.gateway.y, camera_offset
         ):
-            screen_x = game.game_map.gateway.x - camera_offset.x
-            screen_y = game.game_map.gateway.y - camera_offset.y + 1
+            screen_x, screen_y = self._world_to_console(
+                game.game_map.gateway.x, game.game_map.gateway.y, camera_offset
+            )
 
             distance = game.player.position.distance_to(game.game_map.gateway)
             # Check if player can see the gateway (respecting walls)
@@ -332,8 +330,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Enemies
         for enemy in game.enemies:
             if self._is_in_viewport(enemy.x, enemy.y, camera_offset):
-                screen_x = enemy.x - camera_offset.x
-                screen_y = enemy.y - camera_offset.y + 1
+                screen_x, screen_y = self._world_to_console(enemy.x, enemy.y, camera_offset)
 
                 threat_scan_active = game.game_state.threat_scan_turns > 0
                 can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
@@ -368,8 +365,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Player
         if self._is_in_viewport(game.player.x, game.player.y, camera_offset):
-            player_screen_x = game.player.x - camera_offset.x
-            player_screen_y = game.player.y - camera_offset.y + 1
+            player_screen_x, player_screen_y = self._world_to_console(
+                game.player.x, game.player.y, camera_offset
+            )
 
             texture = self.tile_manager.get_tile("player")
             if texture:
@@ -414,8 +412,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Draw status effect outline for player if has status
         if self._is_in_viewport(game.player.x, game.player.y, camera_offset):
-            player_screen_x = game.player.x - camera_offset.x
-            player_screen_y = game.player.y - camera_offset.y + 1
+            player_screen_x, player_screen_y = self._world_to_console(
+                game.player.x, game.player.y, camera_offset
+            )
 
             # Check for various player status effects (using centralized thresholds)
             status_color = None
@@ -438,8 +437,7 @@ class GraphicsMapRenderer(MapRendererBase):
         # Draw enemy state outlines (yellow/orange/red for normal/alert/hostile)
         for enemy in game.enemies:
             if self._is_in_viewport(enemy.x, enemy.y, camera_offset):
-                screen_x = enemy.x - camera_offset.x
-                screen_y = enemy.y - camera_offset.y + 1
+                screen_x, screen_y = self._world_to_console(enemy.x, enemy.y, camera_offset)
                 threat_scan_active = game.game_state.threat_scan_turns > 0
                 can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
 
@@ -604,8 +602,9 @@ class GraphicsMapRenderer(MapRendererBase):
                 )
 
         if self._is_in_viewport(cursor_pos.x, cursor_pos.y, camera_offset):
-            cursor_screen_x = cursor_pos.x - camera_offset.x
-            cursor_screen_y = cursor_pos.y - camera_offset.y + 1
+            cursor_screen_x, cursor_screen_y = self._world_to_console(
+                cursor_pos.x, cursor_pos.y, camera_offset
+            )
 
             # Graphics mode: Render targeting cursor sprite
             texture = self.tile_manager.get_tile("targeting")
@@ -661,8 +660,9 @@ class GraphicsMapRenderer(MapRendererBase):
                             continue
 
                     if self._is_in_viewport(world_x, world_y, camera_offset):
-                        screen_x = world_x - camera_offset.x
-                        screen_y = world_y - camera_offset.y + 1
+                        screen_x, screen_y = self._world_to_console(
+                            world_x, world_y, camera_offset
+                        )
 
                         # Render semi-transparent overlay using SDL rectangles
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -695,8 +695,9 @@ class GraphicsMapRenderer(MapRendererBase):
                     world_y = center.y + dy
 
                     if self._is_in_viewport(world_x, world_y, camera_offset):
-                        screen_x = world_x - camera_offset.x
-                        screen_y = world_y - camera_offset.y + 1
+                        screen_x, screen_y = self._world_to_console(
+                            world_x, world_y, camera_offset
+                        )
 
                         # Render brighter semi-transparent overlay
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -726,8 +727,9 @@ class GraphicsMapRenderer(MapRendererBase):
         hover_pos = game.mouse_hover_world_pos
 
         if self._is_in_viewport(hover_pos.x, hover_pos.y, camera_offset):
-            hover_screen_x = hover_pos.x - camera_offset.x
-            hover_screen_y = hover_pos.y - camera_offset.y + 1
+            hover_screen_x, hover_screen_y = self._world_to_console(
+                hover_pos.x, hover_pos.y, camera_offset
+            )
 
             tile_rect = self._get_tile_rect(hover_screen_x, hover_screen_y)
 
@@ -954,8 +956,9 @@ class GraphicsMapRenderer(MapRendererBase):
                     continue
 
                 if self._is_in_viewport(world_x, world_y, camera_offset):
-                    screen_x = world_x - camera_offset.x
-                    screen_y = world_y - camera_offset.y + 1
+                    screen_x, screen_y = self._world_to_console(
+                        world_x, world_y, camera_offset
+                    )
 
                     # Fill tile with semi-transparent color overlay (configurable alpha)
                     tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -994,8 +997,9 @@ class GraphicsMapRenderer(MapRendererBase):
                         continue
 
                     if self._is_in_viewport(point.x, point.y, camera_offset):
-                        screen_x = point.x - camera_offset.x
-                        screen_y = point.y - camera_offset.y + 1
+                        screen_x, screen_y = self._world_to_console(
+                            point.x, point.y, camera_offset
+                        )
 
                         # Get directional arrow sprite (tintable)
                         texture = self.tile_manager.get_tile("arrow")

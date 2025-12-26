@@ -4,10 +4,15 @@ Unit tests for default bindings JSON loading in game_input_mappings.py
 
 Tests that default bindings can be loaded from default_bindings.json
 instead of being hardcoded in Python.
+
+Includes fail-fast tests to verify behavior when JSON is missing or corrupted
+(per CLAUDE.md: fail-fast on missing config, no hardcoded fallbacks).
 """
 
 import json
 import os
+import tempfile
+from unittest.mock import patch
 
 import pytest
 import tcod.event
@@ -320,3 +325,103 @@ class TestActionNameValidation:
                 assert (
                     action_name in valid_actions
                 ), f"Invalid action '{action_name}' for {context}/{axis}"
+
+
+# =============================================================================
+# Fail-Fast Tests (per CLAUDE.md: no hardcoded fallbacks)
+# =============================================================================
+
+
+class TestInputMapperFailFast:
+    """Tests that InputMapper fails fast when JSON is missing or corrupted.
+
+    Per CLAUDE.md: 'Fail-fast on missing config... No hardcoded fallbacks.'
+    """
+
+    def test_raises_when_json_missing(self, tmp_path, monkeypatch):
+        """InputMapper should raise FileNotFoundError when JSON is missing."""
+        from game_input_mappings import InputMapper
+
+        # Point to non-existent file
+        monkeypatch.setattr(
+            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            str(tmp_path / "nonexistent.json"),
+        )
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            InputMapper()
+
+        assert "not found" in str(exc_info.value).lower()
+
+    def test_raises_when_json_malformed(self, tmp_path, monkeypatch):
+        """InputMapper should raise JSONDecodeError when JSON is malformed."""
+        from game_input_mappings import InputMapper
+
+        # Create malformed JSON file
+        bad_json = tmp_path / "bad_bindings.json"
+        bad_json.write_text("{ invalid json }", encoding="utf-8")
+
+        monkeypatch.setattr(
+            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            str(bad_json),
+        )
+
+        with pytest.raises(json.JSONDecodeError):
+            InputMapper()
+
+    def test_raises_when_json_unreadable(self, tmp_path, monkeypatch):
+        """InputMapper should raise OSError when JSON file cannot be read."""
+        from game_input_mappings import InputMapper
+
+        # Point to the tmp_path directory (not a file)
+        monkeypatch.setattr(
+            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            str(tmp_path),  # This is a directory, not a file
+        )
+
+        # os.path.exists returns True for directories, but open() fails
+        with pytest.raises((OSError, PermissionError, IsADirectoryError)):
+            InputMapper()
+
+    def test_no_fallback_to_hardcoded_defaults(self, tmp_path, monkeypatch):
+        """InputMapper should NOT silently use hardcoded defaults when JSON fails.
+
+        This test ensures we don't regress back to the old fallback behavior.
+        """
+        from game_input_mappings import InputMapper
+
+        # Point to non-existent file
+        monkeypatch.setattr(
+            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            str(tmp_path / "missing.json"),
+        )
+
+        # Should raise an error, not silently continue with hardcoded defaults
+        with pytest.raises(FileNotFoundError):
+            mapper = InputMapper()
+            # If we got here, the fallback is active (BAD!)
+            # Check that mapper has bindings - this would indicate fallback was used
+            assert len(mapper._default_keyboard_map) == 0, "Hardcoded fallback was used!"
+
+    def test_valid_json_loads_successfully(self, tmp_path, monkeypatch):
+        """InputMapper should load successfully with valid JSON."""
+        from game_input_mappings import InputMapper
+
+        # Create minimal valid JSON
+        valid_json = tmp_path / "valid_bindings.json"
+        valid_json.write_text(
+            json.dumps({
+                "keyboard": {"W": "MOVE_NORTH"},
+                "gamepad": {"buttons": {}, "axes": {}},
+            }),
+            encoding="utf-8",
+        )
+
+        monkeypatch.setattr(
+            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            str(valid_json),
+        )
+
+        # Should not raise
+        mapper = InputMapper()
+        assert mapper.get_action_for_key(tcod.event.KeySym.W) == InputAction.MOVE_NORTH

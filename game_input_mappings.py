@@ -396,28 +396,33 @@ class InputMapper:
         self._custom_keyboard_bindings: dict[InputContext, dict[InputAction, list[KeyBinding]]] = {}
         self._custom_gamepad_bindings: dict[InputContext, dict[InputAction, list[int]]] = {}
 
-        # Load defaults from JSON (with hardcoded fallback)
-        if not self._load_defaults_from_json():
-            logging.warning("Could not load default_bindings.json, using hardcoded defaults")
-            self._init_default_keyboard_mappings()
-            self._init_default_gamepad_mappings()
+        # Load defaults from JSON (fail-fast - no fallbacks per CLAUDE.md rules)
+        self._load_defaults_from_json()
 
-    def _load_defaults_from_json(self) -> bool:
+    def _load_defaults_from_json(self) -> None:
         """
         Load default bindings from default_bindings.json.
 
-        Returns:
-            True if loaded successfully, False otherwise
+        Raises:
+            FileNotFoundError: If default_bindings.json is missing
+            json.JSONDecodeError: If JSON is malformed
         """
         if not os.path.exists(DEFAULT_BINDINGS_PATH):
-            return False
+            error_msg = f"CRITICAL CONFIG ERROR: {DEFAULT_BINDINGS_PATH} not found"
+            logging.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         try:
             with open(DEFAULT_BINDINGS_PATH, encoding="utf-8") as f:
                 data = json.load(f)
-        except (json.JSONDecodeError, OSError) as e:
-            logging.error(f"Failed to load default_bindings.json: {e}")
-            return False
+        except json.JSONDecodeError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in {DEFAULT_BINDINGS_PATH}"
+            logging.error(f"{error_msg}: {e}")
+            raise
+        except OSError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Could not read {DEFAULT_BINDINGS_PATH}"
+            logging.error(f"{error_msg}: {e}")
+            raise
 
         # Load keyboard bindings
         keyboard_data = data.get("keyboard", {})
@@ -476,7 +481,6 @@ class InputMapper:
                         logging.warning(f"Unknown action name in JSON: {action_name}")
 
         logging.info(f"Loaded defaults from {DEFAULT_BINDINGS_PATH}")
-        return True
 
     def _parse_key_name(self, key_name: str) -> tuple[tcod.event.KeySym | None, int]:
         """
@@ -506,321 +510,6 @@ class InputMapper:
 
         keysym = _KEY_NAME_TO_SYM.get(key_part)
         return keysym, modifier
-
-    def _init_default_keyboard_mappings(self):
-        """
-        Initialize default keyboard mappings.
-
-        Migrated from game_input.py InputMappings.MOVEMENT_MAP (lines 51-75).
-        Now uses KeyBinding to support modifier keys.
-        """
-
-        # Helper to create bindings without modifiers
-        def bind(key: tcod.event.KeySym, action: InputAction, modifier: int = 0):
-            self._default_keyboard_map[KeyBinding(key, modifier)] = action
-
-        # ====================================================================
-        # MOVEMENT (8-directional)
-        # ====================================================================
-        # WASD + QEZC
-        bind(tcod.event.KeySym.W, InputAction.MOVE_NORTH)
-        bind(tcod.event.KeySym.Q, InputAction.MOVE_NORTHWEST)
-        bind(tcod.event.KeySym.E, InputAction.MOVE_NORTHEAST)
-        bind(tcod.event.KeySym.D, InputAction.MOVE_EAST)
-        bind(tcod.event.KeySym.C, InputAction.MOVE_SOUTHEAST)
-        bind(tcod.event.KeySym.S, InputAction.MOVE_SOUTH)
-        bind(tcod.event.KeySym.Z, InputAction.MOVE_SOUTHWEST)
-        bind(tcod.event.KeySym.A, InputAction.MOVE_WEST)
-
-        # Arrow keys (cardinal)
-        bind(tcod.event.KeySym.UP, InputAction.MOVE_NORTH)
-        bind(tcod.event.KeySym.DOWN, InputAction.MOVE_SOUTH)
-        bind(tcod.event.KeySym.LEFT, InputAction.MOVE_WEST)
-        bind(tcod.event.KeySym.RIGHT, InputAction.MOVE_EAST)
-
-        # Arrow cluster diagonals (laptop-friendly - standard roguelike layout)
-        # Physical layout: [Home][PgUp]    matches    [NW][NE]
-        #                  [End ][PgDn]               [SW][SE]
-        bind(tcod.event.KeySym.HOME, InputAction.MOVE_NORTHWEST)
-        bind(tcod.event.KeySym.PAGEUP, InputAction.MOVE_NORTHEAST)
-        bind(tcod.event.KeySym.END, InputAction.MOVE_SOUTHWEST)
-        bind(tcod.event.KeySym.PAGEDOWN, InputAction.MOVE_SOUTHEAST)
-
-        # Numpad
-        bind(tcod.event.KeySym.KP_8, InputAction.MOVE_NORTH)
-        bind(tcod.event.KeySym.KP_9, InputAction.MOVE_NORTHEAST)
-        bind(tcod.event.KeySym.KP_6, InputAction.MOVE_EAST)
-        bind(tcod.event.KeySym.KP_3, InputAction.MOVE_SOUTHEAST)
-        bind(tcod.event.KeySym.KP_2, InputAction.MOVE_SOUTH)
-        bind(tcod.event.KeySym.KP_1, InputAction.MOVE_SOUTHWEST)
-        bind(tcod.event.KeySym.KP_4, InputAction.MOVE_WEST)
-        bind(tcod.event.KeySym.KP_7, InputAction.MOVE_NORTHWEST)
-
-        # ====================================================================
-        # WAIT/REST
-        # ====================================================================
-        bind(tcod.event.KeySym.SPACE, InputAction.WAIT)
-        bind(tcod.event.KeySym.PERIOD, InputAction.WAIT)
-        bind(tcod.event.KeySym.KP_5, InputAction.WAIT)
-
-        # ====================================================================
-        # EXPLOITS (direct slot activation)
-        # ====================================================================
-        bind(tcod.event.KeySym.N1, InputAction.EXPLOIT_SLOT_1)
-        bind(tcod.event.KeySym.N2, InputAction.EXPLOIT_SLOT_2)
-        bind(tcod.event.KeySym.N3, InputAction.EXPLOIT_SLOT_3)
-        bind(tcod.event.KeySym.N4, InputAction.EXPLOIT_SLOT_4)
-        bind(tcod.event.KeySym.N5, InputAction.EXPLOIT_SLOT_5)
-
-        # Exploit cycling (for keyboard users who want gamepad-style controls)
-        # Bound to [ and ] keys (mirrors gamepad shoulder buttons)
-        bind(tcod.event.KeySym.LEFTBRACKET, InputAction.EXPLOIT_CYCLE_PREV)
-        bind(tcod.event.KeySym.RIGHTBRACKET, InputAction.EXPLOIT_CYCLE_NEXT)
-
-        # Execute selected exploit (mirrors gamepad RT trigger)
-        # Use with [ ] cycling for gamepad-style keyboard play
-        bind(tcod.event.KeySym.X, InputAction.EXPLOIT_EXECUTE)
-
-        # ====================================================================
-        # UI TOGGLES
-        # ====================================================================
-        bind(tcod.event.KeySym.I, InputAction.TOGGLE_INVENTORY)
-        bind(tcod.event.KeySym.L, InputAction.TOGGLE_LOOK_MODE)
-        bind(tcod.event.KeySym.F, InputAction.TOGGLE_LORE_VIEWER)
-        bind(tcod.event.KeySym.V, InputAction.TOGGLE_ACHIEVEMENTS)
-        # Help: Shift+/ (the ? key on US keyboards)
-        bind(tcod.event.KeySym.SLASH, InputAction.TOGGLE_HELP, tcod.event.Modifier.SHIFT)
-
-        # ====================================================================
-        # NAVIGATION (for menus/scrolling - context-sensitive)
-        # ====================================================================
-        # Navigation overlaps with movement keys - context determines meaning
-        # In menus: W/S/arrows = navigate, in gameplay: W/S/arrows = move
-        # Note: PgUp/PgDn are bound to diagonal movement (laptop-friendly)
-        # Fast scrolling in menus uses mouse wheel or can be custom-bound
-
-        # ====================================================================
-        # CONFIRM/CANCEL (context-sensitive)
-        # ====================================================================
-        bind(tcod.event.KeySym.RETURN, InputAction.CONFIRM)
-        bind(tcod.event.KeySym.KP_ENTER, InputAction.CONFIRM)
-        bind(tcod.event.KeySym.ESCAPE, InputAction.CANCEL)
-
-        # ====================================================================
-        # SPECIAL
-        # ====================================================================
-        # Debug export (Shift+F12) handled separately due to modifier requirement
-
-    def _init_default_gamepad_mappings(self):
-        """
-        Initialize default gamepad button mappings (Option C).
-
-        Context-sensitive bindings where same button does different things
-        in different game states (A = wait in gameplay, confirm in menus).
-        """
-        # Import ControllerButton and ControllerAxis enums from tcod.sdl.joystick
-        import tcod.sdl.joystick
-
-        CB = tcod.sdl.joystick.ControllerButton
-        CA = tcod.sdl.joystick.ControllerAxis
-
-        # ====================================================================
-        # GAMEPLAY CONTEXT (most important - main game loop)
-        # ====================================================================
-        ctx = InputContext.GAMEPLAY
-
-        # Face buttons
-        self._set_gamepad_button(CB.A, ctx, InputAction.WAIT)
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # For UI consistency
-        self._set_gamepad_button(CB.X, ctx, InputAction.EXPLOIT_SLOT_1)
-        self._set_gamepad_button(CB.Y, ctx, InputAction.TOGGLE_INVENTORY)
-
-        # Shoulder buttons (exploit cycling)
-        self._set_gamepad_button(CB.RIGHTSHOULDER, ctx, InputAction.EXPLOIT_CYCLE_NEXT)
-        self._set_gamepad_button(CB.LEFTSHOULDER, ctx, InputAction.EXPLOIT_CYCLE_PREV)
-
-        # Triggers (RT = execute selected exploit, LT = look mode)
-        self._set_gamepad_axis(CA.TRIGGERRIGHT, ctx, InputAction.EXPLOIT_EXECUTE)
-        self._set_gamepad_axis(CA.TRIGGERLEFT, ctx, InputAction.TOGGLE_LOOK_MODE)
-
-        # Menu buttons
-        self._set_gamepad_button(CB.START, ctx, InputAction.EXIT_TO_MENU)  # Pause = main menu
-        self._set_gamepad_button(CB.BACK, ctx, InputAction.TOGGLE_HELP)  # "Select" button
-
-        # Stick clicks
-        self._set_gamepad_button(CB.LEFTSTICK, ctx, InputAction.TOGGLE_LORE_VIEWER)
-        self._set_gamepad_button(CB.RIGHTSTICK, ctx, InputAction.TOGGLE_ACHIEVEMENTS)
-
-        # D-Pad (movement - also handled by left stick in analog handler)
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.MOVE_NORTH)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.MOVE_SOUTH)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.MOVE_WEST)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.MOVE_EAST)
-
-        # ====================================================================
-        # INVENTORY CONTEXT
-        # ====================================================================
-        ctx = InputContext.INVENTORY
-
-        # Standard Xbox layout: A = confirm, B = cancel (consistent with other contexts)
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button = use/equip
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B button = close
-        self._set_gamepad_button(
-            CB.Y, ctx, InputAction.TOGGLE_INVENTORY
-        )  # Y button = toggle back (same as open)
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-        self._set_gamepad_button(CB.RIGHTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_DOWN)
-        self._set_gamepad_button(CB.LEFTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_UP)
-
-        # ====================================================================
-        # LOOK MODE CONTEXT
-        # ====================================================================
-        ctx = InputContext.LOOK_MODE
-
-        # Standard Xbox layout: A = confirm, B = cancel
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = Inspect entity
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = Exit look mode
-        # Right stick movement handled specially in analog handler (auto-enter + cursor)
-        # D-Pad for cursor movement
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-
-        # ====================================================================
-        # TARGETING CONTEXT
-        # ====================================================================
-        ctx = InputContext.TARGETING
-
-        # Standard Xbox layout: A = confirm, B = cancel
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = Execute exploit
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = Cancel targeting
-        self._set_gamepad_axis(CA.TRIGGERRIGHT, ctx, InputAction.CONFIRM)  # RT also confirms
-        # D-Pad for cursor movement
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-
-        # ====================================================================
-        # DIALOGUE CONTEXT
-        # ====================================================================
-        ctx = InputContext.DIALOGUE
-
-        # Standard Xbox layout: A = confirm/yes, B = cancel/no, X = don't warn again
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = Yes/Confirm
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = No/Cancel
-        self._set_gamepad_button(
-            CB.X, ctx, InputAction.DIALOGUE_SKIP_WARNING
-        )  # X = Don't warn again
-        # D-pad for navigating dialogue choices (all 4 directions)
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-
-        # ====================================================================
-        # HELP/LORE/ACHIEVEMENTS CONTEXT (menu navigation)
-        # ====================================================================
-        for ctx in [InputContext.HELP, InputContext.LORE_VIEWER, InputContext.ACHIEVEMENTS_SCREEN]:
-            # Standard Xbox layout: A = confirm, B = cancel
-            self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-            self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B button
-            self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-            self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-            self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-            self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-            # Shoulder buttons for page navigation (fast scrolling)
-            self._set_gamepad_button(CB.LEFTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_UP)
-            self._set_gamepad_button(CB.RIGHTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_DOWN)
-
-        # ====================================================================
-        # MAIN MENU CONTEXT (vertical navigation only)
-        # ====================================================================
-        ctx = InputContext.MAIN_MENU
-        # Standard Xbox layout: A = confirm, B = cancel
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-        self._set_gamepad_button(
-            CB.B, ctx, InputAction.CANCEL
-        )  # B button (but main menu disables ESC)
-        self._set_gamepad_button(
-            CB.START, ctx, InputAction.EXIT_TO_MENU
-        )  # START = resume game (toggle back)
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        # NO left/right - vertical menu only
-        # NO shoulder buttons - not needed
-
-        # ====================================================================
-        # SETTINGS MENU CONTEXT (horizontal + vertical for value adjustment)
-        # ====================================================================
-        ctx = InputContext.SETTINGS_MENU
-        # Standard Xbox layout: A = confirm, B = cancel
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B button
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        # Settings menu needs left/right for adjusting values (volume, toggles, etc.)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-
-        # ====================================================================
-        # OTHER MENU CONTEXTS (ABOUT, GRAPHICS_PREVIEW)
-        # ====================================================================
-        for ctx in [InputContext.ABOUT_MENU, InputContext.GRAPHICS_PREVIEW]:
-            # Standard Xbox layout: A = confirm, B = cancel
-            self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-            self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = back
-            self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-            self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-            self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-            self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-
-        # ====================================================================
-        # CONTROLS MENU (X=Default, Y=Reset All for binding menus)
-        # ====================================================================
-        ctx = InputContext.CONTROLS_MENU
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = edit binding
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = back
-        self._set_gamepad_button(
-            CB.X, ctx, InputAction.CONTROLS_RESET_DEFAULT
-        )  # X = reset to default
-        self._set_gamepad_button(CB.Y, ctx, InputAction.CONTROLS_RESET_ALL)  # Y = reset all
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-        self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
-        self._set_gamepad_button(CB.DPAD_RIGHT, ctx, InputAction.NAVIGATE_RIGHT)
-        # LB/RB for fast scroll / tab switching
-        self._set_gamepad_button(CB.LEFTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_UP)
-        self._set_gamepad_button(CB.RIGHTSHOULDER, ctx, InputAction.NAVIGATE_PAGE_DOWN)
-
-        # ====================================================================
-        # GAME OVER CONTEXT
-        # ====================================================================
-        ctx = InputContext.GAME_OVER
-        # Any button to dismiss/continue
-        self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-        self._set_gamepad_button(CB.B, ctx, InputAction.CONFIRM)  # B button (either works)
-        self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
-        self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
-
-        # ====================================================================
-        # ACHIEVEMENT POPUP CONTEXT (dismiss on any button)
-        # ====================================================================
-        ctx = InputContext.ACHIEVEMENT_POPUP
-        # Any button dismisses popup - handled specially in input handler
-        # No specific mappings needed
-
-    def _set_gamepad_button(self, button: int, context: InputContext, action: InputAction):
-        """Helper to set default gamepad button binding."""
-        self._default_gamepad_button_map[(button, context)] = action
-
-    def _set_gamepad_axis(self, axis: int, context: InputContext, action: InputAction):
-        """Helper to set default gamepad axis (trigger) binding."""
-        self._default_gamepad_axis_map[(axis, context)] = action
 
     def get_action_for_key(
         self,

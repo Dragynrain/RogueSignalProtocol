@@ -410,7 +410,8 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_decoy_swarm")
         exploit = GameData.EXPLOITS["decoy_swarm"]
         attracted = 0
-        for enemy in self.game.enemies:
+        # Use copy to be defensive even though we don't remove enemies
+        for enemy in self.game.enemies[:]:
             movement_type = enemy.get_movement_type()
             # Use grid distance for AoE radius (diagonals = 1)
             if (

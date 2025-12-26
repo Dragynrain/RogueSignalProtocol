@@ -44,6 +44,7 @@ copy /Y game_content.json dist\ >nul
 copy /Y game_rules.json dist\ >nul
 copy /Y narrative_content.json dist\ >nul
 copy /Y graphics_tiles.json dist\ >nul
+copy /Y default_bindings.json dist\ >nul
 copy /Y KreativeSquare.ttf dist\ >nul
 copy /Y LICENSE dist\ >nul
 copy /Y README.txt dist\ >nul
@@ -58,7 +59,8 @@ if /i "%BUILD_TYPE%"=="alpha" (
 
 REM Create release archive
 echo Creating release archive...
-set TIMESTAMP=%date:~-4%-%date:~-10,2%-%date:~-7,2%
+REM Use PowerShell for locale-independent date format (YYYY-MM-DD)
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set TIMESTAMP=%%i
 set RELEASE_NAME=RogueSignalProtocol_%BUILD_TYPE%_%TIMESTAMP%.zip
 if not exist releases mkdir releases
 "C:\Program Files\7-Zip\7z.exe" a -tzip "releases\%RELEASE_NAME%" ".\dist\*" >nul

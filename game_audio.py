@@ -122,7 +122,7 @@ class SoundManager:
                 logging.debug(
                     f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}"
                 )
-            except Exception as e:
+            except (pygame.error, OSError) as e:
                 GameErrorHandler.handle_error(e, "sound_init", "Sound initialization failed")
                 self.enabled = False
 
@@ -251,7 +251,7 @@ class SoundManager:
             file_size = os.path.getsize(sound_path)
             logging.debug(f"Audio: Loaded sound '{sound_id}' from {filename} ({file_size} bytes)")
             return True
-        except Exception as e:
+        except (pygame.error, OSError) as e:
             GameErrorHandler.handle_error(e, "sound_load", f"Failed to load {sound_id}")
             return False
 
@@ -345,7 +345,7 @@ class SoundManager:
             logging.debug(
                 f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)"
             )
-        except Exception as e:
+        except (pygame.error, OSError) as e:
             GameErrorHandler.handle_error(e, "music_play", f"Failed to play {filename}")
             self.current_music = None
             self.music_playing = False
@@ -363,7 +363,7 @@ class SoundManager:
                 pygame.mixer.music.stop()
             self.music_playing = False
             self.current_music = None
-        except Exception as e:
+        except pygame.error as e:
             GameErrorHandler.handle_error(e, "music_stop", "Failed to stop music")
 
     def is_music_playing(self) -> bool:
