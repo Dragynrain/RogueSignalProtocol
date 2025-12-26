@@ -58,7 +58,7 @@ AppDir:
   app_info:
     id: com.dragynrain.roguesignalprotocol
     name: Rogue Signal Protocol
-    version: 0.8.0
+    version: 0.9.0-beta
     icon: rogue-signal-protocol
     exec: usr/bin/RogueSignalProtocol
     exec_args: $@

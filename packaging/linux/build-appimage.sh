@@ -9,11 +9,11 @@
 #
 # Usage:
 #   ./packaging/linux/build-appimage.sh [version]
-#   Example: ./packaging/linux/build-appimage.sh 0.8.0
+#   Example: ./packaging/linux/build-appimage.sh 0.9.0-beta
 
 set -e
 
-VERSION="${1:-0.8.0}"
+VERSION="${1:-0.9.0-beta}"
 APPNAME="RogueSignalProtocol"
 APPDIR="AppDir"
 

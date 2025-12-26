@@ -2,6 +2,10 @@
 
 This directory contains packaging configurations for Linux distribution formats.
 
+## Current Release: 0.9.0-beta
+
+This is a **beta release** targeting community testing before 1.0 stable.
+
 ## Package Formats
 
 ### 1. AppImage (Universal)
@@ -14,10 +18,10 @@ AppImages are portable, self-contained executables that work on any Linux distri
 ```bash
 # After PyInstaller build completes:
 cd /path/to/RogueSignalProtocol
-./packaging/linux/build-appimage.sh 0.8.0
+./packaging/linux/build-appimage.sh 0.9.0-beta
 ```
 
-**Output**: `RogueSignalProtocol-0.8.0-x86_64.AppImage`
+**Output**: `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
 
 **Distribution**: GitHub Releases, itch.io
 
@@ -34,12 +38,20 @@ flatpak-builder --user --install --force-clean build-dir com.dragynrain.roguesig
 flatpak run com.dragynrain.roguesignalprotocol
 ```
 
-**Flathub submission**:
+**Flathub BETA submission** (for 0.9.0-beta):
 1. Fork https://github.com/flathub/flathub
-2. Create branch with app ID
+2. Create branch: `com.dragynrain.roguesignalprotocol`
 3. Add `com.dragynrain.roguesignalprotocol.yml`
-4. Submit PR
+4. Submit PR targeting the **beta branch**
 5. Wait for review (1-7 days)
+
+**User installation from beta channel**:
+```bash
+flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+flatpak install flathub-beta com.dragynrain.roguesignalprotocol
+```
+
+**Note**: Beta apps don't appear in main Flathub listings. When ready for 1.0 stable, submit new PR to stable branch (users must reinstall).
 
 ### 3. AUR (Arch Linux)
 

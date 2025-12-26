@@ -1,10 +1,16 @@
 # Flatpak manifest for Rogue Signal Protocol
 # Build with: flatpak-builder --user --install build-dir com.dragynrain.roguesignalprotocol.yml
 #
-# For Flathub submission:
+# For Flathub BETA submission (0.9.0-beta):
 #   1. Fork https://github.com/flathub/flathub
-#   2. Add this file as com.dragynrain.roguesignalprotocol.yml
-#   3. Submit PR
+#   2. Create branch: com.dragynrain.roguesignalprotocol
+#   3. Add this file as com.dragynrain.roguesignalprotocol.yml
+#   4. Add x-flathub section with "default-branch": "beta" to manifest
+#   5. Submit PR targeting the beta branch
+#
+# Users install beta via:
+#   flatpak remote-add flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+#   flatpak install flathub-beta com.dragynrain.roguesignalprotocol
 #
 # Local testing:
 #   flatpak-builder --user --install --force-clean build-dir com.dragynrain.roguesignalprotocol.yml
@@ -90,7 +96,7 @@ modules:
       # Source type: archive from GitHub release
       # Update URL and sha256 for each release
       - type: archive
-        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.8.0/RogueSignalProtocol-Linux.tar.gz
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/RogueSignalProtocol-Linux.tar.gz
         sha256: REPLACE_WITH_ACTUAL_SHA256
         # For local testing, use:
         # - type: dir
