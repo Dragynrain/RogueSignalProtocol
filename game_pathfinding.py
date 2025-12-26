@@ -158,6 +158,17 @@ class PathfindingHelper:
         Returns:
             Tuple (dx, dy) for the best flee direction, or None if no valid move
         """
+        # Validate current position is within dijkstra_map bounds
+        if dijkstra_map is None or dijkstra_map.size == 0:
+            return None
+        map_height, map_width = dijkstra_map.shape
+        if not (0 <= current_pos.x < map_width and 0 <= current_pos.y < map_height):
+            logging.debug(
+                f"get_flee_move: current_pos ({current_pos.x},{current_pos.y}) "
+                f"out of bounds for dijkstra_map ({map_width}x{map_height})"
+            )
+            return None
+
         best_move = None
         best_distance = dijkstra_map[current_pos.y, current_pos.x]  # [y, x] indexing
 
@@ -169,6 +180,10 @@ class PathfindingHelper:
             if not new_pos.is_valid(game_map.width, game_map.height):
                 continue
             if game_map.is_wall(new_pos):
+                continue
+
+            # Bounds check before array access (defensive - is_valid should catch this)
+            if not (0 <= new_pos.x < map_width and 0 <= new_pos.y < map_height):
                 continue
 
             # Get distance at this position
@@ -252,10 +267,21 @@ class PathfindingHelper:
         if hasattr(game_engine, "player") and game_engine.player is not None:
             try:
                 player = game_engine.player
-                # Validate player coordinates are integers
-                px, py = int(player.x), int(player.y)
-                if 0 <= px < game_map.width and 0 <= py < game_map.height:
-                    cost_map[py, px] = 0  # TCOD uses [y, x] indexing
+                # Validate coordinates are finite numbers BEFORE int conversion
+                # (NaN/infinity would produce unpredictable int() results)
+                if (
+                    hasattr(player, "x")
+                    and hasattr(player, "y")
+                    and player.x is not None
+                    and player.y is not None
+                    and isinstance(player.x, (int, float))
+                    and isinstance(player.y, (int, float))
+                    and player.x == player.x  # NaN check (NaN != NaN)
+                    and player.y == player.y
+                ):
+                    px, py = int(player.x), int(player.y)
+                    if 0 <= px < game_map.width and 0 <= py < game_map.height:
+                        cost_map[py, px] = 0  # TCOD uses [y, x] indexing
             except (AttributeError, TypeError, ValueError) as e:
                 logging.debug(f"Failed to mark player as impassable in cost map: {e}")
                 pass  # Skip player blocking if coordinates invalid (e.g., in tests)

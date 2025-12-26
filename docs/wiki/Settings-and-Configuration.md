@@ -183,25 +183,88 @@ Complete reference for all settings and configuration options in Rogue Signal Pr
 
 ## Gameplay Settings
 
-### System Crash Warning
-- **Options:** On | Off
-- **Default:** On
-- **Description:** Show warning dialogue before using System Crash exploit
-- **Reason:** System Crash deals self-damage and can kill you
-- **Warning Content:**
-  - "System Crash deals damage to YOU!"
-  - Confirms you want to proceed
-  - Prevents accidental deaths
-- **When to Disable:** Experienced players who know the risks
-
 ### Dialogue Preferences
 - **Description:** Per-dialogue toggles to hide specific warnings after seeing them once
-- **Format:** Individual dialogues can be disabled
+- **Format:** Individual dialogues can be disabled via pressing D on the dialogue
 - **Examples:**
-  - Overclock warning
-  - Tutorial tips
-  - First-time help messages
+  - Overclock warning (when using exploits at high heat)
+  - System Crash warning (self-damage confirmation)
+  - Friendly fire warning
+  - Gateway confirmation
 - **Reset:** Delete `saves/user_settings.json` to see all dialogues again
+
+---
+
+## Gamepad Settings
+
+### Gamepad Enabled
+- **Options:** On | Off
+- **Default:** On
+- **Description:** Enable controller/gamepad support
+
+### Gamepad Deadzone
+- **Range:** 0.0 - 1.0
+- **Default:** 0.25
+- **Description:** Minimum stick movement before registering input
+- **Tip:** Increase if experiencing stick drift
+
+### Gamepad Threshold
+- **Range:** 0.0 - 1.0
+- **Default:** 0.5
+- **Description:** Stick position required to trigger movement
+- **Tip:** Lower for more sensitive controls
+
+### Gamepad Direction Locking
+- **Options:** On | Off
+- **Default:** On
+- **Description:** Lock to 8-directional movement (prevents diagonal drift)
+- **When On:** Movement snaps to cardinal/diagonal directions
+- **When Off:** Free analog movement (may feel less precise)
+
+### Gamepad Swap Sticks
+- **Options:** On | Off
+- **Default:** Off
+- **Description:** Swap left and right stick functions
+- **When On:** Right stick controls movement, left stick for menus
+
+---
+
+## Ascension System
+
+### What is Ascension?
+- **Access:** Press **N** key in-game
+- **Description:** Meta-progression system that increases difficulty for experienced players
+- **Persistence:** Ascension level persists across runs
+
+### Ascension Levels
+- Higher ascension = harder enemies, less resources
+- Unlocks after completing the game
+- Provides additional challenge for mastery
+
+---
+
+## Advanced Settings
+
+### UI Scale
+- **Range:** 0.5 - 2.0
+- **Default:** 1.0
+- **Description:** Scale UI elements (useful for high-DPI displays)
+
+### Music Boost
+- **Range:** 0.5 - 2.0
+- **Default:** 1.0
+- **Description:** Additional music volume multiplier (for Linux compatibility)
+- **Use Case:** Some Linux audio systems need boosted music levels
+
+### Custom Keybindings
+- **Description:** Override default keyboard controls
+- **Format:** JSON object mapping actions to keys
+- **Location:** `custom_keyboard_bindings` in user_settings.json
+
+### Custom Gamepad Bindings
+- **Description:** Override default gamepad button mappings
+- **Format:** JSON object mapping actions to buttons
+- **Location:** `custom_gamepad_bindings` in user_settings.json
 
 ---
 
@@ -211,7 +274,7 @@ Complete reference for all settings and configuration options in Rogue Signal Pr
 
 ### Fixed Display Parameters
 - **Screen Size:** 80x50 characters
-- **Game Viewport:** 27x21 tiles (visible play area)
+- **Game Viewport:** 55x44 glyph / ~27x21 graphics (visible play area)
 - **UI Panels:** Fixed layout
 - **Status Bar:** Top of screen (1 line height)
 - **Message Log:** Bottom of screen (scrollable)
@@ -255,11 +318,19 @@ When `user_settings.json` doesn't exist, defaults are:
   "sfx_volume": 0.75,
   "music_volume": 0.6,
   "graphics_mode": "graphics",
-  "particle_effects": true,
-  "ui_color_theme": "cyan",
-  "achievement_popups": true,
+  "show_particle_effects": true,
+  "ui_color": "cyan",
+  "show_achievement_popups": true,
   "dialogue_preferences": {},
-  "system_crash_warning": true
+  "gamepad_enabled": true,
+  "gamepad_deadzone": 0.25,
+  "gamepad_threshold": 0.5,
+  "gamepad_direction_locking": true,
+  "gamepad_swap_sticks": false,
+  "ui_scale": 1.0,
+  "music_boost": 1.0,
+  "custom_keyboard_bindings": {},
+  "custom_gamepad_bindings": {}
 }
 ```
 
@@ -407,11 +478,13 @@ Settings beyond user options require editing JSON files:
 4. **Accessible:** Easy to find and modify
 5. **Forgiving:** Can't break game by changing settings
 
-**What's NOT Configurable:**
-- Keybindings (fixed for consistency)
-- Difficulty (selected at game start)
+**What's NOT Configurable In-Game:**
 - Display resolution (fixed to 80x50 console)
 - Game rules (requires JSON modding)
+
+**Configurable via JSON:**
+- Keybindings (custom_keyboard_bindings in user_settings.json)
+- Gamepad bindings (custom_gamepad_bindings in user_settings.json)
 
 Settings are about **comfort and preference**, not **gameplay advantage**.
 

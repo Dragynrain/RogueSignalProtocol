@@ -36,7 +36,7 @@ dist/
 ├── game_content.json
 ├── game_rules.json
 ├── graphics_tiles.json
-├── story_content.json
+├── narrative_content.json
 ├── terminal10x16_gs_ro.png
 ├── graphics/                (all sprite PNGs)
 ├── sound/                   (all sound effects)

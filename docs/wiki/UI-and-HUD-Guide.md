@@ -8,7 +8,7 @@ The game UI is divided into distinct regions, each serving specific purposes. Un
 
 **Screen Layout (80x50 characters):**
 - **Top:** Status bar (1 line)
-- **Center:** Game viewport (27x21 tiles)
+- **Center:** Game viewport (55x44 glyph / ~27x21 graphics)
 - **Bottom:** Status panel and message log
 - **Right:** Sidebar (when applicable)
 
@@ -251,7 +251,7 @@ Scrolling text log of recent game events, displayed in lower portion of screen.
 
 ## Game Viewport
 
-**Central play area (27x21 tiles)** showing the game world.
+**Central play area (55x44 glyph / ~27x21 graphics)** showing the game world.
 
 ### Viewport Elements
 

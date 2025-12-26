@@ -12,9 +12,9 @@
 - **File**: `game_mouse_utils.py`
 
 ### 2. **World Coordinates** (Game Map)
-- **What**: Position on game map (100×100 in this game)
+- **What**: Position on game map (50×50 in this game)
 - **Used by**: In-game clicks, targeting, look mode, movement
-- **Returns**: World position (0-99, 0-99) or None
+- **Returns**: World position (0-49, 0-49) or None
 - **Tool**: `InputCoordinateConverter.pixel_to_world_position()`
 - **File**: `game_input_coordinates.py`
 
@@ -104,7 +104,7 @@ if world_pos:
 - Simple and stateless - no game state needed
 
 **InputCoordinateConverter.pixel_to_world_position (game_input_coordinates.py):**
-- Converts pixel → world position (0-99, 0-99)
+- Converts pixel → world position (0-49, 0-49)
 - Complex and stateful - needs graphics mode, camera offset, map bounds, viewport config
 - Used by input handlers in `game_input_gameplay.py` and `game_input_modals.py`
 

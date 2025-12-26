@@ -39,25 +39,24 @@ dx = next_x - player_x    # dx = 0, dy = 0 → no movement!
 dy = next_y - player_y
 ```
 
-**Correct approach:**
+**Correct approach (this codebase):**
 
 ```python
-# Skip starting position:
-pathfinder.add_root((player_x, player_y))
-path = pathfinder.path_to((target_x, target_y))
+# Use (y, x) order for TCOD pathfinding!
+pathfinder.add_root((player_y, player_x))
+path = pathfinder.path_to((target_y, target_x))
 
-# Filter out starting position
-path_to_walk = [p for p in path if tuple(p) != (player_x, player_y)]
-
-if len(path_to_walk) == 0:
-    return True  # Already at destination
-
-next_x, next_y = path_to_walk[0]  # First actual move
-dx = next_x - player_x
-dy = next_y - player_y
+# Check path length - path[0] is starting position
+if len(path) > 1:
+    # Skip starting position (path[0]) - use path[1] for first move
+    next_y, next_x = path[1]  # Remember: TCOD returns (y, x)
+    dx = next_x - player_x
+    dy = next_y - player_y
 ```
 
 **Why this happens:** `path_to()` returns the full path including start → step1 → step2 → ... → goal. Many pathfinding libraries only return the steps (excluding start), but TCOD includes it.
+
+**This codebase's approach:** Instead of filtering, we check `len(path) > 1` and access `path[1]` directly. See `game_pathfinding.py` for the actual implementation.
 
 **Symptom if you get this wrong:** Movement fails silently - entities stay at starting position forever, trying to "move" with dx=0, dy=0.
 
