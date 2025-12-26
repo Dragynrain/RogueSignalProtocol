@@ -181,6 +181,116 @@ class TestQueueMaintenanceIntegration:
         assert len(test_enemy.move_queue) == 0, "Queue should clear on state change"
 
 
+class TestCompleteEnemyLifecycle:
+    """Test complete enemy AI lifecycle from spawn to attack."""
+
+    def test_enemy_detects_player_and_transitions_to_hostile(self, basic_game_engine):
+        """Test detection flow: UNAWARE → sees player → transitions to HOSTILE.
+
+        This tests the AI detection system that happens in real gameplay.
+        The pathfinding portion is tested separately in pathfinding tests.
+        """
+        # Position enemy and player in open area (center of map) for clear LOS
+        enemy_pos = (15, 12)
+        player_pos = (15, 16)  # Same column, 4 tiles away (clear vertical line)
+
+        # Create UNAWARE enemy - scanner has good base vision
+        test_enemy = enemy_builder("scanner", pos=enemy_pos)
+        test_enemy.state = EnemyState.UNAWARE
+        basic_game_engine.enemies = [test_enemy]
+
+        # Place player in enemy's line of sight
+        basic_game_engine.player.x = player_pos[0]
+        basic_game_engine.player.y = player_pos[1]
+
+        # Ensure clear line of sight by removing any walls between them
+        for y in range(min(enemy_pos[1], player_pos[1]), max(enemy_pos[1], player_pos[1]) + 1):
+            pos = (enemy_pos[0], y)
+            if pos in basic_game_engine.game_map.walls:
+                basic_game_engine.game_map.walls.remove(pos)
+
+        # Verify initial state
+        assert test_enemy.state == EnemyState.UNAWARE
+
+        # Process turns until enemy detects player
+        detected = False
+        for turn in range(5):  # Give it 5 turns to detect
+            basic_game_engine.process_turn()
+            if test_enemy.state in (EnemyState.HOSTILE, EnemyState.ALERT):
+                detected = True
+                break
+
+        assert detected, f"Enemy should detect player within 5 turns, got {test_enemy.state}"
+
+        # Continue processing until enemy is HOSTILE
+        for _ in range(3):  # Extra turns for full transition
+            if test_enemy.state == EnemyState.HOSTILE:
+                break
+            basic_game_engine.process_turn()
+
+        assert test_enemy.state == EnemyState.HOSTILE, f"Enemy should be HOSTILE, got {test_enemy.state}"
+
+        # Enemy should know where player was
+        assert test_enemy.last_seen_player is not None, "Enemy should have recorded player position"
+
+    def test_adjacent_enemy_can_attack(self, basic_game_engine):
+        """Test that an adjacent HOSTILE enemy can attack the player."""
+        # Place enemy adjacent to player
+        player_x, player_y = 15, 15
+        basic_game_engine.player.x = player_x
+        basic_game_engine.player.y = player_y
+
+        # Create HOSTILE enemy adjacent to player (use firewall - has damage)
+        test_enemy = enemy_builder("firewall", pos=(player_x + 1, player_y))
+        test_enemy.state = EnemyState.HOSTILE
+        test_enemy.last_seen_player = basic_game_engine.player.position
+        basic_game_engine.enemies = [test_enemy]
+
+        # Verify adjacency
+        distance = test_enemy.position.grid_distance_to(basic_game_engine.player.position)
+        assert distance == 1, f"Enemy should be adjacent (distance 1), got {distance}"
+
+        # Verify enemy has damage
+        assert test_enemy.type_data.damage > 0, f"Enemy should have damage, got {test_enemy.type_data.damage}"
+
+        # Enemy should be able to attack
+        assert test_enemy.can_attack_player(
+            basic_game_engine.player
+        ), "Adjacent HOSTILE enemy with damage should be able to attack"
+
+    def test_alert_chain_propagation(self, basic_game_engine):
+        """Test that when one enemy goes HOSTILE, nearby enemies are alerted.
+
+        This tests the communication system between enemies.
+        """
+        from game_session import GameSession
+
+        # Create a chain of enemies
+        primary = enemy_builder("scanner", pos=(10, 10), state=EnemyState.UNAWARE)
+        nearby1 = enemy_builder("bot", pos=(12, 10), state=EnemyState.UNAWARE)
+        nearby2 = enemy_builder("patrol", pos=(10, 12), state=EnemyState.UNAWARE)
+        distant = enemy_builder("virus", pos=(40, 40), state=EnemyState.UNAWARE)
+
+        basic_game_engine.enemies = [primary, nearby1, nearby2, distant]
+        game_session = GameSession(basic_game_engine)
+
+        # Primary enemy goes hostile
+        player_pos = basic_game_engine.player.position
+        primary.make_hostile(player_pos)
+        game_session._alert_nearby_enemies(primary)
+
+        # Nearby enemies should be alerted
+        assert nearby1.state == EnemyState.HOSTILE, "nearby1 should be alerted"
+        assert nearby2.state == EnemyState.HOSTILE, "nearby2 should be alerted"
+
+        # Distant enemy should remain unaware
+        assert distant.state == EnemyState.UNAWARE, "distant should stay unaware"
+
+        # All alerted enemies should know player position
+        assert nearby1.last_seen_player == player_pos
+        assert nearby2.last_seen_player == player_pos
+
+
 if __name__ == "__main__":
     import pytest
 

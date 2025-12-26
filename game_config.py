@@ -788,25 +788,6 @@ class GameConfig:
             raise KeyError(f"Required config key missing: {key}") from e
 
     @classmethod
-    def get(cls, key: str, default=None):
-        """Get configuration value by key with optional default (use sparingly)."""
-        if cls._config_data is None:
-            cls.load_from_json()
-
-        if cls._config_data:
-            keys = key.split(".")
-            value = cls._config_data
-            try:
-                for k in keys:
-                    value = value[k]
-                return value
-            except (KeyError, TypeError):
-                # Log at debug level - this is expected for optional config with defaults
-                logging.debug(f"Config key '{key}' not found, using default: {default}")
-
-        return default
-
-    @classmethod
     def get_network_configs(cls) -> dict[int, dict[str, Any]]:
         """Get network configurations from game data."""
         game_data = DataLoader.load_game_data()
