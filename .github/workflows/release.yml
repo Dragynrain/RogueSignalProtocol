@@ -341,8 +341,8 @@ jobs:
         wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
         chmod +x appimagetool-x86_64.AppImage
 
-        # Build the AppImage
-        ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "RogueSignalProtocol-${VERSION}-x86_64.AppImage"
+        # Build the AppImage (use --appimage-extract-and-run to avoid FUSE requirement on GitHub runners)
+        ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run "$APPDIR" "RogueSignalProtocol-${VERSION}-x86_64.AppImage"
 
         # Verify AppImage was created
         if [ ! -f "RogueSignalProtocol-${VERSION}-x86_64.AppImage" ]; then
