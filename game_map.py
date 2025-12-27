@@ -158,16 +158,22 @@ class GameMap:
         return False
 
     def is_cooling_node(self, position: Position) -> bool:
-        """Check if position contains a cooling node."""
-        return (position.x, position.y) in self.cooling_nodes
+        """Check if position contains an active (non-depleted) cooling node."""
+        pos = (position.x, position.y)
+        node = self.cooling_nodes.get(pos)
+        return node is not None and not node.depleted
 
     def is_cpu_recovery_node(self, position: Position) -> bool:
-        """Check if position contains a CPU recovery node."""
-        return (position.x, position.y) in self.cpu_recovery_nodes
+        """Check if position contains an active (non-depleted) CPU recovery node."""
+        pos = (position.x, position.y)
+        node = self.cpu_recovery_nodes.get(pos)
+        return node is not None and not node.depleted
 
     def is_ghost_node(self, position: Position) -> bool:
-        """Check if position contains a ghost node (trace level reduction)."""
-        return (position.x, position.y) in self.ghost_nodes
+        """Check if position contains an active (non-depleted) ghost node."""
+        pos = (position.x, position.y)
+        node = self.ghost_nodes.get(pos)
+        return node is not None and not node.depleted
 
     def get_special_node_type(self, position: Position) -> str | None:
         """
