@@ -561,11 +561,13 @@ class TestA12SpawnWeightDistribution:
         a12_dangerous_pct = a12_dangerous / max(a12_total, 1)
 
         # A12 should have higher percentage of dangerous enemies
-        # This is a statistical test - allow some variance but expect trend
-        # At minimum, verify the modifier is being applied
-        assert (
-            engine.ascension_modifiers.spawn_weights is not None
-        ), "A12 spawn weights should be configured"
+        # With 3 level generations each and A9's +5 enemies bonus at A12,
+        # we have enough samples to expect a measurable difference
+        assert a12_dangerous_pct >= a0_dangerous_pct, (
+            f"A12 should have >= dangerous enemy percentage: "
+            f"A0={a0_dangerous_pct:.1%} ({a0_dangerous}/{a0_total}), "
+            f"A12={a12_dangerous_pct:.1%} ({a12_dangerous}/{a12_total})"
+        )
 
 
 class TestA13NodeCapacitySystem:
@@ -624,6 +626,75 @@ class TestA13NodeCapacitySystem:
         for node in engine.game_map.cooling_nodes.values():
             assert node.total_capacity == -1, "Below A13, nodes should be unlimited"
             assert node.unlimited
+
+
+class TestA15AlertRangeGameplay:
+    """Verify A15 alert range override affects actual enemy alert cascades."""
+
+    def test_alert_cascade_at_extended_range(self, mock_sound_manager, game_settings):
+        """
+        A15 should allow alert cascades at distance 8 (beyond default 6).
+
+        At A15, alert_range_override is 10. An enemy at distance 8 from an
+        alerting enemy should become hostile. At A14 (default 6), it would not.
+        """
+        from game_characters import EnemyState
+
+        engine = create_game_at_ascension(15, mock_sound_manager, game_settings)
+
+        # Clear existing enemies for controlled test
+        engine.enemies.clear()
+
+        # Create two enemies at distance 8 apart (within A15's range of 10, outside default 6)
+        enemy1 = Enemy(position=Position(10, 10), enemy_type="scanner")
+        enemy2 = Enemy(position=Position(18, 10), enemy_type="scanner")
+        engine.enemies.extend([enemy1, enemy2])
+
+        # Verify distance is 8 (outside default range of 6)
+        distance = enemy1.position.grid_distance_to(enemy2.position)
+        assert distance == 8, f"Test setup: enemies should be 8 tiles apart, got {distance}"
+
+        # Make enemy1 hostile - this should trigger alert cascade
+        enemy1.state = EnemyState.HOSTILE
+
+        # Call the alert cascade method
+        engine.game_session.turn_manager._alert_nearby_enemies(enemy1)
+
+        # At A15 (range 10), enemy2 should become hostile
+        assert enemy2.state == EnemyState.HOSTILE, (
+            f"A15: Enemy at distance 8 should be alerted (range is 10), "
+            f"but state is {enemy2.state}"
+        )
+
+    def test_alert_cascade_not_extended_below_a15(self, mock_sound_manager, game_settings):
+        """
+        Below A15, alert cascade should use default range (6).
+
+        An enemy at distance 8 should NOT be alerted at A14.
+        """
+        from game_characters import EnemyState
+
+        engine = create_game_at_ascension(14, mock_sound_manager, game_settings)
+
+        # Clear existing enemies for controlled test
+        engine.enemies.clear()
+
+        # Create two enemies at distance 8 apart
+        enemy1 = Enemy(position=Position(10, 10), enemy_type="scanner")
+        enemy2 = Enemy(position=Position(18, 10), enemy_type="scanner")
+        engine.enemies.extend([enemy1, enemy2])
+
+        # Make enemy1 hostile
+        enemy1.state = EnemyState.HOSTILE
+
+        # Call the alert cascade method
+        engine.game_session.turn_manager._alert_nearby_enemies(enemy1)
+
+        # At A14 (default range 6), enemy2 at distance 8 should NOT be alerted
+        assert enemy2.state != EnemyState.HOSTILE, (
+            f"A14: Enemy at distance 8 should NOT be alerted (range is 6), "
+            f"but state is {enemy2.state}"
+        )
 
 
 class TestA17A8HeatStacking:
