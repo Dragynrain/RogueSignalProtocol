@@ -287,7 +287,7 @@ class TestAchievementsMenuIntegration:
         # and that get_unlock_progress returns correct values
         unlocked, total = AchievementManager.get_unlock_progress()
         assert unlocked == 3
-        assert total == 37
+        assert total == 47
 
         # Clean up
         AchievementManager._unlocked_achievements = set()
@@ -328,10 +328,10 @@ class TestAchievementsMenuEdgeCases:
         # Should not crash
         menu.render(console)
 
-        # Check progress is 0/25
+        # Check progress is 0/47
         unlocked, total = AchievementManager.get_unlock_progress()
         assert unlocked == 0
-        assert total == 37
+        assert total == 47
 
     def test_menu_handles_all_unlocked_achievements(self):
         """Test menu works when all achievements unlocked."""
@@ -344,10 +344,10 @@ class TestAchievementsMenuEdgeCases:
         # Should not crash
         menu.render(console)
 
-        # Check progress is 25/25
+        # Check progress is 47/47
         unlocked, total = AchievementManager.get_unlock_progress()
-        assert unlocked == 37
-        assert total == 37
+        assert unlocked == 47
+        assert total == 47
 
         # Clean up
         AchievementManager._unlocked_achievements = set()

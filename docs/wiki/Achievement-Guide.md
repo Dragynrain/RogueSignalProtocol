@@ -4,7 +4,7 @@ Complete guide to all achievements in Rogue Signal Protocol.
 
 ## Overview
 
-There are **37 achievements** organized into 8 categories. Some achievements are **hidden** until unlocked to preserve surprise and challenge.
+There are **47 achievements** organized into 9 categories. Some achievements are **hidden** until unlocked to preserve surprise and challenge.
 
 **Progress Tracking:**
 - Achievements unlock in real-time during gameplay
@@ -15,6 +15,72 @@ There are **37 achievements** organized into 8 categories. Some achievements are
 ---
 
 ## Achievement Categories
+
+### Getting Started (10 Achievements)
+
+Early game achievements designed for new players. These unlock quickly and provide satisfying feedback as you learn the game.
+
+#### System Failure
+**Die for the first time**
+- **Unlock Condition:** Die in any way
+- **Difficulty:** Automatic
+- **Tips:** This is a roguelike - death is inevitable and part of the experience
+
+#### Victory Protocol
+**Win your first game**
+- **Unlock Condition:** Successfully exfiltrate through all 3 levels
+- **Difficulty:** Medium
+- **Tips:** Focus on survival, learn enemy patterns, use restoration nodes liberally
+
+#### Network Breach
+**Complete your first level**
+- **Unlock Condition:** Reach the gateway on any level
+- **Difficulty:** Easy
+- **Tips:** The gateway (>) appears once you explore enough of the level
+
+#### Payload Deployed
+**Use your first exploit**
+- **Unlock Condition:** Activate any exploit
+- **Difficulty:** Automatic
+- **Tips:** Press number keys (1-4) to use equipped exploits
+
+#### Hack Activated
+**Use your first code hack**
+- **Unlock Condition:** Pick up and use any code hack (!)
+- **Difficulty:** Automatic
+- **Tips:** Code hacks are color-coded - same color = same effect each run
+
+#### System Restore
+**Use a restoration node**
+- **Unlock Condition:** Step on any Cooling, CPU, or Ghost node
+- **Difficulty:** Automatic
+- **Tips:** Nodes are marked with symbols on the map
+
+#### Kill Streak
+**Kill 5 enemies in one run**
+- **Unlock Condition:** Eliminate 5 enemies across all levels in single run
+- **Difficulty:** Easy
+- **Tips:** Most runs involve combat - this unlocks naturally
+
+#### Body Count
+**Kill 10 enemies in one run**
+- **Unlock Condition:** Eliminate 10 enemies across all levels in single run
+- **Difficulty:** Easy-Medium
+- **Tips:** Be more aggressive on Corporate Network (19 enemies available)
+
+#### Rookie
+**Complete 3 games**
+- **Unlock Condition:** Finish 3 playthroughs (win or lose)
+- **Difficulty:** Time-based
+- **Tips:** Every run teaches you something - embrace the learning curve
+
+#### Heat Spike
+**Reach 50+ heat in a run**
+- **Unlock Condition:** Let heat level exceed 50 at any point
+- **Difficulty:** Easy
+- **Tips:** Use high-heat exploits like System Crash (35) or Logic Bomb (35)
+
+---
 
 ### Combat Mastery (6 Achievements)
 
@@ -460,38 +526,49 @@ Special achievements for unique accomplishments and memorable moments.
 
 ### Efficient Unlocking Path
 
-**Beginner Route (First 5 Runs):**
-1. First Blood → Automatic in first combat
-2. Explorer → Use all 3 node types
-3. Enemy Database → See all enemy types
-4. Code Collector → Use all 6 code hack types
-5. Veteran → Complete 10 games (ongoing)
+**First Run (Tutorial Achievements):**
+1. System Failure → You'll die, and that's okay
+2. Payload Deployed → Use any exploit
+3. Hack Activated → Use any code hack
+4. System Restore → Use any restoration node
+5. Network Breach → Complete your first level
+6. Kill Streak → Kill 5 enemies
+7. First Blood → Already tracked with Kill Streak
+
+**Early Runs (Learning the Game):**
+8. Body Count → Kill 10 enemies
+9. Heat Spike → Reach 50+ heat
+10. Rookie → Complete 3 games
+11. Victory Protocol → Win your first game
+12. Explorer → Use all 3 node types
+13. Enemy Database → See all enemy types
+14. Code Collector → Use all 6 code hack types
+15. Veteran → Complete 10 games (ongoing)
 
 **Intermediate Route (Skill Building):**
-6. Ghost Protocol → Complete one level undetected
-7. Pacifist → Complete level with ≤5 kills
-8. Blind Spot Master → 5 kills from blind spots
-9. Silent Assassin → 10 undetected kills
-10. Minimalist → Win with ≤3 exploits
+16. Ghost Protocol → Complete one level undetected
+17. Pacifist → Complete level with ≤5 kills
+18. Blind Spot Master → 5 kills from blind spots
+19. Silent Assassin → 10 undetected kills
+20. Minimalist → Win with ≤3 exploits
 
 **Advanced Route (Challenge Runs):**
-11. No Trace → Win without trace >50%
-12. Heat Master → Win without heat >50
-13. Untouchable → Win without taking damage
-14. Speedrunner → Win in <100 turns
-15. Resource Efficient → Win without code hacks
+21. No Trace → Win without trace >50%
+22. Heat Master → Win without heat >50
+23. Untouchable → Win without taking damage
+24. Speedrunner → Win in <100 turns
+25. Resource Efficient → Win without code hacks
 
 **Expert Route (Mastery):**
-16. Master Hacker → Use all 12 exploits
-17. Massacre → Kill 20+ enemies
-18. Invisible Victory → Win never detected
-19. Pure Skill → Win without exploits/code hacks (extreme)
+26. Master Hacker → Use all 12 exploits
+27. Massacre → Kill 20+ enemies
+28. Invisible Victory → Win never detected
+29. Pure Skill → Win without exploits/code hacks (extreme)
 
 **Lifetime Achievements (Ongoing):**
-20. Veteran → 10 completions
-21. Persistent → 5 wins
-22. Survivor → 500+ turn run
-23. Legendary → 20 wins
+30. Persistent → 5 wins
+31. Survivor → 500+ turn run
+32. Legendary → 20 wins
 
 ### Complementary Achievements
 

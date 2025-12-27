@@ -20,6 +20,12 @@ TOTAL_EXPLOITS = 12  # From game_content.json
 TOTAL_CODE_HACK_TYPES = 6
 
 # Achievement threshold constants
+# Early game / Easy achievements
+KILL_STREAK_5_THRESHOLD = 5
+KILL_STREAK_10_THRESHOLD = 10
+HEAT_SPIKE_THRESHOLD = 50
+ROOKIE_GAMES_THRESHOLD = 3
+
 # Combat
 MASSACRE_KILLS_THRESHOLD = 20
 OVERKILL_DAMAGE_THRESHOLD = 50
@@ -57,6 +63,81 @@ class Achievement:
 # ============================================================================
 # ACHIEVEMENT DEFINITIONS
 # ============================================================================
+
+# Category: Early Game / Easy Dopamine (unlocks quickly to keep players engaged)
+EARLY_GAME_ACHIEVEMENTS = {
+    "system_failure": Achievement(
+        id="system_failure",
+        name="System Failure",
+        description="Die for the first time",
+        icon="[DEATH]",
+        category="early",
+    ),
+    "victory_protocol": Achievement(
+        id="victory_protocol",
+        name="Victory Protocol",
+        description="Win your first game",
+        icon="[WIN]",
+        category="early",
+    ),
+    "network_breach": Achievement(
+        id="network_breach",
+        name="Network Breach",
+        description="Complete your first level",
+        icon="[GATE]",
+        category="early",
+    ),
+    "payload_deployed": Achievement(
+        id="payload_deployed",
+        name="Payload Deployed",
+        description="Use your first exploit",
+        icon="[EXEC]",
+        category="early",
+    ),
+    "hack_activated": Achievement(
+        id="hack_activated",
+        name="Hack Activated",
+        description="Use your first code hack",
+        icon="[CODE]",
+        category="early",
+    ),
+    "system_restore": Achievement(
+        id="system_restore",
+        name="System Restore",
+        description="Use a restoration node",
+        icon="[NODE]",
+        category="early",
+    ),
+    "kill_streak_5": Achievement(
+        id="kill_streak_5",
+        name="Kill Streak",
+        description=f"Kill {KILL_STREAK_5_THRESHOLD} enemies in one run",
+        icon="[KILL5]",
+        category="early",
+    ),
+    "kill_streak_10": Achievement(
+        id="kill_streak_10",
+        name="Body Count",
+        description=f"Kill {KILL_STREAK_10_THRESHOLD} enemies in one run",
+        icon="[KILL10]",
+        category="early",
+    ),
+    "rookie": Achievement(
+        id="rookie",
+        name="Rookie",
+        description=f"Complete {ROOKIE_GAMES_THRESHOLD} games",
+        icon="[PLAY]",
+        category="early",
+    ),
+    "heat_spike": Achievement(
+        id="heat_spike",
+        name="Heat Spike",
+        description=f"Reach {HEAT_SPIKE_THRESHOLD}+ heat in a run",
+        icon="[HOT]",
+        category="early",
+    ),
+}
+
 
 # Category: Combat Mastery
 COMBAT_ACHIEVEMENTS = {
@@ -364,6 +445,7 @@ FUN_ACHIEVEMENTS = {
 
 # Combine all achievements
 ALL_ACHIEVEMENTS: dict[str, Achievement] = {
+    **EARLY_GAME_ACHIEVEMENTS,
     **COMBAT_ACHIEVEMENTS,
     **STEALTH_ACHIEVEMENTS,
     **EFFICIENCY_ACHIEVEMENTS,
@@ -450,6 +532,48 @@ class AchievementChecker:
             newly_unlocked.append("blind_spot_master")
 
     @staticmethod
+    def _check_early_game_achievements_immediate(
+        session: SessionMetrics, already_unlocked: set[str], newly_unlocked: list[str]
+    ) -> None:
+        """
+        Check early game achievements that can unlock immediately during gameplay.
+
+        These are "easy dopamine" achievements for new player engagement.
+
+        Args:
+            session: SessionMetrics to check
+            already_unlocked: Set of achievement IDs already unlocked
+            newly_unlocked: List to append newly unlocked achievement IDs
+        """
+        total_kills = sum(session.enemies_killed.values())
+
+        # Kill milestones (lower than Massacre)
+        if "kill_streak_5" not in already_unlocked and total_kills >= KILL_STREAK_5_THRESHOLD:
+            newly_unlocked.append("kill_streak_5")
+
+        if "kill_streak_10" not in already_unlocked and total_kills >= KILL_STREAK_10_THRESHOLD:
+            newly_unlocked.append("kill_streak_10")
+
+        # First exploit use
+        if "payload_deployed" not in already_unlocked and session.used_any_exploits:
+            newly_unlocked.append("payload_deployed")
+
+        # First code hack use
+        if "hack_activated" not in already_unlocked and session.used_any_code_hacks:
+            newly_unlocked.append("hack_activated")
+
+        # First restoration node use
+        if "system_restore" not in already_unlocked and session.restoration_nodes_used >= 1:
+            newly_unlocked.append("system_restore")
+
+        # Heat spike (reach 50+ heat)
+        if (
+            "heat_spike" not in already_unlocked
+            and session.highest_heat_reached >= HEAT_SPIKE_THRESHOLD
+        ):
+            newly_unlocked.append("heat_spike")
+
+    @staticmethod
     def check_immediate_achievements(
         session: SessionMetrics, already_unlocked: set[str]
     ) -> list[str]:
@@ -478,6 +602,11 @@ class AchievementChecker:
             session, already_unlocked, newly_unlocked
         )
 
+        # Early game achievements (immediate)
+        AchievementChecker._check_early_game_achievements_immediate(
+            session, already_unlocked, newly_unlocked
+        )
+
         return newly_unlocked
 
     @staticmethod
@@ -503,6 +632,27 @@ class AchievementChecker:
         AchievementChecker._check_stealth_achievements_immediate(
             session, already_unlocked, newly_unlocked
         )
+
+        # Early game achievements (shared immediate checks)
+        AchievementChecker._check_early_game_achievements_immediate(
+            session, already_unlocked, newly_unlocked
+        )
+
+        # ============================================
+        # Early game achievements (session-only)
+        # ============================================
+
+        # Network Breach: complete first level
+        if "network_breach" not in already_unlocked and session.levels_completed >= 1:
+            newly_unlocked.append("network_breach")
+
+        # Victory Protocol: win first game
+        if "victory_protocol" not in already_unlocked and session.victory:
+            newly_unlocked.append("victory_protocol")
+
+        # System Failure: die for the first time (not a victory = death)
+        if "system_failure" not in already_unlocked and not session.victory:
+            newly_unlocked.append("system_failure")
 
         # Stealth achievements (session-only - require level completion or victory)
         if (
@@ -690,6 +840,10 @@ class AchievementChecker:
             List of newly unlocked achievement IDs
         """
         newly_unlocked = []
+
+        # Early game: complete 3 games (before veteran's 10)
+        if "rookie" not in already_unlocked and lifetime.total_games >= ROOKIE_GAMES_THRESHOLD:
+            newly_unlocked.append("rookie")
 
         if "veteran" not in already_unlocked and lifetime.total_games >= VETERAN_GAMES_THRESHOLD:
             newly_unlocked.append("veteran")
@@ -910,6 +1064,24 @@ class AchievementManager:
                 return (session.turns_with_kills, EFFICIENT_KILLER_TURNS_THRESHOLD)
             return (0, EFFICIENT_KILLER_TURNS_THRESHOLD)
 
+        # Early game achievements (kill milestones)
+        if achievement_id == "kill_streak_5":
+            if session:
+                kills = sum(session.enemies_killed.values())
+                return (kills, KILL_STREAK_5_THRESHOLD)
+            return (0, KILL_STREAK_5_THRESHOLD)
+
+        if achievement_id == "kill_streak_10":
+            if session:
+                kills = sum(session.enemies_killed.values())
+                return (kills, KILL_STREAK_10_THRESHOLD)
+            return (0, KILL_STREAK_10_THRESHOLD)
+
+        if achievement_id == "heat_spike":
+            if session:
+                return (session.highest_heat_reached, HEAT_SPIKE_THRESHOLD)
+            return (0, HEAT_SPIKE_THRESHOLD)
+
         # Stealth achievements
         if achievement_id == "silent_assassin":
             if session:
@@ -943,6 +1115,11 @@ class AchievementManager:
             return (0, EXPLORER_NODES_THRESHOLD)
 
         # Lifetime achievements
+        if achievement_id == "rookie":
+            if lifetime:
+                return (lifetime.total_games, ROOKIE_GAMES_THRESHOLD)
+            return (0, ROOKIE_GAMES_THRESHOLD)
+
         if achievement_id == "veteran":
             if lifetime:
                 return (lifetime.total_games, VETERAN_GAMES_THRESHOLD)
