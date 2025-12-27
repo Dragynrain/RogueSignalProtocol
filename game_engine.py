@@ -673,9 +673,10 @@ class GameEngine:
                 self.message_log.add_message(overheat_msg)
 
         # Track highest heat reached for achievements (cold_blooded, heat_master)
+        # Pass self to trigger immediate achievement check for heat_spike
         from game_metrics import track_highest_heat
 
-        track_highest_heat(self.player.heat)
+        track_highest_heat(self.player.heat, game=self)
 
     def trigger_death_particles(self, enemy_type: str, world_x: int, world_y: int) -> None:
         """

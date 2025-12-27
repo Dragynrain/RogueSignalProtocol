@@ -239,6 +239,13 @@ class ExploitSystem:
                 session.used_any_exploits = True
                 session.unique_exploits_used_this_run.add(exploit_key)
 
+                # Trigger immediate achievement check for payload_deployed
+                from game_achievements import AchievementManager
+
+                AchievementManager.check_immediate_achievements_and_notify(
+                    session, self.game
+                )
+
             # Apply heat and overheat damage if exceeding max
             # Uses shared helper for consistent behavior
             did_overheat = self.game.player.apply_overheat_damage(
@@ -256,9 +263,10 @@ class ExploitSystem:
                     self.game.message_log.add_message(overheat_msg)
 
             # Track highest heat reached for achievements (cold_blooded, heat_master)
+            # Pass game to trigger immediate achievement check for heat_spike
             from game_metrics import track_highest_heat
 
-            track_highest_heat(self.game.player.heat)
+            track_highest_heat(self.game.player.heat, game=self.game)
 
         if success:
             self.game.targeting_mode = False

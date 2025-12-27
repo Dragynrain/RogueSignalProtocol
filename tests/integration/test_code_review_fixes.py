@@ -60,7 +60,8 @@ class TestCodeHackUnknownEffect:
         code = CodeHack("crimson", "restore_cpu", "Crimson Code")
 
         with patch("game_metrics.get_current_session", return_value=MagicMock()):
-            result = code.use(mock_player, mock_game)
+            with patch("game_achievements.AchievementManager"):
+                result = code.use(mock_player, mock_game)
 
         assert result is True
         # Verify CPU was restored (effect was applied)
@@ -77,8 +78,9 @@ class TestCodeHackUnknownEffect:
         code = CodeHack("phantom", "unknown_effect_type", "Phantom Code")
 
         with patch("game_metrics.get_current_session", return_value=MagicMock()):
-            with caplog.at_level(logging.WARNING):
-                result = code.use(mock_player, mock_game)
+            with patch("game_achievements.AchievementManager"):
+                with caplog.at_level(logging.WARNING):
+                    result = code.use(mock_player, mock_game)
 
         assert result is False
         assert "Unknown effect key 'unknown_effect_type'" in caplog.text
@@ -102,12 +104,13 @@ class TestCodeHackUnknownEffect:
             code = CodeHack(color, effect, f"{color.title()} Code")
 
             with patch("game_metrics.get_current_session", return_value=MagicMock()):
-                with patch("game_config.GameConfig") as mock_config:
-                    # Provide mock config values for effects that need them
-                    mock_config._get_required.return_value = 5
-                    mock_config.get.return_value = 5
+                with patch("game_achievements.AchievementManager"):
+                    with patch("game_config.GameConfig") as mock_config:
+                        # Provide mock config values for effects that need them
+                        mock_config._get_required.return_value = 5
+                        mock_config.get.return_value = 5
 
-                    result = code.use(mock_player, mock_game)
+                        result = code.use(mock_player, mock_game)
 
             assert result is True, f"Effect {effect} should return True"
 

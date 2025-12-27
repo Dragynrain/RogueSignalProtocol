@@ -393,15 +393,25 @@ def track_max_damage(damage: int) -> None:
         session.max_single_hit_damage = damage
 
 
-def track_highest_heat(current_heat: int) -> None:
+def track_highest_heat(current_heat: int, game: Any = None) -> None:
     """
     Track highest heat reached for cold_blooded/heat_master achievements.
 
     Call this whenever heat increases to update the max if exceeded.
+
+    Args:
+        current_heat: Current heat level
+        game: Optional game engine for immediate achievement checking (heat_spike)
     """
     session = get_current_session()
     if session and current_heat > session.highest_heat_reached:
         session.highest_heat_reached = current_heat
+
+        # Trigger immediate achievement check for heat_spike if game provided
+        if game is not None:
+            from game_achievements import AchievementManager
+
+            AchievementManager.check_immediate_achievements_and_notify(session, game)
 
 
 def track_highest_trace(current_trace: float) -> None:
