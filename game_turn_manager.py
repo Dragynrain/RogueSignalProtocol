@@ -227,7 +227,7 @@ class GameTurnManager:
                     if restored > 0:
                         from game_metrics import track
 
-                        track("restoration_nodes_used")
+                        track("restoration_nodes_used", game=self.game_engine)
 
         # CPU recovery node (with A13+ capacity support)
         if self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
@@ -252,7 +252,7 @@ class GameTurnManager:
                     if restored > 0:
                         from game_metrics import track
 
-                        track("restoration_nodes_used")
+                        track("restoration_nodes_used", game=self.game_engine)
 
         # Ghost node (trace level reduction with A13+ capacity support)
         if self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
@@ -277,7 +277,7 @@ class GameTurnManager:
                     if restored > 0:
                         from game_metrics import track
 
-                        track("restoration_nodes_used")
+                        track("restoration_nodes_used", game=self.game_engine)
 
         # Code hack
         if player_pos in self.game_engine.game_map.code_hacks:

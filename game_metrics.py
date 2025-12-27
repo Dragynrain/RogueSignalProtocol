@@ -528,7 +528,9 @@ def track_enemy_kill(
             AchievementManager.check_immediate_achievements_and_notify(session, game)
 
 
-def track(metric_name: str, category: str | None = None, amount: int = 1) -> None:
+def track(
+    metric_name: str, category: str | None = None, amount: int = 1, game: Any = None
+) -> None:
     """
     Track a gameplay event.
 
@@ -536,12 +538,14 @@ def track(metric_name: str, category: str | None = None, amount: int = 1) -> Non
         metric_name: Name of the metric to track
         category: Optional category (for Counter metrics like enemy type, exploit name)
         amount: Amount to add (default 1)
+        game: Optional game engine for immediate achievement checking
 
     Examples:
         track("enemies_killed", category="virus")
         track("damage_dealt", amount=25)
         track("exploits_used", category="code_injection")
         track("stealth_kills")
+        track("restoration_nodes_used", game=self.game_engine)  # Triggers achievement check
     """
     global _current_session
 
@@ -564,6 +568,14 @@ def track(metric_name: str, category: str | None = None, amount: int = 1) -> Non
                 setattr(_current_session, metric_name, current_value + amount)
             else:
                 logging.error(f"Metric '{metric_name}' is not an integer type")
+
+        # Check achievements immediately if game provided
+        # This fixes timing bugs where achievements trigger on next enemy kill
+        # instead of when the action actually happens
+        if game is not None:
+            from game_achievements import AchievementManager
+
+            AchievementManager.check_immediate_achievements_and_notify(_current_session, game)
 
     except AttributeError as e:
         GameErrorHandler.handle_error(
