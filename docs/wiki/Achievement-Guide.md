@@ -4,7 +4,7 @@ Complete guide to all achievements in Rogue Signal Protocol.
 
 ## Overview
 
-There are **26 achievements** organized into 6 categories. Some achievements are **hidden** until unlocked to preserve surprise and challenge.
+There are **37 achievements** organized into 8 categories. Some achievements are **hidden** until unlocked to preserve surprise and challenge.
 
 **Progress Tracking:**
 - Achievements unlock in real-time during gameplay
@@ -16,11 +16,11 @@ There are **26 achievements** organized into 6 categories. Some achievements are
 
 ## Achievement Categories
 
-### 🗡️ Combat Mastery (5 Achievements)
+### Combat Mastery (6 Achievements)
 
 Master the art of digital combat and enemy elimination.
 
-#### ⚔️ First Blood
+#### First Blood
 **Kill your first enemy**
 - **Unlock Condition:** Kill any enemy
 - **Difficulty:** Easy
@@ -51,9 +51,9 @@ Master the art of digital combat and enemy elimination.
   - System Crash (radius 3) makes this easier if you can survive self-damage
   - Military Backbone has most enemies (38 total)
 
-#### 🎯 Efficient Killer
-**Average 2+ kills per turn for 10+ turns**
-- **Unlock Condition:** Kill 20+ enemies in 10 consecutive turns
+#### Efficient Killer
+**Average 1.5+ kills per turn for 5+ turns**
+- **Unlock Condition:** Maintain high kill rate over consecutive turns
 - **Difficulty:** Very Hard
 - **Tips:**
   - Requires aggressive, optimized combat
@@ -61,9 +61,19 @@ Master the art of digital combat and enemy elimination.
   - Plan ahead to ensure enemies are always in range
   - Best attempted on Military Backbone with dense enemy spawns
 
+#### Full Clear
+**Eliminate every enemy on a floor**
+- **Unlock Condition:** Kill all enemies on any single level
+- **Difficulty:** Hard
+- **Tips:**
+  - Corporate Network (19 enemies) is easiest
+  - Use Network Scan to find stragglers
+  - Track enemy count in your head or note it
+  - Combine with Massacre achievement attempt
+
 ---
 
-### 🕵️ Stealth Mastery (4 Achievements)
+### Stealth Mastery (5 Achievements)
 
 Demonstrate perfect infiltration without detection.
 
@@ -97,7 +107,7 @@ Demonstrate perfect infiltration without detection.
   - Position in blind spots, wait for enemies to approach
   - Combine with Silent Assassin for double achievement progress
 
-#### 🕶️ Invisible Victory
+#### Invisible Victory
 **Win the game without ever being detected**
 - **Unlock Condition:** Complete all 3 levels without enemies entering Alert or Hostile states
 - **Difficulty:** Very Hard
@@ -109,9 +119,20 @@ Demonstrate perfect infiltration without detection.
   - Trace management critical - use Log Wiper and Ghost Nodes
   - Practice Ghost Protocol on individual levels first
 
+#### Shadow Dancer
+**Spend 100+ turns in blind spots in a single run**
+- **Unlock Condition:** Accumulate 100 turns standing in blind spots across all 3 levels
+- **Difficulty:** Medium
+- **Tips:**
+  - Blind spots are marked with `.` symbol
+  - Ghost nodes also count as blind spots
+  - Play slowly and methodically
+  - Use blind spots for ambushes and waiting
+  - Pairs well with stealth-focused builds
+
 ---
 
-### Efficiency & Speed (4 Achievements)
+### Efficiency & Speed (5 Achievements)
 
 Complete runs with speed and resource management mastery.
 
@@ -148,21 +169,34 @@ Complete runs with speed and resource management mastery.
   - Exploit pickups (&) are allowed
   - More challenging than it sounds - those buffs are tempting!
 
-#### 🧠 Pure Skill **[HIDDEN]**
-**Win without using exploits or code hacks**
+#### ??? **[HIDDEN]**
+<details>
+<summary>Click to reveal hidden achievement</summary>
+
+**Pure Skill** - Win without using exploits or code hacks
 - **Unlock Condition:** Complete game with 0 exploits equipped and 0 code hacks used
 - **Difficulty:** Extreme
 - **Tips:**
   - Ultimate challenge - movement and positioning only
   - Cannot equip any exploits (not even utility ones!)
   - Must avoid all combat - 100% stealth required
-  - Traffic Masquerade unavailable - rely on blind spots only
-  - Extremely difficult, requires perfect level knowledge
-  - **Hidden achievement** - doesn't appear until unlocked
+
+</details>
+
+#### Cold Blooded
+**Win without ever exceeding 25 heat**
+- **Unlock Condition:** Complete game with max heat never above 25
+- **Difficulty:** Very Hard
+- **Tips:**
+  - Even stricter than Heat Master (50 heat limit)
+  - Use only low-heat exploits: Network Scan (20), Threat Scan (25)
+  - Avoid high-heat exploits entirely (System Crash, Logic Bomb, etc.)
+  - Cooling nodes and Reduce Heat code hacks are essential
+  - Pure stealth approach recommended
 
 ---
 
-### 🏆 Challenge Runs (4 Achievements)
+### Challenge Runs (5 Achievements)
 
 Special challenge conditions for advanced players.
 
@@ -190,7 +224,7 @@ Special challenge conditions for advanced players.
   - Reduces by 50% when advancing levels
   - Prevents Admin Avatar spawn on Level 3
 
-#### ✂️ Minimalist
+#### Minimalist
 **Win with only 3 or fewer exploits equipped**
 - **Unlock Condition:** Complete game with max 3 exploits in equipped slots
 - **Difficulty:** Medium-Hard
@@ -201,7 +235,7 @@ Special challenge conditions for advanced players.
   - Forces creative problem-solving with limited tools
   - Loadout example: System Hop + Code Injection + Traffic Masquerade
 
-#### ☮️ Pacifist
+#### Pacifist
 **Complete a level killing 5 or fewer enemies**
 - **Unlock Condition:** Finish any single level with 5 or fewer kills
 - **Difficulty:** Medium
@@ -212,9 +246,22 @@ Special challenge conditions for advanced players.
   - Doesn't require full game completion - just one level
   - Good practice for Invisible Victory achievement
 
+#### ??? **[HIDDEN]**
+<details>
+<summary>Click to reveal hidden achievement</summary>
+
+**The Floor is Lava** - Win without stepping on any restoration nodes
+- **Unlock Condition:** Complete game without using Cooling, CPU, or Ghost nodes
+- **Difficulty:** Extreme
+- **Tips:**
+  - Must rely entirely on code hacks and passive regeneration
+  - Heat and CPU management become critical
+
+</details>
+
 ---
 
-### 💼 Mastery & Collection (4 Achievements)
+### Mastery & Collection (4 Achievements)
 
 Demonstrate comprehensive knowledge and usage of game systems.
 
@@ -291,18 +338,20 @@ Long-term progression across multiple playthroughs.
   - Each win counts toward Veteran too
   - Master one strategy, then experiment
 
-#### 👑 Legendary **[HIDDEN]**
-**Win 20 games**
+#### ??? **[HIDDEN]**
+<details>
+<summary>Click to reveal hidden achievement</summary>
+
+**Legendary** - Win 20 games
 - **Unlock Condition:** Achieve 20 successful exfiltrations
 - **Difficulty:** Hard (time + skill)
 - **Tips:**
   - Long-term goal for dedicated players
-  - Shows true mastery of game systems
-  - ~3-5 hours of successful play
-  - **Hidden achievement** - appears after unlocking Persistent
-  - Prestige status
+  - Appears after unlocking Persistent
 
-#### ⏱️ Survivor
+</details>
+
+#### Survivor
 **Survive 500+ turns in a single run**
 - **Unlock Condition:** Single playthrough lasts 500 or more turns
 - **Difficulty:** Medium-Hard
@@ -313,6 +362,97 @@ Long-term progression across multiple playthroughs.
   - Resource management critical over long run
   - Typical win is 150-250 turns, so this requires deliberate pacing
   - Can win and get Survivor simultaneously
+
+---
+
+### Ascension Achievements (4 Achievements)
+
+Long-term progression for players mastering higher difficulties.
+
+#### Sensor Sweep
+**Complete Ascension 5**
+- **Unlock Condition:** Win a game at Ascension level 5 or higher
+- **Difficulty:** Hard
+- **Tips:**
+  - Ascension increases enemy stats and reduces resources
+  - Master Normal difficulty before attempting
+  - Each Ascension level adds new modifiers
+  - First major Ascension milestone
+
+#### Firewall Breaker
+**Complete Ascension 10**
+- **Unlock Condition:** Win a game at Ascension level 10 or higher
+- **Difficulty:** Very Hard
+- **Tips:**
+  - Significant difficulty spike from A5
+  - Enemies hit harder, see further
+  - Resources become scarce
+  - Requires refined strategy
+
+#### Silent Running
+**Complete Ascension 15**
+- **Unlock Condition:** Win a game at Ascension level 15 or higher
+- **Difficulty:** Extreme
+- **Tips:**
+  - Near-perfect play required
+  - Every resource matters
+  - Stealth becomes mandatory
+  - Combat is risky at this level
+
+#### Ascension Master
+**Complete Ascension 20**
+- **Unlock Condition:** Win a game at Ascension level 20
+- **Difficulty:** Extreme
+- **Tips:**
+  - Maximum Ascension level
+  - Ultimate test of mastery
+  - Requires deep game knowledge
+  - Prestige achievement for dedicated players
+
+---
+
+### Bonus Achievements (4 Achievements)
+
+Special achievements for unique accomplishments and memorable moments.
+
+#### Admin Slayer
+**Defeat the Admin Avatar**
+- **Unlock Condition:** Kill the Admin Avatar boss
+- **Difficulty:** Hard
+- **Tips:**
+  - Admin Avatar spawns on Level 3 at high trace (70%+)
+  - 250 CPU with 50% damage resistance
+  - Deals 45 damage per hit
+  - High-damage exploits required: Buffer Overflow, Code Injection
+  - System Hop for kiting and repositioning
+
+#### Close Call
+**Win with 5 or less CPU remaining**
+- **Unlock Condition:** Complete the game with 5 or fewer CPU
+- **Difficulty:** Medium
+- **Tips:**
+  - Don't heal before final gateway
+  - Risky but achievable
+  - Can be combined with other challenge achievements
+  - Let enemies whittle you down before victory
+
+#### ??? **[HIDDEN]**
+<details>
+<summary>Click to reveal hidden achievement</summary>
+
+**Thermal Meltdown** - Die from overheating while using System Crash
+- A "failure" achievement for dramatic deaths
+
+</details>
+
+#### ??? **[HIDDEN]**
+<details>
+<summary>Click to reveal hidden achievement</summary>
+
+**Own Worst Enemy** - Kill yourself with Logic Bomb friendly fire
+- Another "failure" achievement
+
+</details>
 
 ---
 
@@ -374,12 +514,18 @@ Some achievements are mutually exclusive in single run:
 
 ## Hidden Achievements
 
-Two achievements are hidden until unlocked:
+Five achievements are hidden until unlocked. They don't show in the menu until earned, preserving the sense of discovery.
 
-1. **🧠 Pure Skill** - Extreme challenge, meant to be discovered
-2. **👑 Legendary** - Long-term goal, revealed after Persistent
+<details>
+<summary>Click to reveal all hidden achievements</summary>
 
-Hidden achievements don't show in menu until unlocked, preserving sense of discovery.
+1. **Pure Skill** - Win without exploits or code hacks (Extreme)
+2. **Legendary** - Win 20 games (long-term goal)
+3. **The Floor is Lava** - Win without using restoration nodes (Extreme)
+4. **Thermal Meltdown** - Die from overheat + System Crash (failure achievement)
+5. **Own Worst Enemy** - Kill yourself with Logic Bomb (failure achievement)
+
+</details>
 
 ---
 

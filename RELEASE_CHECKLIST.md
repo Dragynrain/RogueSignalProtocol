@@ -283,6 +283,34 @@ git push origin vX.Y.Z-beta
 - [ ] Update itch.io page with Linux info
 - [ ] Prepare Reddit post if doing announcement
 
+### 6.4 Update Wiki
+
+**Auto-generated pages (if game_content.json changed):**
+```bash
+python docs/generate_wiki.py
+```
+- [ ] Run wiki generator if enemy/exploit/network data changed
+- [ ] Review generated pages for accuracy
+
+**Manual wiki pages to review:**
+- [ ] `docs/wiki/Home.md` - Version number (already in Phase 1)
+- [ ] `docs/wiki/Keybindings.md` - If controls changed
+- [ ] `docs/wiki/Gameplay-Mechanics.md` - If mechanics changed
+- [ ] `docs/wiki/UI-and-HUD-Guide.md` - If UI changed
+- [ ] `docs/wiki/Settings-and-Configuration.md` - If settings changed
+
+**Sync to GitHub Wiki:**
+```bash
+cd ..
+git clone https://github.com/Dragynrain/RogueSignalProtocol.wiki.git
+cp -r RogueSignalProtocol/docs/wiki/*.md RogueSignalProtocol.wiki/
+cd RogueSignalProtocol.wiki
+git add . && git commit -m "Update wiki for vX.Y.Z" && git push
+```
+- [ ] Clone wiki repo (first time) or pull latest
+- [ ] Copy updated wiki pages
+- [ ] Commit and push to wiki
+
 ---
 
 ## Phase 7: Post-Release
