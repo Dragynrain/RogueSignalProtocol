@@ -231,15 +231,9 @@ Complete reference for all settings and configuration options in Rogue Signal Pr
 
 ## Ascension System
 
-### What is Ascension?
-- **Access:** Press **N** key in-game
-- **Description:** Meta-progression system that increases difficulty for experienced players
-- **Persistence:** Ascension level persists across runs
+Post-game difficulty scaling with 20 levels of stacking modifiers. Press **N** in-game to access.
 
-### Ascension Levels
-- Higher ascension = harder enemies, less resources
-- Unlocks after completing the game
-- Provides additional challenge for mastery
+See **[Ascension System](Ascension-System)** for the full modifier list.
 
 ---
 

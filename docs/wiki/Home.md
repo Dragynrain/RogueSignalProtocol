@@ -24,7 +24,8 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 ### 📦 Items & Progression
 - **[Code Hacks System](Code-Hacks-System)** - Randomized beneficial pickups explained
 - **[Network Configuration](Network-Configuration)** - Level progression and difficulty
-- **[Achievement Guide](Achievement-Guide)** - All 26 achievements and how to unlock them
+- **[Ascension System](Ascension-System)** - Post-game difficulty scaling (20 levels)
+- **[Achievement Guide](Achievement-Guide)** - All 37 achievements and how to unlock them
 
 ### ⚙️ Configuration
 - **[Settings and Configuration](Settings-and-Configuration)** - All settings and customization options
