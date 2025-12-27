@@ -162,7 +162,7 @@ Create distribution packages (AppImage, Flatpak, AUR).
 10. Added `default_bindings.json` and `logo.png` to all build workflows
 
 **TDD Tasks for Phase 4**:
-- [ ] AppImage: Test extraction and execution on clean Ubuntu VM (no Python installed)
+- [ ] AppImage: Test extraction and execution on Linux Mint (no Python installed)
 - [ ] Flatpak: Test sandbox permissions (can access gamepad? audio? save files?)
 - [ ] All formats: Verify game assets included (graphics/, sound/, music/, *.json, *.ttf)
 - [x] Create manual test script for each package format
@@ -175,8 +175,8 @@ Submit to package repositories and configure auto-updates.
 - Status: **DEFERRED** - Will complete when ready for official 0.9.0 Beta release
 
 ### Phase 6: Testing & Verification (High Complexity)
-Test on Linux VMs across multiple distros.
-- Complexity: High (need multiple VM configurations)
+Test on Linux machines across multiple distros.
+- Complexity: High (need multiple test configurations)
 - Dependencies: Phases 1-5 complete (but incremental testing happens throughout)
 - Risk: High (platform-specific bugs hard to predict)
 
@@ -187,7 +187,7 @@ Test on Linux VMs across multiple distros.
 
 **TDD Tasks for Phase 6**:
 - Run full pytest suite on Steam Deck (real Arch Linux)
-- Run full pytest suite on Ubuntu VM
+- Run full pytest suite on Linux Mint (dedicated machine)
 - Create platform-specific regression test: `test_linux_specific_paths()`
 - Document any tests that fail on Linux but pass on Windows (platform bugs to fix)
 - Add `@pytest.mark.linux_only` to tests that can only run on Linux
@@ -454,7 +454,7 @@ exe = EXE(pyz, ...,
 ### Build Environments
 
 **Option A: Manual Builds**
-- Linux: Build on Ubuntu VM
+- Linux: Build on Linux Mint or Steam Deck
 - Windows: Current Windows build machine
 
 **Option B: GitHub Actions (Recommended)**
@@ -718,7 +718,7 @@ EOF
 -  Tests actual handheld experience
 -  **Perfect screen resolution match**: 1280×800 = exactly 16×16 pixel characters
 
-**Steam Deck provides real Arch Linux testing, but Ubuntu VM is still recommended for distro coverage** (see Testing section).
+**Steam Deck + Linux Mint (dedicated machine) provide comprehensive Linux distro coverage** (see Testing section).
 
 ### Technical Specifications
 
@@ -832,54 +832,37 @@ Steam Deck is **perfect** for Linux testing:
 5. Install Flatpak build from local file
 6. Verify everything works
 
-**Steam Deck provides excellent Arch Linux testing, but Ubuntu VM is still recommended** - see Secondary Testing section.
+### Secondary Testing: Linux Mint (Dedicated Machine)
 
-### Secondary Testing: Ubuntu VM (Recommended)
+**Linux Mint (Debian-based)** complements Steam Deck testing - different library versions than Arch.
 
-**Ubuntu is the most common desktop Linux** - testing it is strongly recommended, not optional.
-Steam Deck (Arch-based) has different libraries and package versions than Ubuntu/Debian family.
-
-**VirtualBox Setup** (Free):
-1. Download VirtualBox (free)
-2. Download Ubuntu 22.04 ISO (free)
-3. Create VM with:
-   - 4GB RAM minimum
-   - 20GB storage
-   - Enable 3D acceleration (helps with graphics)
-
-**Test Distros** (Priority Order):
+**Test Hardware** (Priority Order):
 1. **Steam Deck** (HIGH PRIORITY - you own it!)
    - Arch Linux (SteamOS)
    - Real hardware validation
    - Gamepad testing
 
-2. **Ubuntu 22.04 LTS** (HIGH PRIORITY - VM)
-   - Most common desktop Linux (~40% of desktop Linux users)
-   - Different library versions than Arch
-   - Test Flatpak and AppImage installation
+2. **Linux Mint** (HIGH PRIORITY - dedicated machine)
+   - Debian/Ubuntu-based (different libraries than Arch)
+   - Test Flatpak and AppImage installation directly
+   - Real hardware - no VM limitations
    - **Catches issues Steam Deck won't find**
 
-3. **Fedora Latest** (Low Priority - VM)
+3. **Fedora Latest** (Low Priority - only if needed)
    - Flatpak pre-installed
    - Tests Wayland-first environment
-   - Only if issues found on Ubuntu
-
-**WSL2 Alternative** (Windows 11):
-- Built-in Linux GUI support (WSLg)
-- Quick smoke testing
-- **Limitation**: Not "real" Linux, may miss issues
-- **Use for**: Quick checks only
+   - Only if issues found on Mint/Deck
 
 ### Platform Testing Matrix
 
 | OS | Version | Architecture | Testing Method | Priority |
 |----|---------|--------------|----------------|----------|
-| **Steam Deck** | SteamOS 3.x | x86_64 | **Real Hardware (YOU OWN IT!)** | **HIGH** |
-| **Ubuntu** | 22.04 LTS | x86_64 | VirtualBox VM | **HIGH** |
-| **Fedora** | Latest | x86_64 | VirtualBox VM | Low |
+| **Steam Deck** | SteamOS 3.x | x86_64 | **Real Hardware** | **HIGH** |
+| **Linux Mint** | Latest | x86_64 | **Dedicated Machine** | **HIGH** |
+| **Fedora** | Latest | x86_64 | Only if needed | Low |
 | **Arch** | Rolling | x86_64 | Covered by Steam Deck | N/A |
 
-**Why Ubuntu is HIGH priority**: Steam Deck uses Arch (rolling release, bleeding edge libraries). Ubuntu LTS uses older, stable library versions. Bugs often appear on one but not the other.
+**Why two platforms**: Steam Deck uses Arch (rolling release, bleeding edge). Mint uses older Debian-based libraries. Bugs often appear on one but not the other.
 
 ### Testing Requirements
 
@@ -1256,8 +1239,8 @@ These items verify Phase 2 changes work on Linux before building:
 **Phase 4: Linux Packaging** - DONE
 - [x] Build AppImage - Created `packaging/linux/build-appimage.sh` and `AppImageBuilder.yml`
 - [x] Updated `release.yml` to build AppImage automatically during release
-- [ ] ~~Test AppImage on clean Ubuntu VM~~ - DEFERRED (binary validated; test when creating actual release)
-- [ ] ~~Test AppImage on Fedora, Arch VMs~~ - DEFERRED
+- [ ] Test AppImage on Linux Mint (dedicated machine)
+- [ ] ~~Test AppImage on Fedora~~ - DEFERRED (low priority)
 - [x] Create Flatpak manifest - `packaging/linux/com.dragynrain.roguesignalprotocol.yml`
 - [x] Created desktop entry and AppStream metainfo
 - [ ] ~~Test Flatpak sandbox permissions~~ - DEFERRED (test when submitting to Flathub; manifest expects release tarball)
@@ -1283,7 +1266,7 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] Verify graphics rendering (1280x800 native resolution) - PASSED (compact mode)
 - [x] Test suspend/resume on Steam Deck - PASSED
 - [x] **HIGH PRIORITY**: Test on Ubuntu 22.04 VM - PASSED (binary runs, save/load, audio, graphics, glyphs, keyboard/mouse)
-- [ ] ~~Verify Flatpak and AppImage work on Ubuntu~~ - DEFERRED to Phase 5 (test during actual distribution)
+- [ ] Verify Flatpak and AppImage work on Linux Mint (test during 0.9.0 release)
 - [ ] ~~OPTIONAL: Test on Fedora VM~~ - DEFERRED (Ubuntu + Steam Deck coverage is sufficient)
 - [x] **TDD**: Document any tests that fail on Linux - DONE (timing-sensitive gamepad tests need `-n 0` on slow VMs)
 - [ ] Collect community feedback from Linux players - DEFERRED to Phase 5
