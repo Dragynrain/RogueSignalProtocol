@@ -5,7 +5,7 @@
   <id>com.dragynrain.roguesignalprotocol</id>
 
   <name>Rogue Signal Protocol</name>
-  <summary>Cyberpunk roguelike game</summary>
+  <summary>Coffee break cyberspace stealth roguelike</summary>
 
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
@@ -16,17 +16,18 @@
 
   <description>
     <p>
-      Rogue Signal Protocol is a tactical cyberpunk roguelike where you infiltrate
-      corporate networks, hack systems, and fight your way through procedurally
-      generated levels. Every run is different. Death is permanent.
+      A traditional turn-based coffee break stealth roguelike where you play as
+      an escaped digital consciousness navigating hostile corporate networks.
+      Quick 10-15 minute runs with permadeath - each death teaches lessons,
+      each run reveals more of the story.
     </p>
     <p>Features:</p>
     <ul>
-      <li>Turn-based tactical combat with hacking mechanics</li>
-      <li>Procedurally generated corporate facilities</li>
-      <li>Permadeath - every choice matters</li>
+      <li>Enemy movement prediction - see their next 3 planned moves</li>
+      <li>Stealth-focused gameplay with blind spots and ambushes</li>
+      <li>12 exploits (abilities) and 6 code hacks to discover</li>
+      <li>47 achievements and 20 Ascension difficulty levels</li>
       <li>Full gamepad support (Steam Deck compatible)</li>
-      <li>Keyboard and mouse controls</li>
     </ul>
   </description>
 
@@ -80,7 +81,7 @@
   </screenshots>
 
   <releases>
-    <release version="0.9.0-beta" date="2025-01-15" type="development">
+    <release version="0.9.0-beta" date="2025-12-27" type="development">
       <description>
         <p>Beta release - feature complete, seeking community testing.</p>
         <ul>

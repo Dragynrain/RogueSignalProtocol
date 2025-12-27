@@ -14,8 +14,8 @@ All notable changes to Rogue Signal Protocol will be documented in this file.
 - **4 Ascension achievements** - Sensor Sweep (A5), Firewall Breaker (A10), Silent Running (A15), Ascension Master (A20)
 - **JSON-configured modifiers** - all 20 levels defined in game_rules.json
 
-#### 20 New Achievements
-- **45 total achievements** across 9 categories (up from 25 in 0.8.0)
+#### 22 New Achievements
+- **47 total achievements** across 9 categories (up from 25 in 0.8.0)
 - 10 early game achievements: system_failure, victory_protocol, network_breach, payload_deployed, hack_activated, system_restore, kill_streak_5, kill_streak_10, rookie, heat_spike
 - 4 ascension achievements: sensor_sweep, firewall_breaker, silent_running, ascension_master
 - 6 additional combat/stealth achievements added throughout development
@@ -141,7 +141,7 @@ All notable changes to Rogue Signal Protocol will be documented in this file.
 
 ### Documentation
 - Added `docs/wiki/Ascension-System.md` with full modifier reference
-- Added `docs/wiki/Achievement-Guide.md` expanded to 45 achievements
+- Added `docs/wiki/Achievement-Guide.md` expanded to 47 achievements
 - Updated `docs/wiki/Keybindings.md` with full gamepad reference
 - Updated `game_help_content.py` with gamepad controls
 - Updated README files with gamepad support and Linux instructions
