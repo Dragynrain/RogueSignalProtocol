@@ -49,7 +49,7 @@ class StoryFragmentManager:
         self._storage = PersistentStorage()
         self.progress_data = self._storage.load_data("rogue_signal_progress.json")
         if not self.progress_data:
-            self.progress_data = {"discovered_story_fragments": [], "version": "0.8.0 Alpha"}
+            self.progress_data = {"discovered_story_fragments": [], "version": "0.9.0 Beta"}
         self.discovered_fragments: list[int] = self.progress_data.get(
             "discovered_story_fragments", []
         )

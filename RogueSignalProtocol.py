@@ -53,11 +53,10 @@ print(f"Data storage mode: {get_mode_description()}")
 from game_loop import main  # noqa: E402
 
 # Configure logging based on build type
-# Beta/Alpha builds: DEBUG logging with file output (for playtester bug reports)
+# Alpha/Beta builds: DEBUG logging with file output (for playtester bug reports)
 # Release builds: WARNING logging with minimal file output
-# Beta default: DEBUG is ON unless release_mode.flag exists (inverted for beta)
-# Build script creates release_mode.flag for stable releases only
-DEBUG_MODE = not os.path.exists("release_mode.flag")
+# Build script creates debug_mode.flag for alpha/beta builds only
+DEBUG_MODE = os.path.exists("debug_mode.flag")
 
 # Get log directory path (supports portable/AppData modes)
 from game_file_paths import get_data_directory  # noqa: E402
@@ -85,10 +84,10 @@ if DEBUG_MODE:
     log_handlers = [console_handler, file_handler]
     print("DEBUG MODE: Verbose logging enabled (Beta/Alpha build)")
 else:
-    # Release build - minimal logging (only when release_mode.flag exists)
+    # Release build - minimal logging (default when no debug_mode.flag)
     log_level = logging.WARNING
     log_handlers = [logging.FileHandler(str(log_dir / "game_errors.log"), mode="w")]
-    print("RELEASE MODE: Minimal logging (Stable release build)")
+    print("RELEASE MODE: Minimal logging")
 
 logging.basicConfig(
     level=log_level,
@@ -108,7 +107,7 @@ if DEBUG_MODE:
     logging.info(f"Data directory: {get_mode_description()}")
     logging.info(f"Python version: {__import__('sys').version}")
     logging.info(f"TCOD version: {tcod.__version__}")
-    logging.info("NOTE: Create 'release_mode.flag' to switch to minimal logging")
+    logging.info("NOTE: Remove 'debug_mode.flag' to switch to minimal logging")
     # Force flush to ensure it's written
     for handler in logging.root.handlers:
         handler.flush()

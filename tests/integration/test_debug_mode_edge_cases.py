@@ -123,7 +123,7 @@ class TestDebugModeFlags:
         """Debug mode flag should be detectable."""
         import os
 
-        # Check if debug_mode.flag exists
+        # Check if debug_mode.flag exists (enables DEBUG logging when present)
         debug_flag_exists = os.path.exists("debug_mode.flag")
 
         # Flag existence is valid (may or may not exist)

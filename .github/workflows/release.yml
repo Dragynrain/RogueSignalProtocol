@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.x'  # Use latest stable Python 3.x
+        python-version: '3.12'
 
     - name: Verify required files
       run: |
@@ -53,12 +53,13 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --noconsole --name RogueSignalProtocol RogueSignalProtocol.py
+        # Use spec file for consistent build settings with local builds
+        pyinstaller --clean RogueSignalProtocol.spec
 
-        # Create debug_mode.flag for alpha releases (enable verbose logging for bug reports)
-        # Comment out the next two lines for production release builds
-        Write-Host "Creating debug_mode.flag for alpha/beta testing..."
-        "This file enables DEBUG logging for playtester bug reports." | Out-File -FilePath "dist\debug_mode.flag" -Encoding ASCII
+        # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
+        # For stable releases, comment out these lines (no flag = minimal logging)
+        Write-Host "Creating debug_mode.flag for alpha/beta build..."
+        "Debug mode enabled for alpha/beta build" | Out-File -FilePath "dist\debug_mode.flag" -Encoding ASCII
       shell: powershell
 
     - name: Verify executable was created
@@ -83,6 +84,10 @@ jobs:
         # Copy font file
         Write-Host "Copying font file..."
         Copy-Item -Path "KreativeSquare.ttf" -Destination "dist\"
+
+        # Copy logo for desktop integration
+        Write-Host "Copying logo..."
+        Copy-Item -Path "logo.png" -Destination "dist\"
 
         # Copy LICENSE if it exists
         if (Test-Path "LICENSE") {
@@ -184,8 +189,9 @@ jobs:
       run: |
         pyinstaller RogueSignalProtocol-linux.spec
 
-        # Create debug_mode.flag for alpha builds
-        echo "This file enables DEBUG logging for playtester bug reports." > dist/debug_mode.flag
+        # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
+        # For stable releases, comment out this line (no flag = minimal logging)
+        echo "Debug mode enabled for alpha/beta build" > dist/debug_mode.flag
 
     - name: Verify executable was created
       run: |
