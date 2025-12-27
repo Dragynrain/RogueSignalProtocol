@@ -35,7 +35,7 @@ Enemies telegraph their next 3 moves. You see their plan, they commit to it. Use
 
 **Story fragments persist across runs.** Die all you want - the 20+ narrative pieces you've discovered stick around. Each run reveals more about Project Chimera.
 
-Also: atmospheric music + 40+ SFX (toggleable), particle explosions, full mouse/keyboard/gamepad support, 45 achievements across 9 categories.
+Also: atmospheric music + 40+ SFX (toggleable), particle explosions, full mouse/keyboard/gamepad support, 47 achievements across 9 categories.
 
 ### Where to Get It:
 **Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol
