@@ -42,6 +42,9 @@ modules:
   - name: RogueSignalProtocol
     buildsystem: simple
     build-commands:
+      # Extract the tarball (using manual extraction instead of type: archive)
+      - tar -xzf game.tar.gz
+
       # Create installation directories
       - install -dm755 /app/lib/rogue-signal-protocol
       - install -dm755 /app/bin
@@ -93,12 +96,13 @@ modules:
       - install -Dm644 com.dragynrain.roguesignalprotocol.metainfo.xml /app/share/metainfo/
 
     sources:
-      # Source: GitHub release tarball
-      # Contains: executable, assets, logo.png
-      # Update URL and sha256 for each release
-      - type: archive
+      # Source: GitHub release tarball (downloaded as file, extracted manually in build-commands)
+      # Using type: file + manual tar extraction because flatpak-builder's archive handling
+      # was flattening the directory structure incorrectly
+      - type: file
         url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/RogueSignalProtocol-Linux.tar.gz
         sha256: 6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21
+        dest-filename: game.tar.gz
 
       # Desktop entry (inline - no external file dependency)
       - type: inline
