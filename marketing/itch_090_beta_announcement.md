@@ -2,7 +2,7 @@
 
 The cyberpunk roguelike now runs on Linux and supports gamepads.
 
-This is a beta. We're looking for feedback before 1.0.
+This is a beta. I'm looking for feedback before 1.0.
 
 ## What's New
 
@@ -39,7 +39,7 @@ This is where it all comes together. Linux build plus gamepad support means the 
 
 The gamepad controls were designed with Steam Deck in mind. Movement feels right on the sticks, the shoulder buttons make exploit cycling fast, and the screen size works well with the tile graphics.
 
-If you have a Steam Deck and try this, please let us know how it runs. We'd love to see it.
+If you have a Steam Deck and try this, please let me know how it runs. I'd love to see it.
 
 To install via Flatpak:
 
@@ -70,15 +70,15 @@ Various crashes fixed, error handling improved, help screens updated.
 
 ## Feedback Wanted
 
-This is a beta release. We need to know what's broken, what's frustrating, and what's working.
+This is a beta release. I need to know what's broken, what's frustrating, and what's working.
 
-**Feedback form:** [link]
+**Feedback form:** https://forms.gle/jbwGdn8VGPa6NG9p9
 
-What we're most interested in:
+What I'm most interested in:
 
 1. Does it run? Any crashes or missing libraries?
 2. Gamepad feel - is the movement timing right? Any stick drift problems?
 3. Balance - what killed you unfairly? What felt too easy?
 4. General impressions
 
-Discord comments, itch.io comments, GitHub issues - whatever works for you. We read everything.
+Discord comments, itch.io comments, GitHub issues - whatever works for you. I read everything.

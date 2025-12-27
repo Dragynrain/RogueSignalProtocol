@@ -1,0 +1,92 @@
+<h1>Rogue Signal Protocol 0.9.0 Beta - Linux, Gamepad, Steam Deck</h1>
+
+<p>The cyberpunk roguelike now runs on Linux and supports gamepads.</p>
+
+<p>This is a beta. I'm looking for feedback before 1.0.</p>
+
+<h2>What's New</h2>
+
+<h3>Linux Support</h3>
+
+<p>Three ways to play:</p>
+
+<ul>
+<li><strong>AppImage</strong> - Download, chmod +x, run. Works on any distro.</li>
+<li><strong>Flatpak</strong> - Available on Flathub beta channel</li>
+<li><strong>AUR</strong> - rogue-signal-protocol-bin for Arch users</li>
+</ul>
+
+<h3>Gamepad Support</h3>
+
+<p>Xbox and PlayStation controllers tested. Most other gamepads should work - SDL handles the mapping.</p>
+
+<ul>
+<li>D-pad or left stick for movement</li>
+<li>Right stick enters look mode and moves the cursor</li>
+<li>Shoulder buttons cycle through your equipped exploits</li>
+<li>Triggers fire them</li>
+<li>Hotplug works - connect or disconnect controllers whenever</li>
+</ul>
+
+<h3>Control Remapping</h3>
+
+<p>Both keyboard and gamepad bindings are now customizable:</p>
+
+<ul>
+<li>Rebind any key or button</li>
+<li>Bind multiple inputs to the same action</li>
+<li>Conflict warnings if you double-bind something</li>
+<li>Settings saved between sessions</li>
+</ul>
+
+<h3>Steam Deck</h3>
+
+<p>This is where it all comes together. Linux build plus gamepad support means the game runs natively on Steam Deck - no Proton, no compatibility layers, no fiddling.</p>
+
+<p>The gamepad controls were designed with Steam Deck in mind. Movement feels right on the sticks, the shoulder buttons make exploit cycling fast, and the screen size works well with the tile graphics.</p>
+
+<p>If you have a Steam Deck and try this, please let me know how it runs. I'd love to see it.</p>
+
+<p>To install via Flatpak:</p>
+
+<pre><code>flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+flatpak install flathub-beta com.dragynrain.roguesignalprotocol</code></pre>
+
+<h3>22 New Achievements (47 Total)</h3>
+
+<p>More goals to chase. Early-game achievements give new players direction. Ascension achievements for the masochists. Combat streaks, stealth challenges, speedrun targets.</p>
+
+<h3>Ascension Modes</h3>
+
+<p>Beat the game? Ascension gives you 20 levels of increasing difficulty. Each level stacks a new modifier on top of all previous ones:</p>
+
+<ul>
+<li>Enemies gain HP, damage, and vision range</li>
+<li>Trace accumulates faster</li>
+<li>Fewer blind spots, smaller rooms, less cover</li>
+<li>Reduced starting RAM</li>
+<li>Fewer upgrades and data nodes per floor</li>
+</ul>
+
+<p>The modifiers stack. By high ascension levels, every move matters.</p>
+
+<h3>Bugfixes</h3>
+
+<p>Various crashes fixed, error handling improved, help screens updated.</p>
+
+<h2>Feedback Wanted</h2>
+
+<p>This is a beta release. I need to know what's broken, what's frustrating, and what's working.</p>
+
+<p><strong><a href="https://forms.gle/jbwGdn8VGPa6NG9p9">Feedback Form</a></strong> - 2 minute survey</p>
+
+<p>What I'm most interested in:</p>
+
+<ol>
+<li>Does it run? Any crashes or missing libraries?</li>
+<li>Gamepad feel - is the movement timing right? Any stick drift problems?</li>
+<li>Balance - what killed you unfairly? What felt too easy?</li>
+<li>General impressions</li>
+</ol>
+
+<p>Discord comments, itch.io comments, GitHub issues - whatever works for you. I read everything.</p>
