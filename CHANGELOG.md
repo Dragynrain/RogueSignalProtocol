@@ -2,9 +2,29 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
-## [Unreleased] - Gamepad Support Release
+## [0.9.0 Beta] - 2025-12-27 - Gamepad, Ascension & Steam Deck Release
 
 ### Added
+
+#### Ascension System
+- **20-level post-game difficulty scaling** unlocked after first victory
+- **Stacking modifiers** - each level adds a new challenge while keeping all previous ones
+- **In-game viewer** - press N to view current modifiers and adjust Ascension level
+- **Unlock screen** - celebratory popup when Ascension is first unlocked
+- **4 Ascension achievements** - Sensor Sweep (A5), Firewall Breaker (A10), Silent Running (A15), Ascension Master (A20)
+- **JSON-configured modifiers** - all 20 levels defined in game_rules.json
+
+#### 20 New Achievements
+- **45 total achievements** across 9 categories (up from 25 in 0.8.0)
+- 10 early game achievements: system_failure, victory_protocol, network_breach, payload_deployed, hack_activated, system_restore, kill_streak_5, kill_streak_10, rookie, heat_spike
+- 4 ascension achievements: sensor_sweep, firewall_breaker, silent_running, ascension_master
+- 6 additional combat/stealth achievements added throughout development
+
+#### Steam Deck & Linux Support
+- **Steam Deck detection** - auto-detects SteamOS and handheld mode
+- **UI Scale setting** - auto/compact/normal for smaller displays
+- **Music Boost setting** - auto/on/off for Linux volume balancing
+- **Linux packaging** - tested on Linux Mint with dedicated build process
 
 #### Full Gamepad/Controller Support
 - **Xbox and PlayStation controller support** with context-sensitive button mappings
@@ -120,23 +140,63 @@ All notable changes to Rogue Signal Protocol will be documented in this file.
 - **Auto-repeat in menus** - separate timing for menu navigation
 
 ### Documentation
+- Added `docs/wiki/Ascension-System.md` with full modifier reference
+- Added `docs/wiki/Achievement-Guide.md` expanded to 47 achievements
 - Updated `docs/wiki/Keybindings.md` with full gamepad reference
 - Updated `game_help_content.py` with gamepad controls
-- Updated README files with gamepad support mention
-- Implementation plan preserved in `PLAN_GAMEPAD.md` (historical reference)
+- Updated README files with gamepad support and Linux instructions
+- Implementation plans preserved in `PLAN_GAMEPAD.md`, `PLAN_ASCENSION.md` (historical reference)
 
-### Files Added (11 new files)
-- `game_input_actions.py`
-- `game_input_analog.py`
-- `game_input_base.py`
-- `game_input_device_tracker.py`
-- `game_input_gamepad.py`
-- `game_menu_controls.py`
-- `game_help_hints.py`
-- `default_bindings.json`
-- `tests/integration/input_test_utils.py`
-- 50+ new test files for gamepad functionality
+### Files Added (14 new files)
+- `game_ascension.py` - Ascension system core logic and modifiers
+- `game_menu_ascension.py` - Ascension viewer UI and unlock screen
+- `game_death_handler.py` - Centralized player death processing
+- `game_input_actions.py` - InputAction and InputContext enums
+- `game_input_analog.py` - Analog stick handling with deadzone
+- `game_input_base.py` - Base input handler class
+- `game_input_device_tracker.py` - Controller device management
+- `game_input_gamepad.py` - Gamepad event processing
+- `game_input_mappings.py` - Input binding configuration
+- `game_menu_controls.py` - Control remapping UI
+- `game_help_hints.py` - Context-sensitive help hints
+- `default_bindings.json` - Default keyboard/gamepad bindings
+- `tests/integration/input_test_utils.py` - Gamepad test utilities
+- 50+ new test files for gamepad and ascension functionality
 
 ### Files Modified (60+ files)
 Major changes to input handling, menu system, game loop, and rendering.
 See git diff for complete list.
+
+### Fixed
+
+#### Save/Load & Death Handling
+- Enemy save/load now correctly persists all fields
+- Centralized PlayerDeathHandler prevents duplicate death processing
+- Combat death no longer corrupts save state
+- Fatal error handling for save operations
+
+#### Achievement System
+- Pacifist achievement now correctly tracks kills per-level (not cumulative)
+- Fixed duplicate achievement metric tracking
+- Consolidated metrics tracking helpers
+
+#### Combat & AI
+- Exploits now correctly clear enemy move queue on state change
+- Fixed bump attack overheat damage bug
+- Fixed patrol restoration after hostile transitions
+- Consolidated hostile state transition logic
+
+#### Pathfinding & Movement
+- Added pathfinding bounds validation (prevents out-of-bounds crashes)
+- Fixed distance comparison bug in Chebyshev calculations
+
+#### UI & Rendering
+- Fixed ascension menu mouse handling
+- Fixed ascension popup text overflow with word wrap
+- Fixed vision rendering edge cases
+- Fixed A20 blind spot single-use behavior
+- Fixed settings menu navigation wraparound
+
+#### Configuration
+- Removed hardcoded JSON fallbacks - fail-fast on missing config
+- Fixed graphics mode case sensitivity check
