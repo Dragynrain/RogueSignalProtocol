@@ -72,8 +72,8 @@ class TestAscensionMenuModifierDisplay:
         # Should contain modifiers from A1-A5
         assert "Scanners +1 vision" in modifiers  # A1
         assert "Enemies +10 CPU" in modifiers  # A2
-        assert "Trace builds faster over time" in modifiers  # A3
-        assert "Enemies deal +20% damage" in modifiers  # A4
+        assert "Trace builds faster" in modifiers  # A3
+        assert "Enemies +20% damage" in modifiers  # A4
         assert "All enemies +1 vision" in modifiers  # A5
 
     def test_locked_level_shows_placeholder(self):
