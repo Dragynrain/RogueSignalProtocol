@@ -12,6 +12,10 @@ import time
 from dataclasses import dataclass
 
 from game_config import GameConfig
+from game_entities import Colors
+
+# Fallback color when no colors are provided
+FALLBACK_WHITE = Colors.PURE_WHITE
 
 
 @dataclass
@@ -89,7 +93,9 @@ class ParticleSystem:
 
         # Ensure we have colors to work with
         if not colors:
-            colors = [(255, 255, 255)]  # Fallback to white
+            # Caller should always provide colors - this indicates a bug
+            logging.error("create_death_explosion called with empty colors list")
+            colors = [FALLBACK_WHITE]
 
         for _ in range(particle_count):
             # Random angle for radial burst

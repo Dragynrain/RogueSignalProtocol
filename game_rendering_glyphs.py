@@ -20,6 +20,9 @@ from game_rendering_base import MapRendererBase, can_render_at_position
 from game_ui import render_char_safe
 from game_unicode_chars import GameGlyphs
 
+# Normal tint for resetting texture color_mod after tinting
+NORMAL_TINT = Colors.PURE_WHITE
+
 # Wall rendering lookup table: (north, south, east, west) -> glyph
 # True = wall exists in that direction, False = no wall
 WALL_GLYPH_LOOKUP = {
@@ -1018,7 +1021,7 @@ class GlyphsMapRenderer(MapRendererBase):
                     texture.color_mod = cursor_color
                     renderer.copy(texture, dest=tile_rect)
                     # Reset color_mod
-                    texture.color_mod = (255, 255, 255)
+                    texture.color_mod = NORMAL_TINT
             else:
                 # Classic mode: Render 'X' character
                 render_char_safe(

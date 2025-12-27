@@ -270,7 +270,11 @@ class GameRenderer:
             game.achievement_popup_manager.update()
             game.achievement_popup_manager.render(console)
 
-        # For overlay screens (inventory, help, lore), we need to present in graphics mode too
+        # For overlay screens (inventory, help, lore), we need to present in graphics mode too.
+        # NOTE: Unlike the main game screen, overlay screens do NOT set console transparency.
+        # This is intentional - overlays are meant to be fully opaque UI screens that cover
+        # the game world completely. Only the main game screen uses transparent console regions
+        # to allow sprites to show through the viewport area.
         if should_use_graphics:
             # Set background to black before clearing
             self.context.sdl_renderer.draw_color = (0, 0, 0, 255)

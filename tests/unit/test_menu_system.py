@@ -31,8 +31,14 @@ class TestMainMenu:
 
     def test_main_menu_initialization_with_save_exists(self):
         """MainMenu initializes correctly when save file exists."""
+        # Clear singleton to ensure test isolation (prevents state bleed from parallel tests)
+        GameSettings._instance = None
         with patch.object(SaveGameManager, "save_exists", return_value=True):
-            # Without settings (glyph mode), Graphics Preview is hidden
+            # Create settings FIRST so both menus see the same ascension state
+            settings = GameSettings()  # Loads from user_settings.json
+            settings.graphics_mode = "glyphs"  # Start in glyph mode
+
+            # Without graphics mode, Graphics Preview is hidden
             # Note: Ascension option only appears when highest_unlocked > 0
             menu = MainMenu()
             assert menu.selected_option == 0
@@ -42,14 +48,12 @@ class TestMainMenu:
             # Base: Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (9)
             # Plus Ascension if unlocked (settings loaded from user_settings.json)
             base_count = 9
-            settings = GameSettings.get_instance()
-            if settings and settings.get_highest_ascension_unlocked() > 0:
+            if settings.get_highest_ascension_unlocked() > 0:
                 base_count += 1  # Ascension option added
             assert len(menu.options) == base_count
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
-            settings = GameSettings()  # Registers as singleton
             settings.graphics_mode = "graphics"
             mock_menus = {
                 "graphics_preview_menu": Mock()

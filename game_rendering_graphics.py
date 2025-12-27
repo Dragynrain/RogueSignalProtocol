@@ -361,7 +361,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         renderer.copy(texture, dest=tile_rect)
 
                         # Reset color mod to prevent affecting other sprites
-                        texture.color_mod = (255, 255, 255)
+                        texture.color_mod = NORMAL_TINT
 
         # Player
         if self._is_in_viewport(game.player.x, game.player.y, camera_offset):

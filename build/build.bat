@@ -4,7 +4,9 @@ setlocal enabledelayedexpansion
 REM Change to parent directory (where RogueSignalProtocol.py is located)
 cd /d "%~dp0.."
 
-REM Build type: alpha (default) or release
+REM Build type: alpha (default), beta, or release
+REM - alpha/beta: DEBUG logging enabled (no release_mode.flag)
+REM - release: Minimal logging (creates release_mode.flag)
 set BUILD_TYPE=%1
 if "%BUILD_TYPE%"=="" set BUILD_TYPE=alpha
 
@@ -15,13 +17,6 @@ echo Generating wiki documentation...
 .venv\Scripts\python.exe docs\generate_wiki.py
 if %ERRORLEVEL% NEQ 0 (
     echo WARNING: Wiki generation failed - continuing with build
-)
-
-REM Set log level based on build type
-if /i "%BUILD_TYPE%"=="release" (
-    set LOG_LEVEL=WARNING
-) else (
-    set LOG_LEVEL=DEBUG
 )
 
 REM Clean previous build
@@ -52,9 +47,9 @@ xcopy /E /I /Y /Q graphics dist\graphics >nul
 xcopy /E /I /Y /Q sound dist\sound >nul
 xcopy /E /I /Y /Q music dist\music >nul
 
-REM Create debug flag for alpha builds
-if /i "%BUILD_TYPE%"=="alpha" (
-    echo. > dist\debug_mode.flag
+REM Create release flag for stable releases only (beta/alpha get DEBUG logging by default)
+if /i "%BUILD_TYPE%"=="release" (
+    echo. > dist\release_mode.flag
 )
 
 REM Create release archive
