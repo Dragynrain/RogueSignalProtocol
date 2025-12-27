@@ -27,6 +27,7 @@ Update version in ALL these locations (search for old version string):
 - [ ] `README_DEV.md` - Lines ~3, ~16 (badge URL)
 - [ ] `.github/ISSUE_TEMPLATE/bug_report.md` - Line ~29
 - [ ] `docs/wiki/Home.md` - Line ~9
+- [ ] `CHANGELOG.md` - Add new version section with all changes
 
 **Linux packaging files:**
 - [ ] `packaging/linux/README.md` - Line ~5
@@ -56,6 +57,12 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 - [ ] Verify game_rules.json loads without errors
 - [ ] Verify narrative_content.json loads without errors
 - [ ] Run config validation test: `pytest tests/integration/test_config_validation.py -v`
+
+### 1.4 URL Verification
+
+- [ ] Verify all URLs are correct: `grep -rn "discord.gg\|itch.io\|forms.gle" --include="*.py" --include="*.md" --include="*.txt" --include="*.html"`
+- [ ] Test feedback form URL is accessible
+- [ ] Test itch.io page URL is correct
 
 ---
 
@@ -95,6 +102,10 @@ Check the `dist/` folder contains:
 - [ ] `music/` folder (all .ogg files)
 - [ ] For alpha/beta: `debug_mode.flag` present (DEBUG logging on)
 - [ ] For release: NO `debug_mode.flag` (minimal logging)
+
+### 2.3 Create Backup
+
+- [ ] Copy entire `dist/` folder to `dist_backup_vX.Y.Z/` before testing
 
 ---
 
@@ -153,33 +164,96 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ## Phase 4: Testing
 
-### 4.1 Windows Testing
+### 4.1 Windows Basic Functionality
 
-**Basic Functionality:**
-- [ ] Game launches without Python installed
+- [ ] Game launches without Python installed (clean Windows 10/11)
 - [ ] Main menu renders correctly
 - [ ] Settings menu works
 - [ ] New game starts successfully
 - [ ] Graphics mode toggle works
+- [ ] All config files load correctly
 
-**Core Gameplay:**
-- [ ] Play through Level 1 (or part of it)
-- [ ] Verify enemies spawn and move
-- [ ] Verify exploits work (test 2-3)
+### 4.2 Core Gameplay (Full Playthrough)
+
+- [ ] Play through all 3 levels (complete run)
+- [ ] Verify enemies spawn and move correctly
+- [ ] Verify ALL 13 exploits work correctly
 - [ ] Verify save/load works
-- [ ] Verify permadeath deletes save
+- [ ] Verify permadeath deletes save completely
+- [ ] Test Admin Avatar spawns when trace hits 100%
 
-**Audio:**
+### 4.3 Audio Verification
+
 - [ ] Music plays on main menu
 - [ ] Music changes per level
-- [ ] Sound effects play
+- [ ] Test ALL 13 exploit sounds play correctly
+- [ ] Logic Bomb sound (logic_bomb.wav) plays
 - [ ] Volume controls work
 
-**Debug Tools:**
+### 4.4 Gamepad Testing
+
+**Controller connection:**
+- [ ] Xbox controller connects and is recognized
+- [ ] PlayStation controller connects (if available)
+- [ ] Hotplug works (connect/disconnect during gameplay)
+
+**Gameplay controls:**
+- [ ] Left stick/D-pad movement works with proper time-gating
+- [ ] Right stick auto-look mode works
+- [ ] LB/RB cycle through exploits
+- [ ] RT fires selected exploit
+- [ ] A=wait, B=cancel, Y=inventory, Start=menu, Select=help
+
+**Menu navigation:**
+- [ ] D-pad/stick navigates menus
+- [ ] A=confirm, B=back works consistently
+- [ ] LB/RB page through achievements/help
+
+**Control remapping:**
+- [ ] Settings > Controls > Gamepad Bindings accessible
+- [ ] Can rebind gamepad buttons
+- [ ] Bindings persist after restart
+
+### 4.5 Ascension System Testing
+
+- [ ] Complete a run to unlock Ascension
+- [ ] Press N to open Ascension viewer
+- [ ] Verify unlock popup appears on first unlock
+- [ ] Test A1 modifier (Scanner Vision +1)
+- [ ] Verify Ascension level persists across runs
+- [ ] Check Ascension achievements unlock at A5/A10/A15/A20
+
+### 4.6 Achievement System
+
+- [ ] Unlock an achievement and verify it persists
+- [ ] Check achievement popups display correctly
+- [ ] Verify progress tracking works across deaths
+
+### 4.7 Debug Tools
+
 - [ ] `Shift+F12` creates debug package
 - [ ] Settings > Export Debug Package works
+- [ ] Verify package includes saves/logs/metrics from data directory
+- [ ] Package created in [data directory]/debug_exports/
 
-### 4.2 Linux Testing
+### 4.8 New Player Experience
+
+- [ ] Delete `user_settings.json` and test fresh start
+- [ ] Verify intro dialogue appears
+- [ ] Check help menu (?) is comprehensive - verify all pages including gamepad
+- [ ] Ensure first death shows feedback link clearly
+
+### 4.9 UI/UX Testing (Both Platforms)
+
+- [ ] Help menu (`?`) displays correctly
+- [ ] Inventory (`I`) works
+- [ ] Fragments screen (`F`) displays all discovered lore
+- [ ] Achievements screen (`V`) works
+- [ ] Ascension screen (`N`) works
+- [ ] Look mode (`L`) works with mouse and keyboard
+- [ ] Keybindings match help text exactly
+
+### 4.10 Linux Testing
 
 > **Detailed checklist:** See `packaging/linux/TEST_CHECKLIST.md` for comprehensive Linux testing procedures.
 
@@ -200,15 +274,6 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 **AppImage Test:**
 - [ ] AppImage runs on clean system
 - [ ] No missing library errors
-
-### 4.3 Edge Cases (Both Platforms)
-
-- [ ] Help menu (`?`) displays correctly
-- [ ] Inventory (`I`) works
-- [ ] Fragments screen (`F`) works
-- [ ] Achievements screen (`V`) works
-- [ ] Look mode (`L`) works with mouse and keyboard
-- [ ] Gamepad controls work
 
 ---
 
@@ -240,21 +305,53 @@ git push origin vX.Y.Z-beta
 - [ ] Upload Windows .zip from `releases/`
 - [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
 - [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
-- [ ] Write release notes
+- [ ] Write release notes from CHANGELOG.md
 
 ---
 
-## Phase 6: Distribution
+## Phase 6: Marketing & Screenshots
 
-### 6.1 Windows Distribution
+### 6.1 Update Screenshots
+
+- [ ] Verify screenshots show pixel explosion effect (graphics mode)
+- [ ] Verify screenshots show queue arrows (directional arrow system)
+- [ ] Verify images show both ASCII and graphics modes
+- [ ] Ensure one screenshot shows enemy movement queue UI clearly
+- [ ] Consider additional shots: gameplay, inventory, lore/fragments, death screen
+
+**Recommended screenshots (5 minimum):**
+1. Main menu
+2. Stealth gameplay (hiding in shadows)
+3. Combat encounter / exploit usage
+4. Lore/Fragments screen
+5. Inventory screen
+
+### 6.2 Record Video (Optional but Recommended)
+
+- [ ] Record MP4 video showcasing gameplay (10-15 seconds)
+- [ ] Show key features: movement queue arrows, pixel explosions, stealth mechanics
+- [ ] Keep file size reasonable for Reddit upload (<100 MB)
+- [ ] Consider showing: player hiding in blind spot -> enemy moves past -> player escapes
+
+### 6.3 Update Marketing Materials
+
+- [ ] Update itch.io page content from `marketing/itch_io_page.html`
+- [ ] Prepare devlog/announcement post if applicable
+- [ ] Take new screenshots if UI changed
+
+---
+
+## Phase 7: Distribution
+
+### 7.1 Windows Distribution
 
 **Itch.io:**
 - [ ] Upload Windows .zip to itch.io
 - [ ] Update page description if needed
-- [ ] Set appropriate tags
+- [ ] Set appropriate tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
 - [ ] Mark build status (Alpha/Beta/Release)
 
-### 6.2 Linux Distribution
+### 7.2 Linux Distribution
 
 **GitHub Releases:**
 - [ ] Linux tarball uploaded
@@ -277,13 +374,14 @@ git push origin vX.Y.Z-beta
 - [ ] Generate .SRCINFO: `makepkg --printsrcinfo > .SRCINFO`
 - [ ] Push to AUR
 
-### 6.3 Update Marketing Materials
+### 7.3 Verify Feedback Collection
 
-- [ ] Take new screenshots if UI changed
-- [ ] Update itch.io page with Linux info
-- [ ] Prepare Reddit post if doing announcement
+- [ ] Feedback form URL works in README.txt
+- [ ] Feedback form URL works in README.md
+- [ ] Feedback form URL visible on itch.io page
+- [ ] Feedback form URL in Reddit post draft
 
-### 6.4 Update Wiki
+### 7.4 Update Wiki
 
 **Auto-generated pages (if game_content.json changed):**
 ```bash
@@ -313,16 +411,52 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 
 ---
 
-## Phase 7: Post-Release
+## Phase 8: Launch & Promotion
 
-### 7.1 Monitor for Issues
+### 8.1 Reddit Posting Strategy
+
+**Option A: r/roguelikedev (friendlier, good for first post)**
+- Use `marketing/reddit_post_draft.md`
+- Post on weekday morning (9-11 AM EST)
+- Respond to comments within first 2 hours
+
+**Option B: r/roguelikes "Sharing Saturday"**
+- Every Saturday
+- More exposure but more competitive
+- Include 2-3 screenshots
+
+**Option C: r/DestroyMyGame (brutal feedback)**
+- Use `marketing/reddit_destroymygame_draft.md`
+- Specifically for crash reports and balance complaints
+- Expect harsh but honest criticism
+- Good for beta testing phase
+
+### 8.2 Announcement Posts
+
+- [ ] Post to chosen subreddit(s)
+- [ ] Include screenshots/video
+- [ ] Monitor and respond to comments
+
+---
+
+## Phase 9: Post-Release
+
+### 9.1 Monitor for Issues (First 24 Hours)
 
 - [ ] Check itch.io comments
 - [ ] Monitor feedback form responses
+- [ ] Respond to Reddit questions
 - [ ] Watch for crash reports in logs
 - [ ] Monitor GitHub issues for Linux-specific bugs
 
-### 7.2 Document Known Issues
+### 9.2 First Week Follow-up
+
+- [ ] Collect survey responses
+- [ ] Prioritize bug fixes
+- [ ] Plan balance tweaks based on feedback
+- [ ] Consider posting to additional subreddits if initial reception is good
+
+### 9.3 Document Known Issues
 
 - [ ] Note any bugs found after release
 - [ ] Add to next version's fix list
@@ -348,8 +482,9 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 | `packaging/linux/README.md` | 1 |
 | `packaging/linux/*.xml` | 1 |
 | `packaging/linux/PKGBUILD` | 1 |
+| `CHANGELOG.md` | 1 |
 
-**Total: ~20+ locations to update**
+**Total: ~21 locations to update**
 
 ---
 
@@ -385,3 +520,14 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 | Steam Deck | HIGH | Real hardware |
 | Fedora | LOW | VM (Wayland testing) |
 | Arch Linux | LOW | Covered by Steam Deck |
+
+---
+
+## Known Issues to Document on Itch.io
+
+**Beta limitations to mention:**
+- Windows and Linux only (no macOS yet)
+- Ascension system provides difficulty scaling (no easy mode)
+- Graphics mode optional (ASCII is primary)
+- No tutorial scenario (help menu is comprehensive)
+- Steam Deck support is experimental
