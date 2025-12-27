@@ -4,6 +4,47 @@ Reusable checklist for alpha, beta, and stable releases.
 
 ---
 
+## STOP - READ THIS FIRST
+
+**DO NOT skip or skim this section. These rules exist because of actual release failures.**
+
+### Rule 1: This is THE ONLY release checklist
+- **USE THIS FILE:** `RELEASE_CHECKLIST.md` (project root)
+- **DO NOT USE:** `marketing/pre_release_checklist.md` (OBSOLETE - kept for historical reference only)
+- If you find yourself in a different checklist file, STOP and come back here.
+
+### Rule 2: Follow phases IN ORDER
+- Complete Phase 1 before Phase 2, Phase 2 before Phase 3, etc.
+- Do not skip ahead to "save time" - it creates more work fixing mistakes.
+- Each phase depends on the previous phase being complete.
+
+### Rule 3: Read referenced files BEFORE acting
+- Phase 3 references `.github/workflows/release.yml` - READ IT before creating a release
+- Phase 4.10 references `packaging/linux/TEST_CHECKLIST.md` - READ IT before testing
+- If a step says "see [file]", open and read that file first.
+
+### Rule 4: Test environments are documented
+- **Windows:** Local machine
+- **Linux Mint:** Dedicated test machine (see `packaging/linux/TEST_CHECKLIST.md`)
+- **Steam Deck:** Real hardware if available
+- Do not guess or ask about test environments - they are documented.
+
+### Rule 5: GitHub Release triggers Linux builds
+- Pushing a git tag does NOT build Linux packages
+- Creating a GitHub Release DOES trigger `.github/workflows/release.yml`
+- Use `gh release create` (GitHub CLI), not just `git push origin [tag]`
+- The workflow needs `permissions: contents: write` to upload assets
+
+### Rule 6: Create a progress tracking file for each release
+- Copy this checklist to `RELEASE_X.Y.Z_PROGRESS.md`
+- Check off items as you complete them
+- Add session notes and timestamps
+- Delete the progress file after release is complete
+
+---
+
+---
+
 ## Phase 1: Pre-Build Preparation
 
 ### 1.1 Version String Updates
