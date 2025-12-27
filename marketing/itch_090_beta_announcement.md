@@ -48,9 +48,9 @@ flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/fl
 flatpak install flathub-beta com.dragynrain.roguesignalprotocol
 ```
 
-### New Achievements
+### 20 New Achievements (45 Total)
 
-Added 10 early-game achievements to give new players some direction. 37 total now.
+More goals to chase. Early-game achievements give new players direction. Ascension achievements for the masochists. Combat streaks, stealth challenges, speedrun targets.
 
 ### Ascension Modes
 
