@@ -65,7 +65,7 @@ MODIFIER_DESCRIPTIONS = {
     17: "Melee +5 heat",
     18: "-1 upgrades per floor",
     19: "-1 nodes per floor",
-    20: "Blind spots fade on exit",
+    20: "Blind spots decay",
 }
 
 
