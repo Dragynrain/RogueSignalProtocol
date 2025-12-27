@@ -141,6 +141,11 @@ class CodeHack(InventoryItem):
             session.unique_code_hacks_used_this_run.add(self.name)
             session.used_any_code_hacks = True
 
+            # Trigger immediate achievement check for hack_activated
+            from game_achievements import AchievementManager
+
+            AchievementManager.check_immediate_achievements_and_notify(session, game)
+
         return self._apply_effect(effect_key, player, game)
 
     def _apply_effect(self, effect_key: str, player, game) -> bool:
