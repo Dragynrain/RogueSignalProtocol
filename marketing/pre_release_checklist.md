@@ -1,63 +1,111 @@
-# Pre-Release Checklist for Alpha 0.8.0
+# Pre-Release Checklist for Beta 0.9.0
 
-```
+## 📝 PRE-BUILD PREPARATION
 
-### 7. **Test the EXE**
+### 1. **Update Documentation**
+
+- [ ] Review and update CHANGELOG.md with all changes since last release
+- [ ] Sync wiki pages with game data (achievements, exploits, enemies, keybindings)
+- [ ] Update version numbers in README files
+- [ ] Verify all URLs are correct (grep for discord.gg, itch.io - don't hallucinate!)
+
+---
+
+## 🧪 TESTING
+
+### 2. **Test the EXE**
 
 **Basic functionality:**
-- [X] Test on clean Windows 10/11 system (no Python installed)
-- [X] Verify all config files load correctly
-- [X] Play through one complete run (all 3 levels)
-- [X] Test save/load functionality
-- [X] Verify permadeath deletes save
-- [X] Check all 13 exploits work correctly
-- [X] Verify keybindings (I=Inventory, L=Look, F=Fragments, ?=Help, V=Achievements)
-
-**CRITICAL: Test with TCOD 19.6.0 changes:**
-- [X] Verify nearest-neighbor scaling looks good (graphics sharper, not broken)
-- [X] Verify graphics mode toggle in Settings menu works
+- [ ] Test on clean Windows 10/11 system (no Python installed)
+- [ ] Verify all config files load correctly
+- [ ] Play through one complete run (all 3 levels)
+- [ ] Test save/load functionality
+- [ ] Verify permadeath deletes save
+- [ ] Check all 13 exploits work correctly
+- [ ] Verify keybindings (I=Inventory, L=Look, F=Fragments, ?=Help, V=Achievements, N=Ascension)
 
 **Audio verification:**
-- [X] Test all 13 exploit sounds play correctly
-- [X] Verify music tracks load and loop
-- [X] Check Logic Bomb sound (logic_bomb.wav) plays
+- [ ] Test all 13 exploit sounds play correctly
+- [ ] Verify music tracks load and loop
+- [ ] Check Logic Bomb sound (logic_bomb.wav) plays
 
 **Debug tools work in EXE:**
-- [X] Shift+F12 creates debug package
-- [X] Settings > Export Debug Package works
-- [X] Verify package includes saves/logs/metrics from data directory
-- [X] Package created in [data directory]/debug_exports/
+- [ ] Shift+F12 creates debug package
+- [ ] Settings > Export Debug Package works
+- [ ] Verify package includes saves/logs/metrics from data directory
+- [ ] Package created in [data directory]/debug_exports/
 
 **Achievement system:**
-- [X] Unlock an achievement and verify it persists
-- [X] Check achievement popups display correctly
-- [X] Verify progress tracking works across deaths
+- [ ] Unlock an achievement and verify it persists
+- [ ] Check achievement popups display correctly
+- [ ] Verify progress tracking works across deaths
 
 **Edge cases:**
-- [X] Test Admin Avatar spawns when trace hits 100%
-- [X] Verify permadeath deletes save file completely
-- [X] Test look mode (L key) mouse and keyboard interaction
-- [X] Check fragments screen (F key) displays all discovered lore
+- [ ] Test Admin Avatar spawns when trace hits 100%
+- [ ] Verify permadeath deletes save file completely
+- [ ] Test look mode (L key) mouse and keyboard interaction
+- [ ] Check fragments screen (F key) displays all discovered lore
 
-### 7.5 **Create backup before packaging**
+### 3. **Test Gamepad Support (NEW in 0.9.0)**
 
-- [X] Copy entire `dist/` folder to `dist_backup_v0.8.0/`
-- [X] Commit current state to git
-- [X] Tag release: `git tag v0.8.0-alpha`
-- [X] Push to GitHub: `git push origin v0.8.0-alpha`
+**Controller connection:**
+- [ ] Test Xbox controller connects and is recognized
+- [ ] Test PlayStation controller connects (if available)
+- [ ] Verify hotplug works (connect/disconnect during gameplay)
 
-### 7.6 **Test new player experience**
+**Gameplay controls:**
+- [ ] Left stick/D-pad movement works with proper time-gating
+- [ ] Right stick auto-look mode works
+- [ ] LB/RB cycle through exploits
+- [ ] RT fires selected exploit
+- [ ] A=wait, B=cancel, Y=inventory, Start=menu, Select=help
 
-- [X] Delete `user_settings.json` and test fresh start
-- [X] Verify intro dialogue appears
-- [X] Check help menu (?) is comprehensive
-- [X] Ensure first death shows feedback link clearly
+**Menu navigation:**
+- [ ] D-pad/stick navigates menus
+- [ ] A=confirm, B=back works consistently
+- [ ] LB/RB page through achievements/help
+
+**Control remapping:**
+- [ ] Settings > Controls > Gamepad Bindings accessible
+- [ ] Can rebind gamepad buttons
+- [ ] Bindings persist after restart
+
+### 4. **Test Ascension System (NEW in 0.9.0)**
+
+- [ ] Complete a run to unlock Ascension
+- [ ] Press N to open Ascension viewer
+- [ ] Verify unlock popup appears on first unlock
+- [ ] Test A1 modifier (Scanner Vision +1)
+- [ ] Verify Ascension level persists across runs
+- [ ] Check Ascension achievements unlock at A5/A10/A15/A20
+
+### 5. **Test Linux/Steam Deck (NEW in 0.9.0)**
+
+- [ ] Test on Linux Mint (or Ubuntu)
+- [ ] Verify Steam Deck detection works (if available)
+- [ ] Test UI Scale setting (compact mode)
+- [ ] Test Music Boost setting
+- [ ] Verify gamepad works on Linux
+
+### 6. **Create backup before packaging**
+
+- [ ] Copy entire `dist/` folder to `dist_backup_v0.9.0/`
+- [ ] Commit current state to git
+- [ ] Tag release: `git tag v0.9.0-beta`
+- [ ] Push to GitHub: `git push origin v0.9.0-beta`
+
+### 7. **Test new player experience**
+
+- [ ] Delete `user_settings.json` and test fresh start
+- [ ] Verify intro dialogue appears
+- [ ] Check help menu (?) is comprehensive - verify gamepad page (Page 4)
+- [ ] Ensure first death shows feedback link clearly
 
 ---
 
 ## 📦 PACKAGING FOR ITCH.IO
 
-### 8.  **Prepare release package** - COMPLETED (AUTOMATED)
+### 8. **Prepare release package** (AUTOMATED)
 
 **The build script already does this!**
 
@@ -75,7 +123,7 @@ build\build.bat alpha
 **Optional: Rename for version-based naming:**
 ```bash
 # If you prefer version-based naming over date-based:
-copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProtocol_v0.8.0_Alpha.zip
+copy releases\RogueSignalProtocol_beta_2025-12-27.zip releases\RogueSignalProtocol_v0.9.0_Beta.zip
 ```
 
 **Verify the zip contains:**
@@ -137,7 +185,7 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 - More exposure but more competitive
 - Include 2-3 screenshots
 
-### 11.  **Feedback collection** - COMPLETED
+### 11. **Feedback collection** - COMPLETED
 
 - [x] Create Google Form from `marketing/feedback_survey_draft.md`
 - [x] Get shareable Google Form URL (short link): https://forms.gle/jbwGdn8VGPa6NG9p9
@@ -152,11 +200,12 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 
 ## 🐛 KNOWN ISSUES (Document on itch.io)
 
-**Alpha limitations to mention:**
-- Windows-only 
-- Single difficulty level (no easy/hard modes yet)
+**Beta limitations to mention:**
+- Windows and Linux only (no macOS yet)
+- Ascension system provides difficulty scaling (no easy mode)
 - Graphics mode optional (ASCII is primary)
 - No tutorial scenario (help menu is comprehensive)
+- Steam Deck support is experimental
 
 ---
 
@@ -176,8 +225,9 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
   3. Combat encounter
   4. Lore/Fragments screen
   5. Inventory screen
-- [ ] Write CHANGELOG.md
+- [X] Write CHANGELOG.md
 - [ ] Create Credits screen (mention TCOD, pygame)
+- [ ] Update screenshots to show gamepad controls/ascension UI
 
 ---
 
@@ -213,16 +263,18 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 
 ## 🎯 SUCCESS METRICS
 
-**Alpha goals:**
-- 50+ downloads in first week
-- 10+ pieces of feedback (survey or comments)
+**Beta goals:**
+- 100+ downloads in first week
+- 15+ pieces of feedback (survey or comments)
 - No game-breaking bugs reported
-- At least 3 people complete all 3 levels
+- At least 5 people complete all 3 levels
+- At least 2 people try Ascension mode
 
 **Feedback priorities:**
 1. Game-breaking bugs (fix immediately)
-2. Balance issues (note for v0.9.0)
-3. UX confusion (clarify in README or help menu)
-4. Feature requests (consider for v1.0)
+2. Gamepad/controller issues (high priority for 0.9.x)
+3. Balance issues (note for v1.0)
+4. UX confusion (clarify in README or help menu)
+5. Feature requests (consider for v1.0)
 
 ---
