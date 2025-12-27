@@ -5,6 +5,7 @@
 ### 1. **Update Documentation**
 
 - [ ] Review and update CHANGELOG.md with all changes since last release
+- [ ] Update itch.io page content (marketing/itch_io_page.html) with new features
 - [ ] Sync wiki pages with game data (achievements, exploits, enemies, keybindings)
 - [ ] Update version numbers in README files
 - [ ] Verify all URLs are correct (grep for discord.gg, itch.io - don't hallucinate!)
@@ -138,12 +139,12 @@ copy releases\RogueSignalProtocol_beta_2025-12-27.zip releases\RogueSignalProtoc
 
 ### 9. **Prepare itch.io page**
 
-- [X] Upload .zip package
-- [X] Copy content from `marketing/itch_io_page_draft.md`
-- [X] Add 3-5 screenshots (gameplay, menus, lore)
-- [X] Set tags: roguelike, stealth, cyberpunk, turn-based, permadeath
-- [X] Set price: Pay what you want ($0 minimum)
-- [X] Mark as "Alpha - In Development"
+- [ ] Upload .zip package (Windows and Linux builds)
+- [ ] Update page description from `marketing/itch_io_page.html` (copy HTML content)
+- [ ] Post devlog from `marketing/itch_090_beta_announcement.md`
+- [ ] Update screenshots if needed (gamepad controls, ascension UI)
+- [ ] Set tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
+- [ ] Mark as "Beta - In Development"
 
 ### 9.5 **Update and verify screenshots** - PARTIALLY COMPLETED
 
