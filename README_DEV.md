@@ -1,6 +1,6 @@
 # Rogue Signal Protocol - Developer Guide
 
-**Version 0.8.0 Alpha** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 0.9.0 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 > **For Players**: See [README.txt](README.txt) for game instructions
 >
@@ -13,7 +13,7 @@ Copyright (C) 2025 Adam Forster
 This program is free software licensed under the MIT License. You can freely use, modify, and distribute it. See LICENSE file for full details.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
+![Version](https://img.shields.io/badge/version-0.9.0%20Beta-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Game Overview
@@ -57,21 +57,23 @@ Discover the dark truth through environmental storytelling:
 - **Dr. Aris Thorne**: Learn about the obsessed lead researcher
 - **Digital Consciousness**: Explore themes of mind uploading and identity
 
-## Alpha Status
+## Beta Status
 
-This is an **Alpha release** focusing on core gameplay and feedback collection.
+This is a **Beta release** - feature-complete and seeking community testing before 1.0.
 
 ### What's Implemented
 - Complete stealth gameplay loop
 - All 8 enemy types with unique behaviors
 - Full exploit system with 13 abilities
 - 3-level campaign with escalating difficulty
+- Ascension mode with meta-progression
 - Save/load system with permadeath
 - Audio system with music and SFX
 - Complete story content (20+ fragments)
+- Full gamepad support with remapping
+- Cross-platform: Windows and Linux (including Steam Deck)
 
 ### Known Limitations
-- Primary support: Windows 10/11 (Linux/Steam Deck supported via GitHub releases)
 - No tutorial scenario (help menu is comprehensive)
 
 ---
@@ -191,10 +193,16 @@ RogueSignalProtocol/
 │
 ├── Build System:
 ├── build/
-│   ├── build.bat                # Build script (alpha/release)
+│   ├── build.bat                # Windows build script (alpha/beta/release)
+│   ├── build-linux.sh           # Linux build script
 │   ├── BUILD_GUIDE.md           # Build documentation
 │   ├── BUILD_TYPES.md           # Logging system docs
 │   └── clean.bat                # Cleanup script
+│
+├── packaging/
+│   └── linux/                   # Linux packaging (AppImage, Flatpak, AUR)
+│       ├── README.md            # Linux distribution guide
+│       └── TEST_CHECKLIST.md    # Package testing checklist
 │
 ├── Testing:
 ├── tests/
@@ -267,46 +275,65 @@ tests/
 
 ## Building Executables
 
-The game uses a sophisticated build system with two build types.
+The game uses a build system supporting both Windows and Linux.
 
-### Alpha Build (For Playtesters)
+### Windows Build
+
+**Beta Build (For Playtesters):**
 ```bash
 cd build
-build.bat alpha  # or just: build.bat
+build.bat beta  # or: build.bat alpha
 ```
 - Includes DEBUG logging
 - Creates `game_debug.log` for bug reports
-- Perfect for sending to playtesters
 
-### Release Build (For Public Release)
+**Release Build (For Public Release):**
 ```bash
 cd build
 build.bat release
 ```
 - Minimal WARNING-level logging only
 - Creates `game_errors.log` (errors only)
-- Optimized for end users
+
+### Linux Build
+
+Build from a Linux environment (native, WSL2, or VM):
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install PyInstaller if needed
+pip install pyinstaller
+
+# Run the build script
+./build/build-linux.sh
+```
+
+**Output:** `dist/RogueSignalProtocol` (no .exe extension)
+
+For distribution packages (AppImage, Flatpak, AUR), see [packaging/linux/README.md](packaging/linux/README.md).
 
 ### Build Output
 ```
 dist/                         # Complete distribution
-├── RogueSignalProtocol.exe   # Main executable
+├── RogueSignalProtocol.exe   # Windows executable (or no extension on Linux)
 ├── README.txt                # End-user instructions
 ├── build_info.txt            # Build type and date
-├── debug_mode.flag           # Present in alpha builds
+├── debug_mode.flag           # Present in beta/alpha builds
 ├── game_content.json         # All JSON configs
 ├── graphics/                 # All sprites
 ├── sound/                    # All SFX
 └── music/                    # All music
 
-releases/                     # Timestamped archives
-└── RogueSignalProtocol_Alpha_2025-01-15_143022.zip
+releases/                     # Timestamped archives (Windows only)
+└── RogueSignalProtocol_Beta_2025-01-15_143022.zip
 ```
 
 ### Build Documentation
 - **build/BUILD_GUIDE.md** - Complete build instructions
 - **build/BUILD_TYPES.md** - Logging system documentation
-- **build/FINAL_BUILD_STATUS.md** - Build system status
+- **packaging/linux/README.md** - Linux packaging guide
 
 ---
 

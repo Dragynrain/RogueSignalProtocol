@@ -1,10 +1,10 @@
 ===============================================================================
                         ROGUE SIGNAL PROTOCOL
-                         Version 0.8.0 Alpha
+                         Version 0.9.0 Beta
                     A Coffee Break Stealth Roguelike
 ===============================================================================
 
-** ALPHA BUILD NOTICE **
+** BETA BUILD NOTICE **
 This build includes debug features:
 - Console window shows startup/error messages (intentional!)
 - Verbose logging to help track bugs
@@ -20,7 +20,7 @@ hostile corporate networks. Quick 10-15 minute runs with permadeath -
 each death teaches lessons, each run reveals more truth.
 
 ** FEEDBACK WANTED **
-This is an alpha release! Please share your experience (2 minute survey):
+This is a beta release! Please share your experience (2 minute survey):
 https://forms.gle/jbwGdn8VGPa6NG9p9
 
 KEY FEATURES
@@ -183,22 +183,35 @@ Save Files:           [data directory]\saves\
 
 SYSTEM REQUIREMENTS
 -------------------
-OS: Windows 10/11
+OS: Windows 10/11, Linux (most distros), Steam Deck
 Disk Space: ~250 MB
-Display: 1280x720 or higher recommended
-Font: CascadiaCode (for glyphs mode)
+Display: 1280x720 or higher recommended (1280x800 native on Steam Deck)
+Font: CascadiaCode (for glyphs mode on Windows)
+
+LINUX NOTES
+-----------
+Linux data is stored in XDG-compliant locations:
+- Saves/Settings: ~/.local/share/RogueSignalProtocol/
+- Logs: ~/.local/share/RogueSignalProtocol/logs/
+
+Distribution formats available:
+- AppImage: Portable, works on any distro
+- Flatpak: Via Flathub beta channel
+- AUR: For Arch-based distros (rogue-signal-protocol-bin)
+
+Steam Deck: Runs natively. Add as non-Steam game for Gaming Mode.
 
 TROUBLESHOOTING
 ---------------
 GAME WON'T START:
 - Check the console window for error messages
-- Check if debug_mode.flag exists (should exist for alpha builds)
+- Check if debug_mode.flag exists (should exist for beta builds)
 - Review logs in [data directory]\logs\ (see FILE LOCATIONS section above)
 - If directories can't be created: Move game to a writable location
   (Desktop, Documents, etc.) instead of Program Files
 
 CRASHES/BUGS:
-- This is an alpha build - bugs expected!
+- This is a beta build - bugs may still occur!
 - Use Shift+F12 or Settings > Export Debug Package to create bug report
 - Debug package includes: saves, logs, metrics, system info, screenshot
 - Package saved to [data directory]\debug_exports\debug_YYYY-MM-DD_HHMM.zip
@@ -225,7 +238,7 @@ GAMEPAD NOT RECOGNIZED:
 
 ADVANCED - LOGGING CONTROL
 ---------------------------
-This alpha build includes verbose logging for bug tracking.
+This beta build includes verbose logging for bug tracking.
 
 ENABLE DEBUG LOGGING:
 1. Create empty file: debug_mode.flag

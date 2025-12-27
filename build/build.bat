@@ -5,8 +5,8 @@ REM Change to parent directory (where RogueSignalProtocol.py is located)
 cd /d "%~dp0.."
 
 REM Build type: alpha (default), beta, or release
-REM - alpha/beta: DEBUG logging enabled (no release_mode.flag)
-REM - release: Minimal logging (creates release_mode.flag)
+REM - alpha/beta: DEBUG logging enabled (creates debug_mode.flag)
+REM - release: Minimal logging (no flag file)
 set BUILD_TYPE=%1
 if "%BUILD_TYPE%"=="" set BUILD_TYPE=alpha
 
@@ -41,16 +41,19 @@ copy /Y narrative_content.json dist\ >nul
 copy /Y graphics_tiles.json dist\ >nul
 copy /Y default_bindings.json dist\ >nul
 copy /Y KreativeSquare.ttf dist\ >nul
+copy /Y logo.png dist\ >nul
 copy /Y LICENSE dist\ >nul
 copy /Y README.txt dist\ >nul
 xcopy /E /I /Y /Q graphics dist\graphics >nul
 xcopy /E /I /Y /Q sound dist\sound >nul
 xcopy /E /I /Y /Q music dist\music >nul
 
-REM Create release flag for stable releases only (beta/alpha get DEBUG logging by default)
-if /i "%BUILD_TYPE%"=="release" (
-    echo. > dist\release_mode.flag
-)
+REM Create debug flag for alpha/beta builds (enables DEBUG logging)
+if /i "%BUILD_TYPE%"=="alpha" (
+    echo Debug mode enabled for alpha build > dist\debug_mode.flag
+) else ( if /i "%BUILD_TYPE%"=="beta" (
+    echo Debug mode enabled for beta build > dist\debug_mode.flag
+) )
 
 REM Create release archive
 echo Creating release archive...

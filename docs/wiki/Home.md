@@ -6,7 +6,7 @@ Welcome to the Rogue Signal Protocol wiki! This is your comprehensive guide to g
 
 Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you exfiltrate from corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
 
-**Current Version:** 0.8.0 Alpha
+**Current Version:** 0.9.0 Beta
 
 ## Quick Links
 

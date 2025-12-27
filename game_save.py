@@ -78,7 +78,7 @@ class SaveGameManager:
 
         # Gather all game state data
         save_data = {
-            "version": "0.8.0 Alpha",
+            "version": "0.9.0 Beta",
             "timestamp": time.time(),
             # Game state
             "level": game.level,

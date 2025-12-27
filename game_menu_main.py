@@ -237,7 +237,7 @@ class MainMenu(BaseMenu):
 
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
-        version = "Version 0.8.0 Alpha"
+        version = "Version 0.9.0 Beta"
         subtitle = "Cyberspace Stealth Exfiltration"
 
         # Get UI color from settings

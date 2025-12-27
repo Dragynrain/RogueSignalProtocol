@@ -2,10 +2,10 @@
 
 # Rogue Signal Protocol
 
-**Version 0.8.0 Alpha** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 0.9.0 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
+![Version](https://img.shields.io/badge/version-0.9.0%20Beta-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 **[SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!
@@ -115,16 +115,38 @@ When running the executable for the first time, Windows may display a "Windows p
 The warning may appear again if you download a new version or move the file to a different location.
 
 #### Linux (Including Steam Deck)
-Linux builds are available from **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)**.
 
-**To run:**
-1. Download and extract `RogueSignalProtocol-linux.tar.gz`
-2. Make the binary executable: `chmod +x RogueSignalProtocol`
-3. Run: `./RogueSignalProtocol`
+Multiple distribution formats available from **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)**:
 
-**Steam Deck:** The game runs natively in Desktop Mode. Add as a non-Steam game for Gaming Mode. Resolution (1280x800) matches the Deck's screen perfectly.
+**AppImage (Recommended - works on any distro):**
+```bash
+chmod +x RogueSignalProtocol-*.AppImage
+./RogueSignalProtocol-*.AppImage
+```
 
-**Requirements:** SDL2, SDL2_ttf, SDL2_mixer (usually pre-installed on modern distros).
+**Tarball (manual installation):**
+```bash
+tar xzf RogueSignalProtocol-linux.tar.gz
+cd RogueSignalProtocol
+./RogueSignalProtocol
+```
+
+**Flatpak (via Flathub beta channel):**
+```bash
+flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+flatpak install flathub-beta com.dragynrain.roguesignalprotocol
+```
+
+**Arch Linux (AUR):**
+```bash
+yay -S rogue-signal-protocol-bin
+```
+
+**Steam Deck:** The game runs natively in Desktop Mode. Add as a non-Steam game for Gaming Mode. Resolution (1280x800) matches the Deck's screen perfectly. Full gamepad support included.
+
+**Requirements:** SDL2 libraries (usually pre-installed on modern distros).
+
+For detailed Linux packaging information, see [packaging/linux/README.md](packaging/linux/README.md).
 
 ### For Developers (From Source)
 
