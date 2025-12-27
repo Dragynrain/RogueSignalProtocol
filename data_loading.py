@@ -19,6 +19,7 @@ import os
 from typing import Any
 
 from game_errors import GameErrorHandler
+from game_file_paths import get_data_directory
 
 
 class DataLoader:
@@ -141,8 +142,12 @@ class DataLoader:
 class PersistentStorage:
     """Handles persistent storage and game saves."""
 
-    def __init__(self, base_dir="saves"):
-        self.base_dir = base_dir
+    def __init__(self, base_dir=None):
+        # Use data directory from game_file_paths if no explicit path provided
+        if base_dir is None:
+            self.base_dir = str(get_data_directory() / "saves")
+        else:
+            self.base_dir = base_dir
         self.ensure_directory_exists()
 
     def ensure_directory_exists(self) -> None:
