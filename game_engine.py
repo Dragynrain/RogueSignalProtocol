@@ -597,6 +597,13 @@ class GameEngine:
 
         total_damage = base_damage + stealth_bonus
 
+        # Log bump attack (DEBUG for detailed combat tracking)
+        logging.debug(
+            f"[COMBAT] Player bump attack: target={target_enemy.type_data.name} ({target_enemy.id}), "
+            f"damage={total_damage} (base={base_damage}, stealth={stealth_bonus}), "
+            f"target HP: {target_enemy.cpu}/{target_enemy.max_cpu}"
+        )
+
         # Log the attack with damage amount
         self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
 
@@ -742,6 +749,16 @@ class GameEngine:
         )
         self.message_log.add_message(
             f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
+        )
+
+        # Log enemy elimination (INFO level for beta debugging)
+        kill_context = "stealth kill" if was_stealth else "combat kill"
+        if from_blind_spot:
+            kill_context += " from blind spot"
+        logging.info(
+            f"[KILL] {enemy.type_data.name} eliminated ({kill_context}), "
+            f"damage={damage}, enemies_remaining={len(self.enemies)}, "
+            f"player CPU: {self.player.cpu}/{self.player.max_cpu}"
         )
 
         # Track kill metrics
