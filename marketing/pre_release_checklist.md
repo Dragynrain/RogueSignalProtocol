@@ -186,6 +186,12 @@ copy releases\RogueSignalProtocol_beta_2025-12-27.zip releases\RogueSignalProtoc
 - More exposure but more competitive
 - Include 2-3 screenshots
 
+**Option C: r/DestroyMyGame (brutal feedback)**
+- Use `marketing/reddit_destroymygame_draft.md`
+- Specifically for crash reports and balance complaints
+- Expect harsh but honest criticism
+- Good for beta testing phase
+
 ### 11. **Feedback collection** - COMPLETED
 
 - [x] Create Google Form from `marketing/feedback_survey_draft.md`
