@@ -447,10 +447,23 @@ class GameTurnManager:
                 else:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player, game_engine=self.game_engine)
-                logging.debug(
-                    f"[COMBAT] Enemy '{enemy.type}' ({enemy.id}) attacked player for {damage} damage, "
-                    f"player CPU: {self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}"
-                )
+
+                # Log combat at INFO level for beta debugging (playtester reports)
+                if damage > 0:
+                    logging.info(
+                        f"[DAMAGE] Player took {damage} damage from {enemy.type_data.name}, "
+                        f"CPU: {self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}, "
+                        f"enemy at ({enemy.x},{enemy.y})"
+                    )
+                elif enemy.type == "virus":
+                    logging.debug(
+                        f"[COMBAT] Virus infection from {enemy.type_data.name}, "
+                        f"virus_turns={self.game_engine.player.temporary_effects.get('virus_turns', 0)}"
+                    )
+                else:
+                    logging.debug(
+                        f"[COMBAT] Status effect from {enemy.type_data.name} ({enemy.id})"
+                    )
 
                 # Add damage message to log (always, not just when inventory is open)
                 if damage > 0:

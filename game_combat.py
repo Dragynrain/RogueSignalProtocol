@@ -213,6 +213,14 @@ class ExploitSystem:
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
 
+        # Log exploit execution result
+        if success:
+            logging.debug(
+                f"[COMBAT] Exploit '{exploit.name}' executed at ({target.x},{target.y}), "
+                f"heat_cost={self._calculate_heat_cost(exploit)}, "
+                f"player_heat={self.game.player.heat}/{self.game.player.max_heat}"
+            )
+
         # Only apply heat cost if the exploit was successful
         if success:
             heat_cost = self._calculate_heat_cost(exploit)
