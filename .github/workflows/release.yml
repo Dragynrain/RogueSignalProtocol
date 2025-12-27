@@ -249,6 +249,11 @@ jobs:
         echo "Copying logo..."
         cp logo.png dist/
 
+        # Copy Flatpak/desktop integration files for Flathub builds
+        echo "Copying desktop integration files..."
+        cp packaging/linux/rogue-signal-protocol.desktop dist/
+        cp packaging/linux/com.dragynrain.roguesignalprotocol.metainfo.xml dist/
+
         echo "All assets copied successfully."
 
     - name: Create release archive
