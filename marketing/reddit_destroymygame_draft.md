@@ -26,8 +26,8 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 
 **Balance:**
 - Is stealth viable or do you end up fighting everything anyway?
-- Heat system (overheat = self-damage) - annoying resource management or interesting risk/reward?
 - Ascension mode (20 difficulty levels that stack) - does it feel like genuine challenge or artificial BS?
+- Any enemy type feel unfair or too easy?
 
 **Controls:**
 - Just added gamepad support. Does it feel right or clunky?
@@ -36,6 +36,7 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 **Crashes:**
 - This is a beta. I want to know what kills it.
 - Shift+F12 auto-generates a debug package if something breaks.
+- Please include your OS (Windows 10/11, Linux distro) when reporting.
 
 **First impressions:**
 - Did you understand what to do without the help menu?

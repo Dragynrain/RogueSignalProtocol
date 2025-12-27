@@ -215,6 +215,7 @@ CRASHES/BUGS:
 - Use Shift+F12 or Settings > Export Debug Package to create bug report
 - Debug package includes: saves, logs, metrics, system info, screenshot
 - Package saved to [data directory]\debug_exports\debug_YYYY-MM-DD_HHMM.zip
+- When reporting, please include your OS (Windows 10/11, Linux distro, Steam Deck)
 - Report issues on GitHub: github.com/Dragynrain/RogueSignalProtocol
 
 SAVE FILE LOST:
