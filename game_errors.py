@@ -8,7 +8,6 @@ Special handlers for config and data loading errors with enhanced context.
 """
 
 import logging
-import traceback
 from typing import Any
 
 
@@ -33,14 +32,14 @@ class GameErrorHandler:
 
         logging.debug(f"Error Handling: Caught {type(error).__name__} in {context}, fatal={fatal}")
 
-        # Logging
+        # Use logging.exception() for automatic stack trace inclusion
+        # This is more reliable than manual traceback.format_exc()
         logging.error(f"ERROR: {error_details}")
         if user_message:
             logging.error(f"User Impact: {user_message}")
 
-        logging.error(f"Exception details: {str(error)}")
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.error(traceback.format_exc())
+        # Always include stack trace for beta debugging - use exception() for proper formatting
+        logging.exception(f"Stack trace for {context}:")
 
         if fatal:
             logging.critical("FATAL ERROR: Game cannot continue")

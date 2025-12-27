@@ -21,8 +21,12 @@ import sys
 import tcod
 import tcod.sdl
 
+from game_entities import Colors
 from game_errors import GameErrorHandler
 from game_tile_dimension_calculator import TileDimensionCalculator
+
+# Fallback color when sprite color extraction fails
+FALLBACK_WHITE = Colors.PURE_WHITE
 
 
 class TileManager:
@@ -367,15 +371,17 @@ class TileManager:
         # Look up sprite filename
         sprite_file = self._get_sprite_filename(entity_name)
         if not sprite_file:
-            logging.debug(f"No sprite for color extraction: {entity_name}")
-            return [(255, 255, 255)]  # Fallback to white
+            # This is an error in graphics mode - every enemy should have a sprite
+            logging.error(f"MISSING SPRITE: No sprite mapping for entity '{entity_name}'")
+            return [FALLBACK_WHITE]
 
         # Build full file path
         filepath = os.path.join(self.graphics_dir, sprite_file)
 
         if not os.path.exists(filepath):
-            logging.warning(f"Sprite file not found for color extraction: {filepath}")
-            return [(255, 255, 255)]
+            # Missing sprite file is a content error
+            logging.error(f"MISSING SPRITE FILE: {filepath}")
+            return [FALLBACK_WHITE]
 
         try:
             import numpy as np
@@ -476,7 +482,7 @@ class TileManager:
             GameErrorHandler.handle_error(
                 e, "color_extract", f"Failed to extract colors from sprite {filepath}"
             )
-            return [(255, 255, 255)]
+            return [FALLBACK_WHITE]
 
     def check_and_handle_resize(self) -> bool:
         """

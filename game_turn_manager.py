@@ -75,6 +75,15 @@ class GameTurnManager:
         if self.game_engine.game_over:
             return
 
+        logging.debug(
+            f"[TURN {self.game_engine.turn}] Start - Level {self.game_engine.level}, "
+            f"Player at ({self.game_engine.player.x},{self.game_engine.player.y}), "
+            f"CPU: {self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}, "
+            f"Heat: {self.game_engine.player.heat}/{self.game_engine.player.max_heat}, "
+            f"Trace: {self.game_engine.player.trace_level:.1f}%, "
+            f"Enemies: {len(self.game_engine.enemies)}"
+        )
+
         # Reset flags at start of turn
         self._enemies_alerted_played_this_turn = False
 
@@ -438,6 +447,10 @@ class GameTurnManager:
                 else:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player, game_engine=self.game_engine)
+                logging.debug(
+                    f"[COMBAT] Enemy '{enemy.type}' ({enemy.id}) attacked player for {damage} damage, "
+                    f"player CPU: {self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}"
+                )
 
                 # Add damage message to log (always, not just when inventory is open)
                 if damage > 0:
@@ -566,6 +579,10 @@ class GameTurnManager:
                 enemy.state = EnemyState.ALERT
                 enemy.alert_timer = 1  # Give 1 turn grace period before becoming HOSTILE
                 enemy.last_seen_player = player_pos
+                logging.debug(
+                    f"Enemy '{enemy.type}' ({enemy.id}) UNAWARE -> ALERT at ({enemy.position.x},{enemy.position.y}), "
+                    f"player at ({player_pos.x},{player_pos.y})"
+                )
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
                 self.game_engine.sound_manager.play_sound("enemy_alert")
 
@@ -606,10 +623,16 @@ class GameTurnManager:
                     if enemy.type == "admin":
                         enemy.state = EnemyState.ALERT
                         enemy.alert_timer = 1  # Give grace period before re-escalation
+                        logging.debug(
+                            f"Enemy 'admin' ({enemy.id}) HOSTILE -> ALERT (lost sight, admin de-escalation)"
+                        )
                     else:
                         enemy.state = EnemyState.UNAWARE
                         enemy.last_seen_player = None
                         self._restore_patrol(enemy)
+                        logging.debug(
+                            f"Enemy '{enemy.type}' ({enemy.id}) HOSTILE -> UNAWARE (lost track)"
+                        )
                         self.game_engine.message_log.add_message(
                             f"{enemy.type_data.name} lost track"
                         )
@@ -625,6 +648,10 @@ class GameTurnManager:
         player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
         enemy.make_hostile(player_pos)
 
+        logging.info(
+            f"[DETECTION] Enemy '{enemy.type}' ({enemy.id}) ALERT -> HOSTILE at ({enemy.position.x},{enemy.position.y}), "
+            f"player at ({player_pos.x},{player_pos.y}), turn {self.game_engine.turn}"
+        )
         self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, "trace_alert_to_hostile")
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
         # Add atmospheric narrative message
