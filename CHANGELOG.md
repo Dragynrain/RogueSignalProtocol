@@ -141,7 +141,7 @@ All notable changes to Rogue Signal Protocol will be documented in this file.
 
 ### Documentation
 - Added `docs/wiki/Ascension-System.md` with full modifier reference
-- Added `docs/wiki/Achievement-Guide.md` expanded to 47 achievements
+- Added `docs/wiki/Achievement-Guide.md` expanded to 45 achievements
 - Updated `docs/wiki/Keybindings.md` with full gamepad reference
 - Updated `game_help_content.py` with gamepad controls
 - Updated README files with gamepad support and Linux instructions
