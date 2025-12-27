@@ -5,7 +5,7 @@ Use this checklist to verify each package format before release.
 ## Test Environments
 
 - [ ] Steam Deck (SteamOS - Arch-based)
-- [ ] Ubuntu 22.04 LTS (VM or real hardware)
+- [ ] Linux Mint (dedicated machine - Debian-based)
 - [ ] Fedora Latest (optional, for Wayland testing)
 
 ---
