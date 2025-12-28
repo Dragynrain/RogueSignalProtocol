@@ -36,7 +36,7 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 **Crashes:**
 - This is a beta. I want to know what kills it.
 - Shift+F12 auto-generates a debug package if something breaks.
-- Please include your OS (Windows 10/11, Linux distro) when reporting.
+- Include your OS (Windows 10/11, Linux distro) when reporting.
 
 **First impressions:**
 - Did you understand what to do without the help menu?
@@ -46,14 +46,13 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 
 - "Looks cool!" - I need specifics
 - Art criticism - I know the sprites are AI-generated placeholder quality
-- "Add multiplayer" - scope is locked
+- "Add multiplayer" - no
 
 ### Technical details
 
 - Windows 10/11, Linux
 - Gamepad support (Xbox/PS tested)
 - ~250 MB download
-- MIT licensed, source on GitHub if you want to dig into bugs
 
 ---
 

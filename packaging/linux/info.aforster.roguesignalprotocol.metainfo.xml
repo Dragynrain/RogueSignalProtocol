@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- AppStream metainfo for Rogue Signal Protocol -->
-<!-- Validation: appstreamcli validate com.dragynrain.roguesignalprotocol.metainfo.xml -->
 <component type="desktop-application">
-  <id>com.dragynrain.roguesignalprotocol</id>
+  <id>info.aforster.roguesignalprotocol</id>
 
   <name>Rogue Signal Protocol</name>
   <summary>Coffee break cyberspace stealth roguelike</summary>
@@ -10,8 +8,8 @@
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
 
-  <developer id="com.dragynrain">
-    <name>Dragynrain</name>
+  <developer id="info.aforster">
+    <name>Alex Forster</name>
   </developer>
 
   <description>
@@ -27,11 +25,11 @@
       <li>Stealth-focused gameplay with blind spots and ambushes</li>
       <li>12 exploits (abilities) and 6 code hacks to discover</li>
       <li>47 achievements and 20 Ascension difficulty levels</li>
-      <li>Full gamepad support (Steam Deck compatible)</li>
+      <li>Full gamepad support (Steam Deck verified)</li>
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.dragynrain.roguesignalprotocol.desktop</launchable>
+  <launchable type="desktop-id">info.aforster.roguesignalprotocol.desktop</launchable>
 
   <url type="homepage">https://dragynrain.itch.io/rogue-signal-protocol</url>
   <url type="bugtracker">https://github.com/Dragynrain/RogueSignalProtocol/issues</url>
@@ -68,16 +66,22 @@
     <keyword>turn-based</keyword>
     <keyword>indie</keyword>
     <keyword>permadeath</keyword>
+    <keyword>stealth</keyword>
   </keywords>
 
   <screenshots>
-    <!-- Add screenshots after taking them -->
-    <!-- Example:
     <screenshot type="default">
-      <caption>Gameplay showing tactical combat</caption>
-      <image>https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/marketing/screenshot1.png</image>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-1.png</image>
+      <caption>Tactical gameplay with enemy movement prediction</caption>
     </screenshot>
-    -->
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-2.png</image>
+      <caption>Stealth navigation through cyberspace</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-3.png</image>
+      <caption>Exploits and abilities system</caption>
+    </screenshot>
   </screenshots>
 
   <releases>
@@ -87,7 +91,7 @@
         <ul>
           <li>Ascension mode with meta-progression</li>
           <li>Cross-platform support (Windows, Linux)</li>
-          <li>Steam Deck compatible</li>
+          <li>Steam Deck verified</li>
           <li>Full gamepad support with remapping</li>
         </ul>
       </description>

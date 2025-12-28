@@ -1,11 +1,11 @@
 [Desktop Entry]
 Name=Rogue Signal Protocol
 GenericName=Roguelike Game
-Comment=Cyberpunk roguelike game
+Comment=Coffee break cyberspace stealth roguelike
 Exec=rogue-signal-protocol
-Icon=com.dragynrain.roguesignalprotocol
+Icon=info.aforster.roguesignalprotocol
 Terminal=false
 Type=Application
 Categories=Game;RolePlaying;
-Keywords=roguelike;cyberpunk;tactical;turn-based;indie;
+Keywords=roguelike;cyberpunk;tactical;turn-based;indie;permadeath;stealth;
 StartupNotify=true
