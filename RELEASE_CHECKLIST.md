@@ -404,16 +404,38 @@ git push origin vX.Y.Z-beta
 - [ ] Mark as Linux compatible
 
 **Flathub (Beta channel):**
-- [ ] Fork flathub/flathub repo
+
+> **WARNING:** Flathub explicitly BANS AI-generated submissions. YOU must submit manually.
+> Claude can prepare files but CANNOT submit the PR.
+
+Prerequisites (do these FIRST):
+- [ ] Update `packaging/linux/com.dragynrain.roguesignalprotocol.yml` with new SHA256
+- [ ] Test Flatpak locally on Linux: `flatpak-builder --user --install --force-clean build-dir packaging/linux/com.dragynrain.roguesignalprotocol.yml`
+- [ ] Verify it runs: `flatpak run com.dragynrain.roguesignalprotocol`
+- [ ] **Record a video** of the app running via Flatpak (REQUIRED by Flathub)
+
+Submission (do manually via GitHub web UI):
+- [ ] Fork flathub/flathub repo (uncheck "copy master branch only")
+- [ ] Clone with `new-pr` branch: `git clone -b new-pr ...`
 - [ ] Create branch: `com.dragynrain.roguesignalprotocol`
-- [ ] Add manifest file
-- [ ] Submit PR to beta branch
+- [ ] Add manifest file, commit, push
+- [ ] Create PR via GitHub web UI (NOT CLI) - this auto-populates the template
+- [ ] PR title MUST be exactly: `Add com.dragynrain.roguesignalprotocol`
+- [ ] Fill in ALL checkboxes in the template
+- [ ] Upload the video
+- [ ] Declare you are the author/developer
 - [ ] Wait for review (1-7 days)
 
 **AUR:**
-- [ ] Update PKGBUILD with new version and checksums
+
+> **TIP:** Use Docker to generate .SRCINFO if not on Arch:
+> `docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux bash -c "pacman -Sy --noconfirm base-devel && useradd builder && su builder -c 'makepkg --printsrcinfo' > .SRCINFO"`
+
+- [ ] Update PKGBUILD with new version and SHA256
+- [ ] Convert to Unix line endings: `sed -i 's/\r$//' PKGBUILD`
 - [ ] Generate .SRCINFO: `makepkg --printsrcinfo > .SRCINFO`
-- [ ] Push to AUR
+- [ ] Push to AUR: `git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git`
+- [ ] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
 
 ### 7.3 Verify Feedback Collection
 
