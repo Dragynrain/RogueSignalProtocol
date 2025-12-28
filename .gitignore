@@ -72,3 +72,6 @@ SESSION_*.md
 # Development diagnostic scripts
 scripts/diagnostics/
 .venv-linux/
+
+# Large video files
+marketing/*.mp4

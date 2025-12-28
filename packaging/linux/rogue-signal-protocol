@@ -1,0 +1,5 @@
+#!/bin/sh
+# Wrapper script for Rogue Signal Protocol
+# Changes to the game directory before executing (required for asset loading)
+cd /app/lib/rogue-signal-protocol
+exec ./RogueSignalProtocol "$@"

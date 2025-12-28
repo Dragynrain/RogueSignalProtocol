@@ -214,6 +214,9 @@ copy releases\RogueSignalProtocol_beta_2025-12-27.zip releases\RogueSignalProtoc
 - No tutorial scenario (help menu is comprehensive)
 - Steam Deck support is experimental
 
+**Deferred to 1.0:**
+- Flathub submission failed (PR #7414 rejected - app ID must match verified domain). Will retry with info.aforster.roguesignalprotocol after domain verification. AppImage remains the primary Linux distribution method for 0.9.0.
+
 ---
 
 ## ✨ OPTIONAL ENHANCEMENTS (Not Blocking)

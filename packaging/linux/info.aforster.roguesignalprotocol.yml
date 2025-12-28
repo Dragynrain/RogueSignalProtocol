@@ -1,0 +1,59 @@
+app-id: info.aforster.roguesignalprotocol
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: rogue-signal-protocol
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --socket=pulseaudio
+  - --device=input  # Gamepad/controller support
+
+modules:
+  - name: RogueSignalProtocol
+    buildsystem: simple
+    build-commands:
+      # Install game binary and assets
+      - install -dm755 /app/lib/rogue-signal-protocol
+      - install -dm755 /app/bin
+      - install -Dm755 RogueSignalProtocol /app/lib/rogue-signal-protocol/
+      - cp -r graphics sound music /app/lib/rogue-signal-protocol/
+      - install -Dm644 game_content.json game_rules.json graphics_tiles.json narrative_content.json default_bindings.json KreativeSquare.ttf -t /app/lib/rogue-signal-protocol/
+      - test -f README.txt && install -Dm644 README.txt /app/lib/rogue-signal-protocol/ || true
+      - test -f debug_mode.flag && install -Dm644 debug_mode.flag /app/lib/rogue-signal-protocol/ || true
+
+      # Install wrapper script
+      - install -Dm755 rogue-signal-protocol /app/bin/
+
+      # Install desktop integration
+      - install -Dm644 info.aforster.roguesignalprotocol.desktop /app/share/applications/
+      - install -Dm644 logo-256.png /app/share/icons/hicolor/256x256/apps/info.aforster.roguesignalprotocol.png
+      - install -Dm644 info.aforster.roguesignalprotocol.metainfo.xml /app/share/metainfo/
+
+      # License
+      - install -dm755 /app/share/licenses/info.aforster.roguesignalprotocol
+      - test -f LICENSE && install -Dm644 LICENSE /app/share/licenses/info.aforster.roguesignalprotocol/ || true
+
+    sources:
+      - type: archive
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/RogueSignalProtocol-Linux.tar.gz
+        sha256: 6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21
+
+      - type: file
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/logo-256.png
+        sha256: 5f753961c3550168d1fead02ad18cf6178f7ef24f35e4c39f9000d7f9d26fe5c
+        dest-filename: logo-256.png
+
+      - type: file
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/info.aforster.roguesignalprotocol.desktop
+        dest-filename: info.aforster.roguesignalprotocol.desktop
+
+      - type: file
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml
+        dest-filename: info.aforster.roguesignalprotocol.metainfo.xml
+
+      - type: file
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/rogue-signal-protocol
+        dest-filename: rogue-signal-protocol
