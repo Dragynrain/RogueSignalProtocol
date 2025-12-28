@@ -1,68 +1,35 @@
-# Flatpak manifest for Rogue Signal Protocol
-# Build with: flatpak-builder --user --install build-dir com.dragynrain.roguesignalprotocol.yml
-#
-# For Flathub BETA submission (0.9.0-beta):
-#   1. Fork https://github.com/flathub/flathub
-#   2. Create branch: com.dragynrain.roguesignalprotocol
-#   3. Add this file as com.dragynrain.roguesignalprotocol.yml
-#   4. Add x-flathub section with "default-branch": "beta" to manifest
-#   5. Submit PR targeting the beta branch
-#
-# Users install beta via:
-#   flatpak remote-add flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
-#   flatpak install flathub-beta com.dragynrain.roguesignalprotocol
-#
-# Local testing:
-#   flatpak-builder --user --install --force-clean build-dir com.dragynrain.roguesignalprotocol.yml
-#   flatpak run com.dragynrain.roguesignalprotocol
-
 app-id: com.dragynrain.roguesignalprotocol
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
 command: rogue-signal-protocol
 
-# Sandbox permissions
 finish-args:
-  # Display (Wayland preferred, X11 fallback)
   - --socket=wayland
   - --socket=fallback-x11
   - --share=ipc
-
-  # Audio
   - --socket=pulseaudio
-
-  # Gamepad support (required for controller input)
   - --device=all
-
-  # Save files in XDG user data directory (automatic via platformdirs)
   - --persist=.local/share/RogueSignalProtocol
 
 modules:
   - name: RogueSignalProtocol
     buildsystem: simple
     build-commands:
-      # Extract the tarball (using manual extraction instead of type: archive)
       - tar -xzf game.tar.gz
 
-      # Create installation directories
       - install -dm755 /app/lib/rogue-signal-protocol
       - install -dm755 /app/bin
       - install -dm755 /app/share/applications
-      - install -dm755 /app/share/icons/hicolor/512x512/apps
-      - install -dm755 /app/share/icons/hicolor/256x256/apps
       - install -dm755 /app/share/icons/hicolor/128x128/apps
       - install -dm755 /app/share/metainfo
 
-      # Install main executable
       - install -Dm755 RogueSignalProtocol /app/lib/rogue-signal-protocol/RogueSignalProtocol
 
-      # Install game assets
       - cp -r graphics /app/lib/rogue-signal-protocol/
       - cp -r sound /app/lib/rogue-signal-protocol/
       - cp -r music /app/lib/rogue-signal-protocol/
 
-      # Install configuration files
       - install -Dm644 game_content.json /app/lib/rogue-signal-protocol/
       - install -Dm644 game_rules.json /app/lib/rogue-signal-protocol/
       - install -Dm644 graphics_tiles.json /app/lib/rogue-signal-protocol/
@@ -70,12 +37,10 @@ modules:
       - install -Dm644 default_bindings.json /app/lib/rogue-signal-protocol/
       - install -Dm644 KreativeSquare.ttf /app/lib/rogue-signal-protocol/
 
-      # Install optional files if present
       - test -f README.txt && install -Dm644 README.txt /app/lib/rogue-signal-protocol/ || true
       - test -f LICENSE && install -Dm644 LICENSE /app/lib/rogue-signal-protocol/ || true
       - test -f debug_mode.flag && install -Dm644 debug_mode.flag /app/lib/rogue-signal-protocol/ || true
 
-      # Create wrapper script (game expects assets in CWD)
       - |
         cat > /app/bin/rogue-signal-protocol << 'WRAPPER'
         #!/bin/sh
@@ -84,27 +49,20 @@ modules:
         WRAPPER
       - chmod +x /app/bin/rogue-signal-protocol
 
-      # Install desktop entry
       - install -Dm644 rogue-signal-protocol.desktop /app/share/applications/com.dragynrain.roguesignalprotocol.desktop
-
-      # Install icons
-      - install -Dm644 logo.png /app/share/icons/hicolor/512x512/apps/com.dragynrain.roguesignalprotocol.png
-      - install -Dm644 logo.png /app/share/icons/hicolor/256x256/apps/com.dragynrain.roguesignalprotocol.png
-      - install -Dm644 logo.png /app/share/icons/hicolor/128x128/apps/com.dragynrain.roguesignalprotocol.png
-
-      # Install AppStream metainfo
+      - install -Dm644 logo-128.png /app/share/icons/hicolor/128x128/apps/com.dragynrain.roguesignalprotocol.png
       - install -Dm644 com.dragynrain.roguesignalprotocol.metainfo.xml /app/share/metainfo/
 
     sources:
-      # Source: GitHub release tarball (downloaded as file, extracted manually in build-commands)
-      # Using type: file + manual tar extraction because flatpak-builder's archive handling
-      # was flattening the directory structure incorrectly
       - type: file
         url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/RogueSignalProtocol-Linux.tar.gz
         sha256: 6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21
         dest-filename: game.tar.gz
 
-      # Desktop entry (inline - no external file dependency)
+      - type: file
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.9.0-beta/logo-128.png
+        sha256: 191439f5a1d298c8a5b3f9916848be194ae377d2fce847edc2cdb163a2bdd261
+
       - type: inline
         dest-filename: rogue-signal-protocol.desktop
         contents: |
@@ -120,7 +78,6 @@ modules:
           Keywords=roguelike;cyberpunk;tactical;turn-based;indie;
           StartupNotify=true
 
-      # AppStream metainfo (inline - no external file dependency)
       - type: inline
         dest-filename: com.dragynrain.roguesignalprotocol.metainfo.xml
         contents: |
