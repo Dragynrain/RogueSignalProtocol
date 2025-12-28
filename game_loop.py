@@ -412,14 +412,16 @@ def _process_menu_action(
         zip_path = export_debug_package(game_engine=active_game)
         if zip_path:
             logging.info(f"Debug Export: Success from settings menu - {zip_path}")
-            menus["settings_menu"].export_status_message = f"Success! Saved to: {zip_path.parent}"
+            menus["settings_menu"].export_status_message = "Debug package exported!"
+            menus["settings_menu"].export_path = zip_path  # Full path shown on second line
         else:
             logging.error("Debug Export: Failed to create package from settings menu")
             menus["settings_menu"].export_status_message = "Failed to create debug package"
+            menus["settings_menu"].export_path = None
         return current_menu, None
 
     elif action == "settings":
-        menus["settings_menu"].export_status_message = None
+        # Don't clear export_status_message - keep it visible until user leaves settings
         menus["settings_menu"].selected_option = 0  # Reset to top when entering
         menu_stack.append(current_menu)
         return menus["settings_menu"], None
@@ -494,6 +496,7 @@ def _process_menu_action(
 
     elif action == "back":
         menus["settings_menu"].export_status_message = None
+        menus["settings_menu"].export_path = None
         if menu_stack:
             new_menu = menu_stack.pop()
         else:

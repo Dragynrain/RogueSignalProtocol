@@ -122,85 +122,87 @@ class TestVictoryScreenRendering:
 
 
 class TestVictoryScreenInputHandling:
-    """Test VictoryScreen input handling."""
+    """Test VictoryScreen input handling.
+
+    VictoryScreen uses inherited BaseInputHandler.handle_input() which:
+    - Maps keyboard keys and gamepad buttons to InputAction via InputMapper
+    - Returns True (close) for CONFIRM/CANCEL actions, "" (no-op) otherwise
+    """
+
+    def _create_key_event(self, sym, mod=0):
+        """Create a mock KeyDown event with required attributes."""
+        event = Mock(spec=tcod.event.KeyDown)
+        event.sym = sym
+        event.mod = mod  # Required by BaseInputHandler
+        return event
 
     def test_handle_input_space_key_closes_screen(self):
         """Pressing SPACE key closes victory screen."""
         victory_screen = VictoryScreen()
-
-        # Create mock SPACE key event
-        space_event = Mock(spec=tcod.event.KeyDown)
-        space_event.sym = tcod.event.KeySym.SPACE
-
+        space_event = self._create_key_event(tcod.event.KeySym.SPACE)
         result = victory_screen.handle_input(space_event)
-
-        # Should return True to close screen
         assert result is True
 
     def test_handle_input_return_key_closes_screen(self):
         """Pressing RETURN key closes victory screen."""
         victory_screen = VictoryScreen()
-
-        # Create mock RETURN key event
-        return_event = Mock(spec=tcod.event.KeyDown)
-        return_event.sym = tcod.event.KeySym.RETURN
-
+        return_event = self._create_key_event(tcod.event.KeySym.RETURN)
         result = victory_screen.handle_input(return_event)
-
-        # Should return True to close screen
         assert result is True
 
     def test_handle_input_kp_enter_key_closes_screen(self):
         """Pressing keypad ENTER closes victory screen."""
         victory_screen = VictoryScreen()
-
-        # Create mock KP_ENTER key event
-        kp_enter_event = Mock(spec=tcod.event.KeyDown)
-        kp_enter_event.sym = tcod.event.KeySym.KP_ENTER
-
+        kp_enter_event = self._create_key_event(tcod.event.KeySym.KP_ENTER)
         result = victory_screen.handle_input(kp_enter_event)
-
-        # Should return True to close screen
         assert result is True
 
     def test_handle_input_escape_key_closes_screen(self):
         """Pressing ESCAPE key closes victory screen."""
         victory_screen = VictoryScreen()
-
-        # Create mock ESCAPE key event
-        escape_event = Mock(spec=tcod.event.KeyDown)
-        escape_event.sym = tcod.event.KeySym.ESCAPE
-
+        escape_event = self._create_key_event(tcod.event.KeySym.ESCAPE)
         result = victory_screen.handle_input(escape_event)
-
-        # Should return True to close screen
         assert result is True
 
     def test_handle_input_other_keys_ignored(self):
         """Other keys do not close victory screen."""
         victory_screen = VictoryScreen()
-
-        # Create mock event for random key (e.g., 'A')
-        # Use KeySym(ord('a')) for cross-platform compatibility (KeySym.a doesn't exist on Linux)
-        other_event = Mock(spec=tcod.event.KeyDown)
-        other_event.sym = tcod.event.KeySym(ord("a"))
-
+        # Use KeySym(ord('a')) for cross-platform compatibility
+        # 'a' maps to MOVE_WEST which execute_action() returns False for
+        other_event = self._create_key_event(tcod.event.KeySym(ord("a")))
         result = victory_screen.handle_input(other_event)
-
-        # Should return False (do not close)
+        # execute_action returns False for non-close actions
         assert result is False
 
     def test_handle_input_non_keydown_events_ignored(self):
         """Non-KeyDown events are ignored."""
         victory_screen = VictoryScreen()
-
-        # Create mock mouse event
+        # Create mock mouse motion event - note: Mock with spec won't pass isinstance() check
+        # so BaseInputHandler returns get_default_return() which is ""
         mouse_event = Mock(spec=tcod.event.MouseMotion)
-
         result = victory_screen.handle_input(mouse_event)
+        # Unrecognized events return get_default_return() = ""
+        assert result == ""
 
-        # Should return False (do not close)
-        assert result is False
+    def test_handle_input_gamepad_a_button_closes_screen(self):
+        """BUG FIX: Gamepad A button closes victory screen (Steam Deck support)."""
+        victory_screen = VictoryScreen()
+        # Create mock gamepad button event (A = 0)
+        button_event = Mock(spec=tcod.event.ControllerButton)
+        button_event.button = 0  # A button
+        button_event.pressed = True
+        result = victory_screen.handle_input(button_event)
+        assert result is True, "Gamepad A button should close victory screen"
+
+    def test_handle_input_gamepad_b_button_closes_screen(self):
+        """BUG FIX: Gamepad B button closes victory screen (Steam Deck support)."""
+        victory_screen = VictoryScreen()
+        # Create mock gamepad button event (B = 1)
+        button_event = Mock(spec=tcod.event.ControllerButton)
+        button_event.button = 1  # B button
+        button_event.pressed = True
+        result = victory_screen.handle_input(button_event)
+        assert result is True, "Gamepad B button should close victory screen"
 
 
 class TestVictoryMessage:
@@ -283,6 +285,7 @@ class TestVictoryScreenEdgeCases:
         # Handle input without rendering first
         space_event = Mock(spec=tcod.event.KeyDown)
         space_event.sym = tcod.event.KeySym.SPACE
+        space_event.mod = 0  # Required by BaseInputHandler
 
         result = victory_screen.handle_input(space_event)
 
@@ -303,6 +306,13 @@ class TestVictoryScreenEdgeCases:
 class TestVictoryScreenIntegration:
     """Integration tests for victory screen workflow."""
 
+    def _create_key_event(self, sym, mod=0):
+        """Create a mock KeyDown event with required attributes."""
+        event = Mock(spec=tcod.event.KeyDown)
+        event.sym = sym
+        event.mod = mod  # Required by BaseInputHandler
+        return event
+
     def test_complete_victory_screen_workflow(self, test_console):
         """Test complete workflow: render -> input -> close."""
         # Use MagicMock without spec to auto-create all nested attributes
@@ -317,9 +327,7 @@ class TestVictoryScreenIntegration:
         victory_screen.render(test_console)
 
         # Step 2: User sees screen and presses SPACE
-        space_event = Mock(spec=tcod.event.KeyDown)
-        space_event.sym = tcod.event.KeySym.SPACE
-
+        space_event = self._create_key_event(tcod.event.KeySym.SPACE)
         should_close = victory_screen.handle_input(space_event)
 
         # Step 3: Screen closes
@@ -341,15 +349,31 @@ class TestVictoryScreenIntegration:
         ]
 
         for key_sym in invalid_keys:
-            key_event = Mock(spec=tcod.event.KeyDown)
-            key_event.sym = key_sym
+            key_event = self._create_key_event(key_sym)
             result = victory_screen.handle_input(key_event)
-            assert result is False  # Should not close
+            # Mapped keys return False (action rejected), unmapped keys return "" (no action)
+            assert result is not True  # Should not close (either False or "")
 
         # Finally press valid key (ENTER)
-        enter_event = Mock(spec=tcod.event.KeyDown)
-        enter_event.sym = tcod.event.KeySym.RETURN
+        enter_event = self._create_key_event(tcod.event.KeySym.RETURN)
         result = victory_screen.handle_input(enter_event)
 
         # Should close now
         assert result is True
+
+    def test_victory_screen_gamepad_workflow(self, test_console):
+        """BUG FIX: Test gamepad workflow for Steam Deck users."""
+        victory_screen = VictoryScreen()
+
+        # Render screen
+        victory_screen.render(test_console)
+
+        # User presses A button on gamepad to dismiss
+        a_button_event = Mock(spec=tcod.event.ControllerButton)
+        a_button_event.button = 0  # A button
+        a_button_event.pressed = True
+
+        should_close = victory_screen.handle_input(a_button_event)
+
+        # Should close on gamepad input
+        assert should_close is True, "Victory screen must accept gamepad input"
