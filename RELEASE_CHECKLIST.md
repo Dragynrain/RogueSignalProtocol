@@ -72,10 +72,10 @@ Update version in ALL these locations (search for old version string):
 
 **Linux packaging files:**
 - [ ] `packaging/linux/README.md` - Line ~5
-- [ ] `packaging/linux/com.dragynrain.roguesignalprotocol.metainfo.xml` - Line ~83 (release version)
+- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml` - Line ~83 (release version)
 - [ ] `packaging/linux/PKGBUILD` - Line ~3 (pkgver)
 - [ ] `packaging/linux/AppImageBuilder.yml` - version field
-- [ ] `packaging/linux/com.dragynrain.roguesignalprotocol.yml` - source URL
+- [ ] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL
 
 **Quick command to find all version strings:**
 ```bash
@@ -190,10 +190,10 @@ Check `dist/` folder contains:
 
 **Flatpak (local test):**
 ```bash
-flatpak-builder --user --install --force-clean build-dir packaging/linux/com.dragynrain.roguesignalprotocol.yml
+flatpak-builder --user --install --force-clean build-dir packaging/linux/info.aforster.roguesignalprotocol.yml
 ```
 - [ ] Flatpak builds successfully
-- [ ] Can run: `flatpak run com.dragynrain.roguesignalprotocol`
+- [ ] Can run: `flatpak run info.aforster.roguesignalprotocol`
 
 **AUR (generate checksums):**
 ```bash
@@ -403,28 +403,35 @@ git push origin vX.Y.Z-beta
 - [ ] Upload AppImage
 - [ ] Mark as Linux compatible
 
-**Flathub (Beta channel):**
+**Flathub (STABLE RELEASES ONLY):**
 
-> **WARNING:** Flathub explicitly BANS AI-generated submissions. YOU must submit manually.
+> **WARNING 1:** Flathub does NOT accept alpha/beta releases. Wait for stable 1.0+.
+> **WARNING 2:** Flathub explicitly BANS AI-generated submissions. YOU must submit manually.
 > Claude can prepare files but CANNOT submit the PR.
 
 Prerequisites (do these FIRST):
-- [ ] Update `packaging/linux/com.dragynrain.roguesignalprotocol.yml` with new SHA256
-- [ ] Test Flatpak locally on Linux: `flatpak-builder --user --install --force-clean build-dir packaging/linux/com.dragynrain.roguesignalprotocol.yml`
-- [ ] Verify it runs: `flatpak run com.dragynrain.roguesignalprotocol`
+- [ ] Update `packaging/linux/info.aforster.roguesignalprotocol.yml` with new SHA256
+- [ ] Test Flatpak locally on Linux: `flatpak-builder --user --install --force-clean build-dir packaging/linux/info.aforster.roguesignalprotocol.yml`
+- [ ] Verify it runs: `flatpak run info.aforster.roguesignalprotocol`
 - [ ] **Record a video** of the app running via Flatpak (REQUIRED by Flathub)
 
 Submission (do manually via GitHub web UI):
 - [ ] Fork flathub/flathub repo (uncheck "copy master branch only")
 - [ ] Clone with `new-pr` branch: `git clone -b new-pr ...`
-- [ ] Create branch: `com.dragynrain.roguesignalprotocol`
+- [ ] Create branch: `info.aforster.roguesignalprotocol`
 - [ ] Add manifest file, commit, push
 - [ ] Create PR via GitHub web UI (NOT CLI) - this auto-populates the template
-- [ ] PR title MUST be exactly: `Add com.dragynrain.roguesignalprotocol`
+- [ ] PR title MUST be exactly: `Add info.aforster.roguesignalprotocol`
 - [ ] Fill in ALL checkboxes in the template
 - [ ] Upload the video
 - [ ] Declare you are the author/developer
 - [ ] Wait for review (1-7 days)
+
+Post-acceptance (for Verified badge):
+- [ ] Log into Flathub Developer Portal
+- [ ] Get verification token for `info.aforster.roguesignalprotocol`
+- [ ] Create `https://aforster.info/.well-known/org.flathub.VerifiedApps.txt` with token
+- [ ] Verify badge appears on Flathub listing
 
 **AUR:**
 
@@ -496,9 +503,18 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 
 ### 8.2 Announcement Posts
 
+**Reddit:**
 - [ ] Post to chosen subreddit(s)
 - [ ] Include screenshots/video
 - [ ] Monitor and respond to comments
+
+**RogueTemple Forums:**
+- [ ] Post announcement thread: https://forums.roguetemple.com/
+- [ ] Update existing thread if continuing development
+
+**RogueBasin Wiki:**
+- [ ] Create/update game page: http://roguebasin.com/
+- [ ] Add to appropriate categories (7DRL if applicable, etc.)
 
 ---
 

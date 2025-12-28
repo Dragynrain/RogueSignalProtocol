@@ -24,11 +24,13 @@
 
 ### Flathub Submission FAILURE
 - **DO NOT let Claude submit Flathub PRs** - They explicitly ban AI-generated submissions
+- **Flathub does NOT accept beta releases** - Wait for 1.0 stable
 - Flathub requires:
-  1. PR title exactly: "Add com.dragynrain.roguesignalprotocol"
+  1. PR title exactly: "Add info.aforster.roguesignalprotocol"
   2. Filled-in PR template with checkboxes
   3. **VIDEO of app running on Linux via Flatpak** (must record yourself)
   4. Declaration that YOU are the author
+  5. **Stable release only** - no alpha/beta
 - Must use GitHub web UI to get the template auto-populated
 - Must test Flatpak locally FIRST before submitting
 
@@ -160,7 +162,7 @@ build\build.bat beta
 - [x] Upload AppImage from GitHub Release
 - [x] Mark as Linux compatible
 
-**Flathub:** PR #7414 SUBMITTED - AWAITING REVIEW
+**Flathub:** REJECTED - DEFERRED TO 1.0
 - [x] Fork created: https://github.com/Dragynrain/flathub
 - [x] Manifest file ready with SHA256: `6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21`
 - [x] Manifest fixed: uses URLs, manual tar extraction (flatpak-builder archive bug workaround)
@@ -168,12 +170,11 @@ build\build.bat beta
 - [x] Added flathub.json for x86_64-only architecture
 - [x] Added 3 screenshots with captions and `type="source"` attribute
 - [x] LICENSE path fixed to `/app/share/licenses/...`
-- [x] Branch: `com.dragynrain.roguesignalprotocol-v2` based on `new-pr`
+- [x] Branch: `info.aforster.roguesignalprotocol` based on `new-pr`
 - [x] Tested Flatpak locally - builds and runs successfully
 - [x] Recorded video of Flatpak running on Linux
 - [x] PR submitted via GitHub web UI: https://github.com/flathub/flathub/pull/7414
-- [ ] Awaiting Flathub CI linter results
-- [ ] Awaiting Flathub reviewer approval (1-7 days typical)
+- [x] **REJECTED** - Flathub does not accept beta releases, resubmit at 1.0
 
 **AUR:** DONE
 - [x] PKGBUILD updated with SHA256
@@ -213,15 +214,19 @@ build\build.bat beta
 
 ### REMAINING (waiting/optional):
 
-6. **Monitor Flathub PR #7414** - WAITING
-   - Check for CI linter results
-   - Respond to any reviewer feedback
-   - URL: https://github.com/flathub/flathub/pull/7414
+6. ~~**Monitor Flathub PR #7414**~~ REJECTED - betas not accepted, resubmit at 1.0
 
-7. **Reddit post** (deferred)
-   - Post to r/roguelikedev or r/roguelikes when ready
+7. **Flathub Submission** (at 1.0 release)
+   - Update manifest with 1.0 release URL and SHA256
+   - Submit new PR via GitHub web UI
+   - After acceptance: verify via aforster.info/.well-known/org.flathub.VerifiedApps.txt
 
-8. **Monitor feedback** (ongoing)
+8. ~~**Community posts**~~ DONE
+   - [x] Reddit r/roguelikes Sharing Saturday
+   - [x] RogueTemple forums
+   - [x] RogueBasin wiki
+
+9. **Monitor feedback** (ongoing)
    - Check itch.io comments
    - Monitor feedback form responses
    - Watch GitHub issues
