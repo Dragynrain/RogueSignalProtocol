@@ -116,6 +116,131 @@ class TestPyInstallerSpecs:
         assert logo.exists(), "logo.png missing in project root (required for Linux builds)"
 
 
+class TestNoRelativeDataPaths:
+    """Tests to catch hardcoded relative paths that break on Linux AppImage.
+
+    Linux AppImage mounts the application in a read-only filesystem.
+    All user data (saves, logs, metrics) must go through get_data_directory()
+    to use the proper writable location (~/.local/share/RogueSignalProtocol).
+    """
+
+    # Directories that must use get_data_directory(), not relative paths
+    DATA_DIRECTORIES = ["saves", "logs", "metrics", "debug_exports"]
+
+    # Files to scan (exclude tests and __pycache__)
+    def _get_python_files(self):
+        """Get all Python source files, excluding tests."""
+        project_root = Path(__file__).parent.parent.parent
+        python_files = []
+        for py_file in project_root.glob("*.py"):
+            python_files.append(py_file)
+        return python_files
+
+    def test_no_relative_makedirs_for_data_directories(self):
+        """Ensure no code uses os.makedirs with relative data directory paths.
+
+        Pattern that breaks on AppImage:
+            os.makedirs("saves", exist_ok=True)  # Creates in read-only CWD
+
+        Correct pattern:
+            os.makedirs(get_data_directory() / "saves", exist_ok=True)
+        """
+        import re
+
+        violations = []
+
+        for py_file in self._get_python_files():
+            content = py_file.read_text(encoding="utf-8")
+            lines = content.split("\n")
+
+            for line_num, line in enumerate(lines, 1):
+                # Skip comments
+                if line.strip().startswith("#"):
+                    continue
+
+                for data_dir in self.DATA_DIRECTORIES:
+                    # Check for os.makedirs("saves" or os.makedirs('saves'
+                    pattern = rf'os\.makedirs\s*\(\s*["\']{data_dir}["\']'
+                    if re.search(pattern, line):
+                        violations.append(
+                            f"{py_file.name}:{line_num}: "
+                            f"os.makedirs with relative path '{data_dir}'"
+                        )
+
+                    # Check for Path("saves") or Path('saves')
+                    pattern = rf'Path\s*\(\s*["\']{data_dir}["\']'
+                    if re.search(pattern, line):
+                        violations.append(
+                            f"{py_file.name}:{line_num}: "
+                            f"Path() with relative path '{data_dir}'"
+                        )
+
+        assert not violations, (
+            "Found hardcoded relative paths for data directories.\n"
+            "These break on Linux AppImage (read-only mount).\n"
+            "Use get_data_directory() / 'dirname' instead.\n\n"
+            "Violations:\n" + "\n".join(violations)
+        )
+
+    def test_no_hardcoded_default_data_paths_in_functions(self):
+        """Ensure function defaults don't use relative data directory paths.
+
+        Pattern that breaks on AppImage:
+            def __init__(self, base_dir="saves"):  # Relative path default
+
+        Correct pattern:
+            def __init__(self, base_dir=None):
+                if base_dir is None:
+                    base_dir = get_data_directory() / "saves"
+        """
+        import re
+
+        violations = []
+
+        for py_file in self._get_python_files():
+            content = py_file.read_text(encoding="utf-8")
+            lines = content.split("\n")
+
+            for line_num, line in enumerate(lines, 1):
+                # Skip comments
+                if line.strip().startswith("#"):
+                    continue
+
+                for data_dir in self.DATA_DIRECTORIES:
+                    # Check for function defaults like: base_dir="saves"
+                    pattern = rf'=\s*["\']{data_dir}["\']'
+                    if re.search(pattern, line):
+                        # Exclude string comparisons like: if x == "saves"
+                        if "==" not in line and "!=" not in line:
+                            violations.append(
+                                f"{py_file.name}:{line_num}: "
+                                f"Default argument with relative path '{data_dir}'"
+                            )
+
+        assert not violations, (
+            "Found function defaults with hardcoded relative paths.\n"
+            "These break on Linux AppImage (read-only mount).\n"
+            "Use None as default, then resolve via get_data_directory().\n\n"
+            "Violations:\n" + "\n".join(violations)
+        )
+
+    def test_data_loading_uses_get_data_directory(self):
+        """Verify PersistentStorage uses get_data_directory for saves path."""
+        from data_loading import PersistentStorage
+        import game_file_paths
+
+        # Create instance without explicit path
+        storage = PersistentStorage()
+
+        # Verify it uses the data directory, not a relative path
+        expected_base = str(game_file_paths.get_data_directory() / "saves")
+        assert storage.base_dir == expected_base, (
+            f"PersistentStorage should use get_data_directory()/saves.\n"
+            f"Expected: {expected_base}\n"
+            f"Got: {storage.base_dir}"
+        )
+
+
 class TestCrossplatformImports:
     """Tests to verify cross-platform code can be imported without errors."""
 

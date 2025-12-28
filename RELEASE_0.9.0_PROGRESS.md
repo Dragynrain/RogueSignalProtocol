@@ -14,6 +14,24 @@
 3. **Use `gh release create`** - Not just `git push origin v0.9.0-beta`
 4. **Old checklist location:** `marketing/pre_release_checklist.md` is OBSOLETE - don't use it
 
+## LESSONS LEARNED (to add to main checklist)
+
+### Linux AppImage Bug Found
+- `PersistentStorage` in `data_loading.py` used relative path `"saves"` instead of `get_data_directory() / "saves"`
+- AppImage mounts read-only, so any relative paths to data directories fail
+- **Fix:** Added test in `test_build_verification.py::TestNoRelativeDataPaths` to catch this in future
+- **Rule:** All file operations for saves/logs/metrics/debug_exports MUST use `get_data_directory()`
+
+### Flathub Submission FAILURE
+- **DO NOT let Claude submit Flathub PRs** - They explicitly ban AI-generated submissions
+- Flathub requires:
+  1. PR title exactly: "Add com.dragynrain.roguesignalprotocol"
+  2. Filled-in PR template with checkboxes
+  3. **VIDEO of app running on Linux via Flatpak** (must record yourself)
+  4. Declaration that YOU are the author
+- Must use GitHub web UI to get the template auto-populated
+- Must test Flatpak locally FIRST before submitting
+
 ---
 
 ## Phase 1: Pre-Build Preparation - COMPLETE
@@ -61,23 +79,26 @@ build\build.bat beta
 
 ---
 
-## Phase 3: Linux Build - IN PROGRESS
+## Phase 3: Linux Build - COMPLETE
 
 ### 3.1 Build Linux Binary - DONE (via GitHub Actions)
 - [x] Created GitHub Release to trigger workflow
 - [x] Command used: `gh release create v0.9.0-beta --title 'v0.9.0 Beta' --notes-file CHANGELOG.md --prerelease releases/RogueSignalProtocol_beta_2025-12-27.zip`
-- [ ] Workflow completed: **WAITING** (started ~2 min ago)
-- [ ] Linux tarball attached to release
-- [ ] AppImage attached to release
+- [x] Workflow completed successfully
+- [x] Linux tarball attached: `RogueSignalProtocol-Linux.tar.gz`
+- [x] AppImage attached: `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
 
-### 3.2 Verify Linux Build Contents - PENDING
-- [ ] Download and verify tarball contents
-- [ ] Download and verify AppImage
+**Workflow fixes required during release:**
+1. Added `--appimage-extract-and-run` flag to fix FUSE error on GitHub runners
+2. Added `permissions: contents: write` to workflow to fix upload permissions
 
-### 3.3 Build Linux Packages - PENDING
-- [ ] AppImage - built by GitHub Actions
-- [ ] Flatpak - manual submission to Flathub
-- [ ] AUR - update PKGBUILD checksums after release assets ready
+### 3.2 Verify Linux Build Contents - DONE
+- [x] Both Linux builds attached to GitHub Release
+
+### 3.3 Build Linux Packages - PARTIALLY DONE
+- [x] AppImage - built by GitHub Actions
+- [ ] Flatpak - manual submission to Flathub (DEFERRED)
+- [ ] AUR - update PKGBUILD checksums (DEFERRED)
 
 ---
 
@@ -102,8 +123,8 @@ build\build.bat beta
 - [x] GitHub Release created via: `gh release create v0.9.0-beta ...`
 - [x] Windows .zip uploaded
 - [x] Release marked as pre-release
-- [ ] Linux tarball auto-uploaded by workflow (pending)
-- [ ] AppImage auto-uploaded by workflow (pending)
+- [x] Linux tarball auto-uploaded by workflow
+- [x] AppImage auto-uploaded by workflow
 - [x] Release URL: https://github.com/Dragynrain/RogueSignalProtocol/releases/tag/v0.9.0-beta
 
 ---
@@ -120,7 +141,7 @@ build\build.bat beta
 
 ---
 
-## Phase 7: Distribution - IN PROGRESS
+## Phase 7: Distribution - COMPLETE (pending Flathub review)
 
 ### 7.1 Windows Distribution - DONE
 **Itch.io:**
@@ -129,22 +150,33 @@ build\build.bat beta
 - [x] Post devlog (HTML version)
 - [x] Tags set
 
-### 7.2 Linux Distribution - PENDING
-**GitHub Releases:**
-- [ ] Linux tarball uploaded (auto by workflow)
-- [ ] AppImage uploaded (auto by workflow)
+### 7.2 Linux Distribution - MOSTLY COMPLETE
+**GitHub Releases:** DONE
+- [x] Linux tarball uploaded (auto by workflow)
+- [x] AppImage uploaded (auto by workflow)
 
-**Itch.io:**
-- [ ] Upload Linux tarball
-- [ ] Upload AppImage
-- [ ] Mark as Linux compatible
+**Itch.io:** DONE
+- [x] Upload Linux tarball from GitHub Release
+- [x] Upload AppImage from GitHub Release
+- [x] Mark as Linux compatible
 
-**Flathub:** - DEFERRED
-- [ ] Submit PR to beta branch
+**Flathub:** PR SUBMITTED - AWAITING REVIEW
+- [x] Fork created: https://github.com/Dragynrain/flathub
+- [x] Manifest file ready with SHA256: `6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21`
+- [x] Manifest fixed: uses URLs, manual tar extraction (flatpak-builder archive bug workaround)
+- [x] Added logo-128.png to GitHub release (icon was 1024x1024, Flatpak requires <=512)
+- [x] Branch exists: `com.dragynrain.roguesignalprotocol`
+- [x] Verified tarball structure is correct (executable + folders preserved)
+- [x] Tested Flatpak locally - builds and runs successfully
+- [x] Recorded video of Flatpak running on Linux
+- [x] Submitted PR via GitHub web UI with proper template and video attached
+- [ ] Awaiting Flathub reviewer approval (1-7 days typical)
 
-**AUR:** - PENDING
-- [ ] Update PKGBUILD with new checksums
-- [ ] Push to AUR
+**AUR:** DONE
+- [x] PKGBUILD updated with SHA256
+- [x] .SRCINFO generated
+- [x] Pushed to AUR: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
+- [x] SSH key created and configured for AUR
 
 ### 7.3 Verify Feedback Collection - DONE
 - [x] Feedback form URL works everywhere
@@ -170,28 +202,30 @@ build\build.bat beta
 
 ## NEXT STEPS (in order)
 
-1. **Wait for GitHub Actions workflow to complete** (~3-5 min)
-   - Check: `gh run list --repo Dragynrain/RogueSignalProtocol --limit 1`
+1. ~~**Wait for GitHub Actions workflow to complete**~~ DONE
 
-2. **Download Linux builds from GitHub release**
+2. ~~**Download Linux builds from GitHub release**~~ DONE (available at GitHub Release)
+
+3. **Upload Linux builds to itch.io** - CURRENT
+   - Download from: https://github.com/Dragynrain/RogueSignalProtocol/releases/tag/v0.9.0-beta
    - `RogueSignalProtocol-Linux.tar.gz`
    - `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
+   - Mark as Linux compatible on itch.io
 
-3. **Upload Linux builds to itch.io**
-
-4. **Update AUR PKGBUILD** (optional)
+4. **Update AUR PKGBUILD** (optional/deferred)
    - Download tarball, get sha256sum
    - Update `packaging/linux/PKGBUILD`
 
 5. **Test Linux build** (optional but recommended)
    - Run in WSL2 or VM
 
-6. **Reddit post** (when ready)
+6. **Reddit post** (when ready/deferred)
 
 ---
 
 ## SESSION LOG
 
+### Session 1: Initial Release
 - **12:00** - Started release process
 - **12:08** - Tests passed (4305), URLs verified
 - **12:09** - Windows build completed
@@ -199,4 +233,40 @@ build\build.bat beta
 - **12:20** - Achievement bug found and fixed
 - **12:37** - GitHub Release created, workflow triggered
 - **12:38** - Waiting for Linux build workflow
+- **~12:45** - Workflow failed: spec file in .gitignore, FUSE error
+- **~12:50** - Fixed: removed spec from .gitignore, added `--appimage-extract-and-run`
+- **~12:52** - Workflow failed again: upload permissions error
+- **~12:55** - Fixed: added `permissions: contents: write` to release.yml
+- **~12:58** - Workflow completed successfully! All 4 assets attached to release
+
+### Session 2: Linux Testing & Distribution (2025-12-27 afternoon)
+- **13:15** - User tested AppImage on Linux Mint - CRASHED
+- **13:16** - Root cause: `PersistentStorage` using relative path `"saves"` in read-only AppImage mount
+- **13:20** - Fixed `data_loading.py` to use `get_data_directory() / "saves"`
+- **13:21** - Deleted broken release, committed fix, created new release
+- **13:22** - New GitHub Actions build triggered
+- **13:25** - Build completed successfully
+- **13:30** - User re-tested AppImage on Linux Mint - WORKS
+- **13:35** - Added regression test `TestNoRelativeDataPaths` to catch this in future
+- **14:00** - Uploaded Windows + Linux builds to itch.io - DONE
+- **14:10** - Updated itch.io announcement to note Flathub pending
+- **14:15** - Created AUR account (used Docker to solve Arch CAPTCHA)
+- **14:20** - Generated SSH key for AUR, configured SSH config
+- **14:25** - Cloned AUR repo, generated .SRCINFO via Docker
+- **14:30** - Pushed to AUR successfully: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
+- **14:32** - Attempted Flathub PR submission via CLI - REJECTED
+- **14:34** - Flathub reviewer closed PR: "AI slop", missing template, missing video
+- **14:40** - Documented lessons learned for future releases
+
+### Session 3: Flathub Proper Submission (2025-12-27 evening)
+- **15:00** - Started proper Flathub local testing
+- **15:10** - flatpak-builder `type: archive` was flattening directory structure - bug in flatpak-builder
+- **15:20** - Fixed: changed to `type: file` + manual `tar -xzf` extraction
+- **15:30** - Build failed: icon too large (1024x1024, max 512x512)
+- **15:35** - Fixed: resized logo to 128x128, uploaded to GitHub release
+- **15:40** - Flatpak builds and runs successfully locally
+- **15:45** - Recorded video proof of Flatpak running
+- **16:00** - Rebased flathub fork branch on upstream/master (commit histories diverged)
+- **16:10** - Submitted PR via GitHub web UI with video attached
+- **16:15** - PR submitted, awaiting Flathub reviewer approval
 

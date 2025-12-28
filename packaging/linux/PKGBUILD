@@ -1,4 +1,4 @@
-# Maintainer: Dragynrain <your@email.com>
+# Maintainer: Dragynrain <roguesignalprotocol@gmail.com>
 # AUR Package: rogue-signal-protocol-bin
 #
 # Installation:
@@ -36,7 +36,7 @@ source=("${pkgname}-${pkgver}.tar.gz::https://github.com/Dragynrain/RogueSignalP
 
 # Update this checksum for each release
 # Generate with: sha256sum RogueSignalProtocol-Linux.tar.gz
-sha256sums=('SKIP')
+sha256sums=('6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21')
 
 # Don't strip the binary - PyInstaller binaries don't like being stripped
 options=('!strip')

@@ -11,8 +11,8 @@ This is a beta. I'm looking for feedback before 1.0.
 Three ways to play:
 
 - **AppImage** - Download, `chmod +x`, run. Works on any distro.
-- **Flatpak** - Available on Flathub beta channel
-- **AUR** - `rogue-signal-protocol-bin` for Arch users
+- **Flatpak** - Pending Flathub review (1-7 days)
+- **AUR** - Coming soon (pending submission)
 
 ### Gamepad Support
 
@@ -41,7 +41,9 @@ The gamepad controls were designed with Steam Deck in mind. Movement feels right
 
 If you have a Steam Deck and try this, please let me know how it runs. I'd love to see it.
 
-To install via Flatpak:
+**Note:** Flathub availability is pending review (1-7 days). Until then, use the AppImage from the downloads.
+
+To install via Flatpak (once available):
 
 ```
 flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
