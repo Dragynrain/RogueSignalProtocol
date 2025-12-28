@@ -160,16 +160,19 @@ build\build.bat beta
 - [x] Upload AppImage from GitHub Release
 - [x] Mark as Linux compatible
 
-**Flathub:** PR SUBMITTED - AWAITING REVIEW
+**Flathub:** PR #7414 SUBMITTED - AWAITING REVIEW
 - [x] Fork created: https://github.com/Dragynrain/flathub
 - [x] Manifest file ready with SHA256: `6b50e04ac2b20bd336d9b8b7570e6693905bfc03de4a1df4019b642258bd9a21`
 - [x] Manifest fixed: uses URLs, manual tar extraction (flatpak-builder archive bug workaround)
-- [x] Added logo-128.png to GitHub release (icon was 1024x1024, Flatpak requires <=512)
-- [x] Branch exists: `com.dragynrain.roguesignalprotocol`
-- [x] Verified tarball structure is correct (executable + folders preserved)
+- [x] Icon upgraded to 256x256 (Flathub requires minimum 256x256)
+- [x] Added flathub.json for x86_64-only architecture
+- [x] Added 3 screenshots with captions and `type="source"` attribute
+- [x] LICENSE path fixed to `/app/share/licenses/...`
+- [x] Branch: `com.dragynrain.roguesignalprotocol-v2` based on `new-pr`
 - [x] Tested Flatpak locally - builds and runs successfully
 - [x] Recorded video of Flatpak running on Linux
-- [x] Submitted PR via GitHub web UI with proper template and video attached
+- [x] PR submitted via GitHub web UI: https://github.com/flathub/flathub/pull/7414
+- [ ] Awaiting Flathub CI linter results
 - [ ] Awaiting Flathub reviewer approval (1-7 days typical)
 
 **AUR:** DONE
@@ -203,23 +206,25 @@ build\build.bat beta
 ## NEXT STEPS (in order)
 
 1. ~~**Wait for GitHub Actions workflow to complete**~~ DONE
+2. ~~**Download Linux builds from GitHub release**~~ DONE
+3. ~~**Upload Linux builds to itch.io**~~ DONE
+4. ~~**Update AUR PKGBUILD**~~ DONE
+5. ~~**Submit Flathub PR**~~ DONE (PR #7414)
 
-2. ~~**Download Linux builds from GitHub release**~~ DONE (available at GitHub Release)
+### REMAINING (waiting/optional):
 
-3. **Upload Linux builds to itch.io** - CURRENT
-   - Download from: https://github.com/Dragynrain/RogueSignalProtocol/releases/tag/v0.9.0-beta
-   - `RogueSignalProtocol-Linux.tar.gz`
-   - `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
-   - Mark as Linux compatible on itch.io
+6. **Monitor Flathub PR #7414** - WAITING
+   - Check for CI linter results
+   - Respond to any reviewer feedback
+   - URL: https://github.com/flathub/flathub/pull/7414
 
-4. **Update AUR PKGBUILD** (optional/deferred)
-   - Download tarball, get sha256sum
-   - Update `packaging/linux/PKGBUILD`
+7. **Reddit post** (deferred)
+   - Post to r/roguelikedev or r/roguelikes when ready
 
-5. **Test Linux build** (optional but recommended)
-   - Run in WSL2 or VM
-
-6. **Reddit post** (when ready/deferred)
+8. **Monitor feedback** (ongoing)
+   - Check itch.io comments
+   - Monitor feedback form responses
+   - Watch GitHub issues
 
 ---
 
@@ -268,5 +273,25 @@ build\build.bat beta
 - **15:45** - Recorded video proof of Flatpak running
 - **16:00** - Rebased flathub fork branch on upstream/master (commit histories diverged)
 - **16:10** - Submitted PR via GitHub web UI with video attached
-- **16:15** - PR submitted, awaiting Flathub reviewer approval
+- **16:15** - PR submitted - AUTO-CLOSED (wrong base branch - targeted master instead of new-pr)
+
+### Session 4: Flathub Third Attempt (2025-12-27 ~17:00-21:00)
+- **17:00** - PR #7413 auto-closed - Flathub requires PRs against `new-pr` branch, not master
+- **17:10** - Cloned fresh: `git clone -b new-pr https://github.com/Dragynrain/flathub.git flathub-submission`
+- **17:15** - Created branch `com.dragynrain.roguesignalprotocol-v2` from `new-pr`
+- **17:20** - Discovered multiple issues via requirements review:
+  1. Missing screenshots in metainfo (REQUIRED for graphical apps)
+  2. Icon 128x128 too small (need 256x256 minimum)
+  3. Binary is x86_64-only (need flathub.json)
+  4. LICENSE installed to wrong path
+  5. Missing `type="source"` on screenshot `<image>` tags
+- **17:30** - Created 256x256 icon, committed to main repo
+- **17:35** - Added screenshots to metainfo (3 screenshots with captions)
+- **17:40** - Created flathub.json with `only-arches: ["x86_64"]`
+- **17:45** - Fixed LICENSE path to `/app/share/licenses/com.dragynrain.roguesignalprotocol/`
+- **17:50** - Added `type="source"` to all screenshot image tags
+- **18:00** - User had stale PR page open (30 min old) - caught before submit, refreshed
+- **18:05** - PR #7414 submitted: https://github.com/flathub/flathub/pull/7414
+- **21:00** - PR verified: 5 commits, all URLs return 200, SHA256 checksums verified
+- **STATUS** - Awaiting Flathub CI linter + human review
 
