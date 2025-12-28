@@ -51,7 +51,9 @@ class VictoryScreen(BaseMenu):
         Returns:
             True if screen should close
         """
-        if action in (InputAction.CONFIRM, InputAction.CANCEL):
+        # Accept CONFIRM, CANCEL, or WAIT (SPACE key) to close
+        # WAIT is included because SPACE traditionally closes dialog screens
+        if action in (InputAction.CONFIRM, InputAction.CANCEL, InputAction.WAIT):
             return True
         return False
 
@@ -177,22 +179,5 @@ class VictoryScreen(BaseMenu):
             "Welcome to the internet."
         )
 
-    def handle_input(self, event: tcod.event.Event) -> bool:
-        """
-        Handle input for victory screen.
-
-        Args:
-            event: TCOD event
-
-        Returns:
-            True if screen should close
-        """
-        if isinstance(event, tcod.event.KeyDown):
-            if event.sym in [
-                tcod.event.KeySym.SPACE,
-                tcod.event.KeySym.RETURN,
-                tcod.event.KeySym.KP_ENTER,
-                tcod.event.KeySym.ESCAPE,
-            ]:
-                return True
-        return False
+    # NOTE: handle_input() inherited from BaseInputHandler handles both keyboard AND gamepad.
+    # Do NOT override - the base class routes events through execute_action() correctly.

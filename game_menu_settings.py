@@ -38,6 +38,7 @@ class SettingsMenu(BaseMenu):
         self.show_export_confirmation = False
         self.export_confirmation_selection = 0
         self.export_status_message = None  # Status message after export (success or failure)
+        self.export_path = None  # Full path to exported file (shown on second line)
 
         # Stored coordinates for confirmation dialog click detection
         self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
@@ -387,11 +388,11 @@ class SettingsMenu(BaseMenu):
                         bg=bg_color,
                     )
 
-        # Status message (debug export result)
+        # Status message (debug export result) - shown on two lines for readability
         if self.export_status_message:
             msg_color = Colors.GREEN if "Success" in self.export_status_message else Colors.RED
             msg_x = box["center_x"] - len(self.export_status_message) // 2
-            msg_y = box["bottom"] - 8
+            msg_y = box["bottom"] - 9
             render_char_safe(
                 console,
                 msg_x,
@@ -400,6 +401,22 @@ class SettingsMenu(BaseMenu):
                 fg=msg_color,
                 bg=Colors.BLACK,
             )
+            # Show path on second line (truncated to fit box if needed)
+            if self.export_path:
+                path_str = str(self.export_path)
+                max_width = box["content_width"] - 4
+                if len(path_str) > max_width:
+                    # Truncate from start to show the filename
+                    path_str = "..." + path_str[-(max_width - 3) :]
+                path_x = box["center_x"] - len(path_str) // 2
+                render_char_safe(
+                    console,
+                    path_x,
+                    msg_y + 1,
+                    path_str,
+                    fg=Colors.LIGHT_GRAY,
+                    bg=Colors.BLACK,
+                )
 
         # Show "* Restart Required" note in graphics mode (explains the * on UI Scale)
         if box["use_background_layout"]:
