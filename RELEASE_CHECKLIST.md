@@ -573,13 +573,44 @@ Post-acceptance (for Verified badge):
 
 **AUR:**
 
-> **TIP:** Use Docker to generate .SRCINFO if not on Arch:
-> `docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux bash -c "pacman -Sy --noconfirm base-devel && useradd builder && su builder -c 'makepkg --printsrcinfo' > .SRCINFO"`
+SSH access is configured via `~/.ssh/config` using the `id_ed25519_aur` key linked to the `dragynrain` AUR account.
+
+**Step 1: Update local files** (in main repo)
+```bash
+# Update packaging/linux/PKGBUILD:
+#   - pkgver=X.Y.Z_beta (underscore, not hyphen)
+#   - _vertag=X.Y.Z-beta (hyphen for GitHub tag)
+#   - sha256sums from: sha256sum releases/RogueSignalProtocol-X.Y.Z-beta-Linux.tar.gz
+
+# Convert to Unix line endings
+sed -i 's/\r$//' packaging/linux/PKGBUILD packaging/linux/*.install
+
+# Generate .SRCINFO using Docker (Windows)
+docker run --rm -v "D:/Projects/RogueSignalProtocol/packaging/linux://pkg" -w //pkg archlinux \
+  bash -c "pacman -Sy --noconfirm base-devel >/dev/null 2>&1 && useradd builder && \
+  su builder -c 'makepkg --printsrcinfo'" > packaging/linux/.SRCINFO
+```
+
+**Step 2: Push to AUR**
+```bash
+# Clone AUR repo (or pull if already cloned)
+git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git /d/Projects/aur-rogue-signal-protocol-bin
+
+# Copy files
+cp packaging/linux/PKGBUILD /d/Projects/aur-rogue-signal-protocol-bin/
+cp packaging/linux/.SRCINFO /d/Projects/aur-rogue-signal-protocol-bin/
+cp packaging/linux/rogue-signal-protocol-bin.install /d/Projects/aur-rogue-signal-protocol-bin/
+
+# Commit and push
+cd /d/Projects/aur-rogue-signal-protocol-bin
+git add PKGBUILD .SRCINFO rogue-signal-protocol-bin.install
+git commit -m "Update to X.Y.Z-beta"
+git push origin master
+```
 
 - [ ] Update PKGBUILD with new version and SHA256
-- [ ] Convert to Unix line endings: `sed -i 's/\r$//' PKGBUILD`
-- [ ] Generate .SRCINFO: `makepkg --printsrcinfo > .SRCINFO`
-- [ ] Push to AUR: `git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git`
+- [ ] Generate .SRCINFO
+- [ ] Push to AUR
 - [ ] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
 
 ### 7.3 Download Verification (Smoke Test)
