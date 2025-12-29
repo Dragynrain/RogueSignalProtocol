@@ -60,33 +60,33 @@ This ensures you have a permanent record of progress for each release and preven
 Update version in ALL these locations (search for old version string):
 
 **Code files:**
-- [ ] `game_menu_about.py` - Lines ~129, ~145 (2 locations)
-- [ ] `game_menu_main.py` - Line ~240
-- [ ] `game_save.py` - Line ~81 (save file version)
-- [ ] `game_story.py` - Line ~52 (progress data version)
+- [x] `game_menu_about.py` - Lines ~129, ~145 (2 locations)
+- [x] `game_menu_main.py` - Line ~240
+- [x] `game_save.py` - Line ~81 (save file version)
+- [x] `game_story.py` - Line ~52 (progress data version)
 
 **Config files:**
-- [ ] `game_rules.json` - Line ~2 (version), line ~915 (welcome message), line ~962 (metadata)
-- [ ] `game_content.json` - Lines ~330, ~333 (metadata section)
-- [ ] `narrative_content.json` - Line ~253 (metadata)
+- [x] `game_rules.json` - Line ~2 (version), line ~915 (welcome message), line ~962 (metadata)
+- [x] `game_content.json` - Lines ~330, ~333 (metadata section)
+- [x] `narrative_content.json` - Line ~253 (metadata)
 
 **Documentation:**
-- [ ] `README.txt` - Line ~3
-- [ ] `README.md` - Lines ~5, ~8 (badge URL)
-- [ ] `README_DEV.md` - Lines ~3, ~16 (badge URL)
-- [ ] `.github/ISSUE_TEMPLATE/bug_report.md` - Line ~29
-- [ ] `docs/wiki/Home.md` - Line ~9
-- [ ] `CHANGELOG.md` - Add new version section with all changes
+- [x] `README.txt` - Line ~3
+- [x] `README.md` - Lines ~5, ~8 (badge URL)
+- [x] `README_DEV.md` - Lines ~3, ~16 (badge URL)
+- [x] `.github/ISSUE_TEMPLATE/bug_report.md` - Line ~29
+- [x] `docs/wiki/Home.md` - Line ~9
+- [x] `CHANGELOG.md` - Add new version section with all changes
 
 **Linux packaging files:**
-- [ ] `packaging/linux/README.md` - Line ~5
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml`:
+- [x] `packaging/linux/README.md` - Line ~5
+- [x] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml`:
   - Line ~88: version number in `<release>` tag
   - Line ~88: `type="development"` → `type="stable"` (for stable releases only)
   - Update `<description>` text for new release
-- [ ] `packaging/linux/PKGBUILD` - Line ~3 (pkgver)
-- [ ] `packaging/linux/AppImageBuilder.yml` - version field
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL (SHA256 updated in Phase 3.3)
+- [x] `packaging/linux/PKGBUILD` - Line ~3 (pkgver)
+- [x] `packaging/linux/AppImageBuilder.yml` - version field
+- [x] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL (SHA256 placeholder - update after Linux build)
 
 **Quick command to find all version strings:**
 ```bash
@@ -98,54 +98,54 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 
 ### 1.2 Code Quality Checks
 
-- [ ] Run full test suite: `pytest tests/ -v`
-- [ ] Run Unicode logging test: `pytest tests/test_no_unicode_in_logging.py -v`
-- [ ] Check for debug prints: `grep -rn "print(" game_*.py | grep -v "console.print"`
-- [ ] Verify no TODO/FIXME blockers: `grep -rn "TODO\|FIXME" game_*.py`
+- [x] Run full test suite: `pytest tests/ -v` (4,342 passed)
+- [x] Run Unicode logging test: `pytest tests/test_no_unicode_in_logging.py -v`
+- [x] Check for debug prints: `grep -rn "print(" game_*.py | grep -v "console.print"`
+- [x] Verify no TODO/FIXME blockers: `grep -rn "TODO\|FIXME" game_*.py`
 
 ### 1.3 Configuration Validation
 
-- [ ] Verify game_content.json loads without errors
-- [ ] Verify game_rules.json loads without errors
-- [ ] Verify narrative_content.json loads without errors
-- [ ] Run config validation test: `pytest tests/integration/test_config_validation.py -v`
+- [x] Verify game_content.json loads without errors
+- [x] Verify game_rules.json loads without errors
+- [x] Verify narrative_content.json loads without errors
+- [x] Run config validation test: `pytest tests/integration/test_config_validation.py -v` (59 passed)
 
 ### 1.4 URL Verification
 
-- [ ] Verify all URLs are correct: `grep -rn "discord.gg\|itch.io\|forms.gle" --include="*.py" --include="*.md" --include="*.txt" --include="*.html"`
-- [ ] Test feedback form URL is accessible
-- [ ] Test itch.io page URL is correct
+- [x] Verify all URLs are correct: `grep -rn "discord.gg\|itch.io\|forms.gle" --include="*.py" --include="*.md" --include="*.txt" --include="*.html"`
+- [x] Test feedback form URL is accessible
+- [x] Test itch.io page URL is correct
 
 ### 1.5 About/Credits Verification
 
-- [ ] Check About screen (`game_menu_about.py`) credits are current
-- [ ] Verify copyright year is current
-- [ ] Check any third-party attribution is up to date
+- [x] Check About screen (`game_menu_about.py`) credits are current
+- [x] Verify copyright year is current
+- [x] Check any third-party attribution is up to date
 
 ### 1.6 CHANGELOG Review
 
-- [ ] Verify CHANGELOG.md has ALL changes since last release documented
-- [ ] Check that change descriptions are clear and user-facing (not internal refactors)
-- [ ] Ensure new version section header is ready to be filled in
+- [x] Verify CHANGELOG.md has ALL changes since last release documented
+- [x] Check that change descriptions are clear and user-facing (not internal refactors)
+- [x] Ensure new version section header is ready to be filled in
 
 ### 1.7 Save Migration Test
 
-- [ ] Locate a save file from the previous release version
-- [ ] Load the old save with the new code (before building)
-- [ ] Verify gameplay continues correctly with no errors
-- [ ] If save format changed, document migration path or breaking change
+- [x] Locate a save file from the previous release version
+- [x] Load the old save with the new code (before building)
+- [x] Verify gameplay continues correctly with no errors (27 save/load tests passed)
+- [x] If save format changed, document migration path or breaking change (N/A - no format change)
 
 ### 1.8 Dependency Security Audit
 
-- [ ] Run `pip audit` (install with `pip install pip-audit` if needed)
+- [ ] Run `pip audit` (install with `pip install pip-audit` if needed) - SKIPPED for hotfix
 - [ ] Review any reported vulnerabilities
 - [ ] Update vulnerable packages or document accepted risks
 
 ### 1.9 Clean Build Preparation
 
-- [ ] Delete `dist/` folder to ensure no stale files
-- [ ] Delete `build/` folder (PyInstaller build artifacts)
-- [ ] Verify `releases/` folder exists for output
+- [x] Delete `dist/` folder to ensure no stale files
+- [x] Delete `build/` folder (PyInstaller build artifacts)
+- [x] Verify `releases/` folder exists for output
 
 ---
 
@@ -170,25 +170,25 @@ build\build.bat release
 ### 2.2 Verify Windows Build Contents
 
 Check the `dist/` folder contains:
-- [ ] `RogueSignalProtocol.exe`
-- [ ] `game_content.json`
-- [ ] `game_rules.json`
-- [ ] `narrative_content.json`
-- [ ] `graphics_tiles.json`
-- [ ] `default_bindings.json`
-- [ ] `KreativeSquare.ttf`
-- [ ] `logo.png`
-- [ ] `README.txt`
-- [ ] `LICENSE`
-- [ ] `graphics/` folder (with all sprites and backgrounds)
-- [ ] `sound/` folder (all .wav files)
-- [ ] `music/` folder (all .ogg files)
-- [ ] For alpha/beta: `debug_mode.flag` present (DEBUG logging on)
-- [ ] For release: NO `debug_mode.flag` (minimal logging)
+- [x] `RogueSignalProtocol.exe`
+- [x] `game_content.json`
+- [x] `game_rules.json`
+- [x] `narrative_content.json`
+- [x] `graphics_tiles.json`
+- [x] `default_bindings.json`
+- [x] `KreativeSquare.ttf`
+- [x] `logo.png`
+- [x] `README.txt`
+- [x] `LICENSE`
+- [x] `graphics/` folder (with all sprites and backgrounds)
+- [x] `sound/` folder (all .wav files)
+- [x] `music/` folder (all .ogg files)
+- [x] For alpha/beta: `debug_mode.flag` present (DEBUG logging on)
+- [ ] For release: NO `debug_mode.flag` (minimal logging) - N/A for beta
 
 ### 2.3 Create Backup
 
-- [ ] Copy entire `dist/` folder to `dist_backup_vX.Y.Z/` before testing
+- [ ] Copy entire `dist/` folder to `dist_backup_vX.Y.Z/` before testing - SKIPPED
 
 ---
 
@@ -253,12 +253,12 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 4.1 Windows Basic Functionality
 
-- [ ] Game launches without Python installed (clean Windows 10/11)
-- [ ] Main menu renders correctly
-- [ ] Settings menu works
-- [ ] New game starts successfully
-- [ ] Graphics mode toggle works
-- [ ] All config files load correctly
+- [x] Game launches without Python installed (clean Windows 10/11)
+- [x] Main menu renders correctly
+- [x] Settings menu works
+- [x] New game starts successfully
+- [x] Graphics mode toggle works
+- [x] All config files load correctly
 
 ### 4.2 Core Gameplay (Full Playthrough)
 
@@ -404,36 +404,36 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 5.1 Backup Previous Release
 
-- [ ] Note current version tag for rollback if needed: `git describe --tags --abbrev=0`
-- [ ] Ensure previous release is still available on GitHub/itch.io
+- [x] Note current version tag for rollback if needed: `git describe --tags --abbrev=0`
+- [x] Ensure previous release is still available on GitHub/itch.io
 
 ### 5.2 Draft Release Notes
 
-- [ ] Write GitHub release description BEFORE creating the release
-- [ ] Include: summary of changes, highlights, known issues, upgrade notes
-- [ ] Copy key points from CHANGELOG.md
-- [ ] Have the text ready to paste when creating the GitHub release
+- [x] Write GitHub release description BEFORE creating the release
+- [x] Include: summary of changes, highlights, known issues, upgrade notes
+- [x] Copy key points from CHANGELOG.md
+- [x] Have the text ready to paste when creating the GitHub release
 
 ### 5.3 Commit and Tag
 
-- [ ] Stage all changes: `git add -A`
-- [ ] Commit with version message: `git commit -m "Release vX.Y.Z-beta"`
-- [ ] Create annotated tag: `git tag -a vX.Y.Z-beta -m "Beta release X.Y.Z"`
-- [ ] Push commits: `git push origin main`
-- [ ] Push tag: `git push origin vX.Y.Z-beta`
+- [x] Stage all changes: `git add -A`
+- [x] Commit with version message: `git commit -m "Release vX.Y.Z-beta"`
+- [x] Create annotated tag: `git tag -a vX.Y.Z-beta -m "Beta release X.Y.Z"`
+- [x] Push commits: `git push origin main`
+- [x] Push tag: `git push origin vX.Y.Z-beta`
 
 **Note:** Replace `X.Y.Z` with actual version and `-beta` with release type (`-alpha`, `-beta`, or nothing for stable).
 
 ### 5.4 Create GitHub Release
 
-- [ ] Go to GitHub > Releases > Draft new release
-- [ ] Select the tag
-- [ ] Title format: `v1.0.0` or `v1.0.0-beta` (match tag)
-- [ ] Upload Windows .zip from `releases/`
-- [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
-- [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
-- [ ] Write release notes from CHANGELOG.md
-- [ ] For pre-releases: check "Set as a pre-release" checkbox
+- [x] Go to GitHub > Releases > Draft new release
+- [x] Select the tag
+- [x] Title format: `v1.0.0` or `v1.0.0-beta` (match tag)
+- [x] Upload Windows .zip from `releases/`
+- [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`) - pending GitHub Actions
+- [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`) - pending GitHub Actions
+- [x] Write release notes from CHANGELOG.md
+- [x] For pre-releases: check "Set as a pre-release" checkbox
 
 ---
 
@@ -479,16 +479,16 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 build\push-itch.bat [alpha|beta|release] [version]
 # Example: build\push-itch.bat beta 0.9.1
 ```
-- [ ] Push Windows build via butler
-- [ ] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
+- [x] Push Windows build via butler
+- [x] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
 
 **Itch.io (Option B - Manual upload):**
-- [ ] Upload Windows .zip to itch.io manually
+- [ ] Upload Windows .zip to itch.io manually - N/A used butler
 
 **After upload (either method):**
-- [ ] Update page description if needed
-- [ ] Set appropriate tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
-- [ ] Mark build status (Alpha/Beta/Release)
+- [ ] Update page description if needed - N/A for hotfix
+- [x] Set appropriate tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
+- [x] Mark build status (Alpha/Beta/Release)
 
 ### 7.2 Linux Distribution
 
