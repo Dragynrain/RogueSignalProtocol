@@ -8,7 +8,7 @@
 # This is a binary package - Python and all dependencies are bundled by PyInstaller.
 
 pkgname=rogue-signal-protocol-bin
-pkgver=0.9.0_beta
+pkgver=0.9.1_beta
 pkgrel=1
 pkgdesc="Cyberpunk roguelike game - BETA release (binary)"
 arch=('x86_64')
@@ -31,7 +31,7 @@ conflicts=('rogue-signal-protocol' 'rogue-signal-protocol-git')
 
 # Source archive from GitHub releases
 # Note: pkgver uses underscore (0.9.0_beta) but release tag uses hyphen (v0.9.0-beta)
-_vertag=0.9.0-beta
+_vertag=0.9.1-beta
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v${_vertag}/RogueSignalProtocol-Linux.tar.gz")
 
 # Update this checksum for each release

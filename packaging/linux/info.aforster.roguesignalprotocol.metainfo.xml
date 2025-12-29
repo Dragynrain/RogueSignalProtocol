@@ -85,6 +85,17 @@
   </screenshots>
 
   <releases>
+    <release version="0.9.1-beta" date="2025-12-29" type="development">
+      <description>
+        <p>Hotfix release for Steam Deck and controller input issues.</p>
+        <ul>
+          <li>Fixed victory screen not responding to gamepad input</li>
+          <li>Fixed ascension unlock popup not responding to gamepad</li>
+          <li>Fixed settings confirmation dialogs for controller users</li>
+          <li>Improved debug export path display</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.9.0-beta" date="2025-12-27" type="development">
       <description>
         <p>Beta release - feature complete, seeking community testing.</p>

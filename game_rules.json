@@ -1,5 +1,5 @@
 {
-  "version": "0.9.0 Beta",
+  "version": "0.9.1 Beta",
   "display": {
     "screen_width": 80,
     "screen_height": 50,
@@ -912,7 +912,7 @@
     }
   },
   "welcome_messages": [
-    "Welcome to Rogue Signal Protocol v0.9.0 Beta!",
+    "Welcome to Rogue Signal Protocol v0.9.1 Beta!",
     "Navigate using stealth",
     "Reach the gateway (>)",
     "Hide in monitoring blind spots (.) to avoid detection",
@@ -959,8 +959,8 @@
     }
   },
   "metadata": {
-    "version": "0.9.0 Beta",
+    "version": "0.9.1 Beta",
     "description": "Consolidated configuration for Rogue Signal Protocol",
-    "last_updated": "2025-01-01"
+    "last_updated": "2025-12-29"
   }
 }

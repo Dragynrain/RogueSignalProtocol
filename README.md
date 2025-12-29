@@ -2,10 +2,10 @@
 
 # Rogue Signal Protocol
 
-**Version 0.9.0 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 0.9.1 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.9.0%20Beta-orange.svg)
+![Version](https://img.shields.io/badge/version-0.9.1%20Beta-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 **[SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!

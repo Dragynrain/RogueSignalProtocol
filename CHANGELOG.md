@@ -2,6 +2,31 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
+## [0.9.1 Beta] - 2025-12-29 - Steam Deck Controller Fixes
+
+### Fixed
+
+#### Gamepad/Controller Support
+- **Victory screen now responds to gamepad input** - removed keyboard-only handler, now uses unified input system
+- **Ascension unlock popup now responds to gamepad input** - same fix pattern
+- **Settings confirmation dialogs now work with gamepad** - action-based flow replaces keyboard-only handling
+- **Added WAIT action to victory/unlock screens** - SPACE key and A button both dismiss popups
+
+#### Debug Export
+- **Debug export path now displays clearly** - shown on separate line with truncation for long paths
+- **Export path persists in settings menu** - path remains visible until leaving menu
+
+#### Input System
+- **Unified input handling** - removed redundant handle_input overrides across victory, ascension, and settings screens
+- **Added Shift+F12 binding** - DEBUG_EXPORT action now in default_bindings.json
+
+### Technical Details
+- Files modified: game_victory_screen.py, game_menu_ascension.py, game_menu_settings.py, game_input_gameplay.py, game_loop.py, default_bindings.json
+- Added gamepad tests for victory screen and ascension unlock screen
+- This is a hotfix release targeting Steam Deck and controller users
+
+---
+
 ## [0.9.0 Beta] - 2025-12-27 - Gamepad, Ascension & Steam Deck Release
 
 ### Added

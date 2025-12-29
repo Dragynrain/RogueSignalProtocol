@@ -26,7 +26,7 @@ If applicable, add screenshots to help explain your problem.
 
 ## System Information
 - **OS:** [e.g., Windows 10, Windows 11, Ubuntu 22.04, Steam Deck]
-- **Game Version:** [e.g., 0.9.0 Beta]
+- **Game Version:** [e.g., 0.9.1 Beta]
 - **Source:** [Downloaded from Itch.io / Built from source / GitHub Release]
 
 ## Save File / Debug Export

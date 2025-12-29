@@ -2,7 +2,7 @@
 
 This directory contains packaging configurations for Linux distribution formats.
 
-## Current Release: 0.9.0-beta
+## Current Release: 0.9.1-beta
 
 This is a **beta release** targeting community testing before 1.0 stable.
 
@@ -18,10 +18,10 @@ AppImages are portable, self-contained executables that work on any Linux distri
 ```bash
 # After PyInstaller build completes:
 cd /path/to/RogueSignalProtocol
-./packaging/linux/build-appimage.sh 0.9.0-beta
+./packaging/linux/build-appimage.sh 0.9.1-beta
 ```
 
-**Output**: `RogueSignalProtocol-0.9.0-beta-x86_64.AppImage`
+**Output**: `RogueSignalProtocol-0.9.1-beta-x86_64.AppImage`
 
 **Distribution**: GitHub Releases, itch.io
 
