@@ -258,17 +258,25 @@ jobs:
 
     - name: Create release archive
       run: |
+        # Get version from release tag (strips leading 'v' if present)
+        VERSION="${GITHUB_REF_NAME#v}"
+        TARBALL="RogueSignalProtocol-${VERSION}-Linux.tar.gz"
+        echo "Creating tarball: $TARBALL"
+
         cd dist
-        tar -czvf ../RogueSignalProtocol-Linux.tar.gz *
+        tar -czvf "../$TARBALL" *
         cd ..
 
-        if [ ! -f "RogueSignalProtocol-Linux.tar.gz" ]; then
+        if [ ! -f "$TARBALL" ]; then
           echo "Failed to create release archive!"
           exit 1
         fi
 
-        size=$(du -h RogueSignalProtocol-Linux.tar.gz | cut -f1)
+        size=$(du -h "$TARBALL" | cut -f1)
         echo "Release archive created: $size"
+
+        # Save filename for upload step
+        echo "TARBALL_NAME=$TARBALL" >> $GITHUB_ENV
 
     - name: Build AppImage
       run: |
@@ -364,7 +372,7 @@ jobs:
     - name: Upload tarball release asset
       uses: softprops/action-gh-release@v1
       with:
-        files: RogueSignalProtocol-Linux.tar.gz
+        files: RogueSignalProtocol-*-Linux.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

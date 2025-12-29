@@ -29,35 +29,32 @@ if [ ! -f "dist/RogueSignalProtocol" ]; then
     exit 1
 fi
 
-# Set channel based on build type
-case "$BUILD_TYPE" in
-    release)
-        CHANNEL="linux"
-        ;;
-    beta)
-        CHANNEL="linux-beta"
-        ;;
-    alpha)
-        CHANNEL="linux-alpha"
-        ;;
-    *)
-        echo "ERROR: Invalid build type. Use: alpha, beta, or release"
-        exit 1
-        ;;
-esac
+# Channel is always "linux" - we use version tags to distinguish releases
+CHANNEL="linux"
 
 PROJECT="dragynrain/rogue-signal-protocol"
+
+# Build tarball filename: RogueSignalProtocol-[version]-[type]-Linux.tar.gz
+TARBALL="RogueSignalProtocol-${VERSION}-${BUILD_TYPE}-Linux.tar.gz"
+
+# Verify tarball exists (should be in releases/ folder)
+if [ ! -f "releases/$TARBALL" ]; then
+    echo "ERROR: releases/$TARBALL not found"
+    echo "Expected: RogueSignalProtocol-${VERSION}-${BUILD_TYPE}-Linux.tar.gz"
+    echo "Run build-linux.sh first, then create the properly named tarball"
+    exit 1
+fi
 
 echo ""
 echo "Pushing to itch.io..."
 echo "  Project: $PROJECT"
 echo "  Channel: $CHANNEL"
 echo "  Version: $VERSION"
-echo "  Source:  dist/"
+echo "  Source:  releases/$TARBALL"
 echo ""
 
-# Push with version tag
-butler push dist "$PROJECT:$CHANNEL" --userversion "$VERSION"
+# Push tarball with version tag
+butler push "releases/$TARBALL" "$PROJECT:$CHANNEL" --userversion "$VERSION"
 
 echo ""
 echo "Push complete!"
