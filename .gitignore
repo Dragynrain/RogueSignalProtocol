@@ -10,7 +10,6 @@ __pycache__/
 
 # Build & Distribution (PyInstaller)
 build/RogueSignalProtocol/
-build/butler/
 dist/
 dist_backup*/
 releases/
