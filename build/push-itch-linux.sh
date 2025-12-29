@@ -1,16 +1,19 @@
 #!/bin/bash
-# Push Linux build to itch.io using butler
-# Usage: ./push-itch-linux.sh [alpha|beta|release] [version]
-# Example: ./push-itch-linux.sh beta 0.9.1
+# Push Linux builds to itch.io using butler
+# Usage: ./push-itch-linux.sh [version]
+# Example: ./push-itch-linux.sh 0.9.1-beta
+#
+# Pushes both tarball and AppImage to separate channels:
+#   - linux: tarball
+#   - linux-appimage: AppImage
 
 set -e
 
-BUILD_TYPE="${1}"
-VERSION="${2}"
+VERSION="${1}"
 
-if [ -z "$BUILD_TYPE" ] || [ -z "$VERSION" ]; then
-    echo "Usage: ./push-itch-linux.sh [alpha|beta|release] [version]"
-    echo "Example: ./push-itch-linux.sh beta 0.9.1"
+if [ -z "$VERSION" ]; then
+    echo "Usage: ./push-itch-linux.sh [version]"
+    echo "Example: ./push-itch-linux.sh 0.9.1-beta"
     exit 1
 fi
 
@@ -22,40 +25,46 @@ if ! command -v butler &> /dev/null; then
     exit 1
 fi
 
-# Verify dist folder exists
-if [ ! -f "dist/RogueSignalProtocol" ]; then
-    echo "ERROR: dist/RogueSignalProtocol not found"
-    echo "Run build-linux.sh first"
-    exit 1
-fi
-
-# Channel is always "linux" - we use version tags to distinguish releases
-CHANNEL="linux"
-
 PROJECT="dragynrain/rogue-signal-protocol"
 
-# Build tarball filename: RogueSignalProtocol-[version]-[type]-Linux.tar.gz
-TARBALL="RogueSignalProtocol-${VERSION}-${BUILD_TYPE}-Linux.tar.gz"
+# Expected filenames (from GitHub release workflow)
+TARBALL="releases/RogueSignalProtocol-${VERSION}-Linux.tar.gz"
+APPIMAGE="releases/RogueSignalProtocol-${VERSION}-x86_64.AppImage"
 
-# Verify tarball exists (should be in releases/ folder)
-if [ ! -f "releases/$TARBALL" ]; then
-    echo "ERROR: releases/$TARBALL not found"
-    echo "Expected: RogueSignalProtocol-${VERSION}-${BUILD_TYPE}-Linux.tar.gz"
-    echo "Run build-linux.sh first, then create the properly named tarball"
+# Check if files exist
+if [ ! -f "$TARBALL" ]; then
+    echo "ERROR: $TARBALL not found"
+    echo "Download from GitHub release first:"
+    echo "  gh release download v${VERSION} --pattern 'RogueSignalProtocol-*-Linux*' --dir releases/"
+    exit 1
+fi
+
+if [ ! -f "$APPIMAGE" ]; then
+    echo "ERROR: $APPIMAGE not found"
+    echo "Download from GitHub release first:"
+    echo "  gh release download v${VERSION} --pattern 'RogueSignalProtocol-*-Linux*' --dir releases/"
     exit 1
 fi
 
 echo ""
-echo "Pushing to itch.io..."
+echo "Pushing Linux builds to itch.io..."
 echo "  Project: $PROJECT"
-echo "  Channel: $CHANNEL"
 echo "  Version: $VERSION"
-echo "  Source:  releases/$TARBALL"
 echo ""
 
-# Push tarball with version tag
-butler push "releases/$TARBALL" "$PROJECT:$CHANNEL" --userversion "$VERSION"
+# Push tarball to linux channel
+echo "Pushing tarball to 'linux' channel..."
+butler push "$TARBALL" "$PROJECT:linux" --userversion "$VERSION"
+
+echo ""
+
+# Push AppImage to linux-appimage channel
+echo "Pushing AppImage to 'linux-appimage' channel..."
+butler push "$APPIMAGE" "$PROJECT:linux-appimage" --userversion "$VERSION"
 
 echo ""
 echo "Push complete!"
-echo "View at: https://dragynrain.itch.io/rogue-signal-protocol"
+echo "Verify at: https://dragynrain.itch.io/rogue-signal-protocol/edit"
+echo ""
+echo "Check status:"
+echo "  butler status $PROJECT"
