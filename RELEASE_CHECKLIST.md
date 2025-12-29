@@ -24,6 +24,12 @@ This ensures you have a permanent record of progress for each release and preven
 
 **DO NOT skip or skim this section. These rules exist because of actual release failures.**
 
+### Rule 0: Check off items AS YOU COMPLETE THEM
+- Mark each `[ ]` as `[x]` immediately after completing it
+- Do NOT batch checkmarks at the end
+- If you skip an item, mark it with `[-]` and note why
+- This prevents missed steps and provides audit trail
+
 ### Rule 1: This is THE ONLY release checklist
 - **USE THIS FILE:** `RELEASE_CHECKLIST.md` (project root)
 - **DO NOT USE:** `marketing/pre_release_checklist.md` (OBSOLETE - kept for historical reference only)
@@ -478,14 +484,25 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 7.1 Windows Distribution
 
-**Itch.io (Option A - Butler, recommended):**
+**Itch.io upload:**
+
+**IMPORTANT: Match existing naming convention!**
+- Check existing uploads on itch.io dashboard first
+- Naming format: `RogueSignalProtocol_beta_X.Y.Z.zip` (version-based, NOT date-based)
+- The build script creates date-based names - rename before uploading
+- Use the zip file, not the dist folder, to preserve the filename
+
 ```bash
-# First time only: butler login
-build\push-itch.bat [alpha|beta|release] [version]
-# Example: build\push-itch.bat beta 0.9.1
+# Rename to match convention (build creates date-based names)
+cp releases/RogueSignalProtocol_beta_YYYY-MM-DD.zip releases/RogueSignalProtocol_beta_X.Y.Z.zip
+
+# Upload via butler (uses the zip filename)
+build\butler\butler.exe push releases/RogueSignalProtocol_beta_X.Y.Z.zip dragynrain/rogue-signal-protocol:windows --userversion X.Y.Z
 ```
+- [ ] Rename zip to version-based name
 - [ ] Push Windows build via butler
 - [ ] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
+- [ ] Verify filename matches existing uploads
 
 **Itch.io (Option B - Manual upload):**
 - [ ] Upload Windows .zip to itch.io manually

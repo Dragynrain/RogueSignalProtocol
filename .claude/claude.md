@@ -24,6 +24,7 @@
 - Never use: `dir`, `del`, `md`, `copy`, `move`, `type` (Windows CMD)
 - Quote paths with spaces: `cd "path with spaces"`
 - Use venv executables: `.venv/Scripts/python.exe` (not bare `python`)
+- **GitHub CLI:** Call explicitly as `/c/Program\ Files/GitHub\ CLI/gh.exe` (not bare `gh`)
 
 **AVOID PIPES & REDIRECTS** - Complex chains trigger permission prompts
 - Split into separate commands or save to temp file
