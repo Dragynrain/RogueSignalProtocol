@@ -57,9 +57,38 @@ Just zip up the entire `dist/` folder and share it. Users extract and run `Rogue
 ### Option 2: Use the auto-generated zip
 The build script creates `releases/RogueSignalProtocol_YYYY-MM-DD_HHMM.zip` automatically. Share that.
 
-### Option 3: Upload to itch.io
+### Option 3: Upload to itch.io (Butler - recommended)
+
+Butler is itch.io's command-line uploader with differential uploads (only changed files).
+
+**One-time setup:**
+1. Download butler: https://itch.io/docs/butler/installing.html
+2. Add to PATH or place in `build/` folder
+3. Run `butler login` (opens browser for authentication)
+
+**Push a build:**
+```bash
+# Windows
+build\push-itch.bat [alpha|beta|release] [version]
+# Example: build\push-itch.bat beta 0.9.1
+
+# Linux
+./build/push-itch-linux.sh [alpha|beta|release] [version]
+```
+
+**Channels:**
+- `windows` / `linux` - Stable releases
+- `windows-beta` / `linux-beta` - Beta builds
+- `windows-alpha` / `linux-alpha` - Alpha builds
+
+**Benefits:**
+- Differential uploads (subsequent pushes upload only changes)
+- Automatic versioning
+- No browser needed after initial login
+
+### Option 4: Upload to itch.io (Manual)
 1. Run `build.bat`
-2. Upload the contents of `dist/` to itch.io
+2. Upload the contents of `dist/` to itch.io web interface
 3. Mark `RogueSignalProtocol.exe` as the main executable
 
 ## GitHub Releases (Automated)
