@@ -27,3 +27,14 @@ Currently version is hardcoded in 21+ locations across Python, JSON, and Markdow
 - CHANGELOG.md
 
 **Effort:** Medium - mostly refactoring imports and build script updates
+
+### Build Script: Version-Based Release Names
+Currently `build.bat` creates date-based zip names (`RogueSignalProtocol_beta_2025-12-29.zip`) but itch.io uploads use version-based names (`RogueSignalProtocol_beta_0.9.1.zip`).
+
+**Proposed solution:**
+- Modify build.bat to accept version as parameter: `build.bat beta 0.9.1`
+- Generate zip name as `RogueSignalProtocol_[type]_[version].zip`
+- Keeps consistency with itch.io naming convention
+- Eliminates manual rename step before upload
+
+**Effort:** Low - simple build script modification

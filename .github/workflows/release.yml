@@ -251,8 +251,8 @@ jobs:
 
         # Copy Flatpak/desktop integration files for Flathub builds
         echo "Copying desktop integration files..."
-        cp packaging/linux/rogue-signal-protocol.desktop dist/
-        cp packaging/linux/com.dragynrain.roguesignalprotocol.metainfo.xml dist/
+        cp packaging/linux/info.aforster.roguesignalprotocol.desktop dist/
+        cp packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml dist/
 
         echo "All assets copied successfully."
 
