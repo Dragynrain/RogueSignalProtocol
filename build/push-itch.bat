@@ -41,21 +41,21 @@ if "%BUTLER%"=="" (
     exit /b 1
 )
 
-REM Verify dist folder exists
+REM Verify dist folder exists (build must have run)
 if not exist dist\RogueSignalProtocol.exe (
     echo ERROR: dist\RogueSignalProtocol.exe not found
-    echo Run build.bat first
+    echo Run build.bat %BUILD_TYPE% first
     exit /b 1
 )
 
-REM Set channel based on build type
-REM Channels: windows, windows-beta, windows-alpha
+REM Channel is always "windows" - we use version tags to distinguish releases
+REM (itch.io doesn't use separate channels for alpha/beta/release)
 if /i "%BUILD_TYPE%"=="release" (
     set CHANNEL=windows
 ) else ( if /i "%BUILD_TYPE%"=="beta" (
-    set CHANNEL=windows-beta
+    set CHANNEL=windows
 ) else ( if /i "%BUILD_TYPE%"=="alpha" (
-    set CHANNEL=windows-alpha
+    set CHANNEL=windows
 ) else (
     echo ERROR: Invalid build type. Use: alpha, beta, or release
     exit /b 1
@@ -63,16 +63,27 @@ if /i "%BUILD_TYPE%"=="release" (
 
 set PROJECT=dragynrain/rogue-signal-protocol
 
+REM Build zip filename: RogueSignalProtocol_[type]_[version].zip
+set ZIP_FILE=releases\RogueSignalProtocol_%BUILD_TYPE%_%VERSION%.zip
+
+REM Verify zip file exists
+if not exist "%ZIP_FILE%" (
+    echo ERROR: %ZIP_FILE% not found
+    echo Run build.bat %BUILD_TYPE% first, then rename the zip to include version
+    echo Expected: RogueSignalProtocol_%BUILD_TYPE%_%VERSION%.zip
+    exit /b 1
+)
+
 echo.
 echo Pushing to itch.io...
 echo   Project: %PROJECT%
 echo   Channel: %CHANNEL%
 echo   Version: %VERSION%
-echo   Source:  dist/
+echo   Source:  %ZIP_FILE%
 echo.
 
-REM Push with version tag
-"%BUTLER%" push dist "%PROJECT%:%CHANNEL%" --userversion %VERSION%
+REM Push zip file with version tag
+"%BUTLER%" push "%ZIP_FILE%" "%PROJECT%:%CHANNEL%" --userversion %VERSION%
 
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: butler push failed
