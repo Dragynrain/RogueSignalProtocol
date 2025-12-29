@@ -1,6 +1,6 @@
 # Rogue Signal Protocol - Developer Guide
 
-**Version 0.9.0 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 0.9.1 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 > **For Players**: See [README.txt](README.txt) for game instructions
 >
@@ -13,7 +13,7 @@ Copyright (C) 2025 Adam Forster
 This program is free software licensed under the MIT License. You can freely use, modify, and distribute it. See LICENSE file for full details.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.9.0%20Beta-orange.svg)
+![Version](https://img.shields.io/badge/version-0.9.1%20Beta-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Game Overview
