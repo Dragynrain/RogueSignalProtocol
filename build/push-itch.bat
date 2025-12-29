@@ -1,24 +1,20 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Push build to itch.io using butler
-REM Usage: push-itch.bat [alpha|beta|release] [version]
-REM Example: push-itch.bat beta 0.9.1
+REM Push Windows build to itch.io using butler
+REM Usage: push-itch.bat [version]
+REM Example: push-itch.bat 0.9.1
+REM
+REM Expects zip file in releases/ folder named RogueSignalProtocol_beta_[version].zip
+REM (or similar naming - script will find the first matching zip)
 
 cd /d "%~dp0.."
 
-set BUILD_TYPE=%1
-set VERSION=%2
-
-if "%BUILD_TYPE%"=="" (
-    echo Usage: push-itch.bat [alpha^|beta^|release] [version]
-    echo Example: push-itch.bat beta 0.9.1
-    exit /b 1
-)
+set VERSION=%1
 
 if "%VERSION%"=="" (
-    echo ERROR: Version is required
-    echo Usage: push-itch.bat [alpha^|beta^|release] [version]
+    echo Usage: push-itch.bat [version]
+    echo Example: push-itch.bat 0.9.1
     exit /b 1
 )
 
@@ -41,36 +37,19 @@ if "%BUTLER%"=="" (
     exit /b 1
 )
 
-REM Verify dist folder exists (build must have run)
-if not exist dist\RogueSignalProtocol.exe (
-    echo ERROR: dist\RogueSignalProtocol.exe not found
-    echo Run build.bat %BUILD_TYPE% first
-    exit /b 1
+set PROJECT=dragynrain/rogue-signal-protocol
+set CHANNEL=windows
+
+REM Look for zip file with version in releases/
+set ZIP_FILE=
+for %%f in (releases\*%VERSION%*.zip) do (
+    set ZIP_FILE=%%f
 )
 
-REM Channel is always "windows" - we use version tags to distinguish releases
-REM (itch.io doesn't use separate channels for alpha/beta/release)
-if /i "%BUILD_TYPE%"=="release" (
-    set CHANNEL=windows
-) else ( if /i "%BUILD_TYPE%"=="beta" (
-    set CHANNEL=windows
-) else ( if /i "%BUILD_TYPE%"=="alpha" (
-    set CHANNEL=windows
-) else (
-    echo ERROR: Invalid build type. Use: alpha, beta, or release
-    exit /b 1
-) ) )
-
-set PROJECT=dragynrain/rogue-signal-protocol
-
-REM Build zip filename: RogueSignalProtocol_[type]_[version].zip
-set ZIP_FILE=releases\RogueSignalProtocol_%BUILD_TYPE%_%VERSION%.zip
-
-REM Verify zip file exists
-if not exist "%ZIP_FILE%" (
-    echo ERROR: %ZIP_FILE% not found
-    echo Run build.bat %BUILD_TYPE% first, then rename the zip to include version
-    echo Expected: RogueSignalProtocol_%BUILD_TYPE%_%VERSION%.zip
+if "%ZIP_FILE%"=="" (
+    echo ERROR: No zip file containing version %VERSION% found in releases/
+    echo Expected something like: releases/RogueSignalProtocol_beta_%VERSION%.zip
+    echo Run build.bat first
     exit /b 1
 )
 
@@ -92,4 +71,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 echo Push complete!
-echo View at: https://dragynrain.itch.io/rogue-signal-protocol
+echo Verify at: https://dragynrain.itch.io/rogue-signal-protocol/edit
+echo.
+echo Check status:
+echo   %BUTLER% status %PROJECT%
