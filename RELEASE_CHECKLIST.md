@@ -484,32 +484,31 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 7.1 Windows Distribution
 
-**Itch.io upload (manual - preserves filenames):**
+**Itch.io upload:**
 
-> **WARNING: Do NOT use butler for itch.io uploads!**
-> Butler renames all files to `projectname-channel.zip` and converts everything to zip format.
-> Manual upload is required to preserve custom filenames.
-
-**Naming convention:** `RogueSignalProtocol_beta_X.Y.Z.zip` (version-based, NOT date-based)
+**IMPORTANT: Match existing naming convention!**
+- Naming format: `RogueSignalProtocol_beta_X.Y.Z.zip` (version-based, NOT date-based)
+- The build script creates date-based names - rename before uploading
+- Channel: `windows` (all releases use same channel, version distinguishes them)
 
 ```bash
-# Rename zip to version-based name (build creates date-based names)
+# Step 1: Rename zip to version-based name (build creates date-based names)
 cp releases/RogueSignalProtocol_beta_YYYY-MM-DD.zip releases/RogueSignalProtocol_beta_X.Y.Z.zip
+
+# Step 2: Upload via butler script (or manual command)
+build\push-itch.bat beta X.Y.Z
+# Or manually:
+build\butler\butler.exe push releases/RogueSignalProtocol_beta_X.Y.Z.zip dragynrain/rogue-signal-protocol:windows --userversion X.Y.Z
 ```
-
-**Upload steps:**
-1. Go to https://dragynrain.itch.io/rogue-signal-protocol/edit
-2. Click "Upload files"
-3. Select `releases/RogueSignalProtocol_beta_X.Y.Z.zip`
-4. Set platform to "Windows"
-5. Save
-
 - [ ] Rename zip to version-based name
-- [ ] Upload Windows .zip via itch.io web interface
-- [ ] Set platform to Windows
-- [ ] Verify filename matches existing uploads
+- [ ] Push Windows build via butler
+- [ ] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
+- [ ] Verify filename matches existing uploads (check itch.io dashboard)
 
-**After upload:**
+**Itch.io (Option B - Manual upload):**
+- [ ] Upload Windows .zip to itch.io manually
+
+**After upload (either method):**
 - [ ] Update page description if needed
 - [ ] Set appropriate tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
 - [ ] Mark build status (Alpha/Beta/Release)
@@ -527,27 +526,17 @@ The version comes from the git tag (e.g., `v0.9.1-beta` -> `0.9.1-beta`).
 - [ ] Linux tarball uploaded
 - [ ] AppImage uploaded
 
-**Itch.io upload (manual - preserves filenames):**
-
-> **WARNING: Do NOT use butler** - it renames files and converts to zip format.
-
-Download Linux builds from GitHub release, then upload manually:
+**Itch.io (Option A - Butler, recommended):**
 ```bash
-# Download from GitHub release
-gh release download vX.Y.Z-beta --pattern "RogueSignalProtocol-*-Linux*" --dir releases/
+# From Linux environment
+./build/push-itch-linux.sh [alpha|beta|release] [version]
 ```
+- [ ] Push Linux build via butler
 
-**Upload steps:**
-1. Go to https://dragynrain.itch.io/rogue-signal-protocol/edit
-2. Upload `RogueSignalProtocol-X.Y.Z-beta-Linux.tar.gz` - set platform to "Linux"
-3. Upload `RogueSignalProtocol-X.Y.Z-beta-x86_64.AppImage` - set platform to "Linux"
-4. Save
-
-- [ ] Download Linux builds from GitHub release
-- [ ] Upload tarball via itch.io web interface
-- [ ] Upload AppImage via itch.io web interface
-- [ ] Set platform to Linux for both
-- [ ] Verify filenames match convention
+**Itch.io (Option B - Manual upload):**
+- [ ] Upload Linux tarball manually
+- [ ] Upload AppImage manually
+- [ ] Mark as Linux compatible
 
 **Flathub (STABLE RELEASES ONLY):**
 
