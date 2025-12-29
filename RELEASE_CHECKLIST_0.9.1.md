@@ -218,12 +218,12 @@ pip install pyinstaller
 ### 3.2 Verify Linux Build Contents
 
 Check `dist/` folder contains:
-- [ ] `RogueSignalProtocol` (no .exe extension)
-- [ ] All JSON config files
-- [ ] `KreativeSquare.ttf`
-- [ ] `logo.png`
-- [ ] `graphics/`, `sound/`, `music/` folders
-- [ ] `README.txt`, `LICENSE`
+- [x] `RogueSignalProtocol` (no .exe extension) - via GitHub Actions
+- [x] All JSON config files
+- [x] `KreativeSquare.ttf`
+- [x] `logo.png`
+- [x] `graphics/`, `sound/`, `music/` folders
+- [x] `README.txt`, `LICENSE`
 
 ### 3.3 Build Linux Packages
 
@@ -231,21 +231,21 @@ Check `dist/` folder contains:
 ```bash
 ./packaging/linux/build-appimage.sh [version]
 ```
-- [ ] AppImage builds successfully
-- [ ] Output: `RogueSignalProtocol-[version]-x86_64.AppImage`
+- [x] AppImage builds successfully - via GitHub Actions
+- [x] Output: `RogueSignalProtocol-[version]-x86_64.AppImage`
 
 **Flatpak (local test):**
 ```bash
 flatpak-builder --user --install --force-clean build-dir packaging/linux/info.aforster.roguesignalprotocol.yml
 ```
-- [ ] Flatpak builds successfully
-- [ ] Can run: `flatpak run info.aforster.roguesignalprotocol`
+- [ ] Flatpak builds successfully - N/A (stable releases only)
+- [ ] Can run: `flatpak run info.aforster.roguesignalprotocol` - N/A
 
 **AUR (generate checksums):**
 ```bash
 sha256sum RogueSignalProtocol-linux.tar.gz
 ```
-- [ ] Update sha256sums in PKGBUILD
+- [x] Update sha256sums in PKGBUILD
 
 ---
 
@@ -430,8 +430,8 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [x] Select the tag
 - [x] Title format: `v1.0.0` or `v1.0.0-beta` (match tag)
 - [x] Upload Windows .zip from `releases/`
-- [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`) - pending GitHub Actions
-- [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`) - pending GitHub Actions
+- [x] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
+- [x] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
 - [x] Write release notes from CHANGELOG.md
 - [x] For pre-releases: check "Set as a pre-release" checkbox
 
@@ -493,20 +493,20 @@ build\push-itch.bat [alpha|beta|release] [version]
 ### 7.2 Linux Distribution
 
 **GitHub Releases:**
-- [ ] Linux tarball uploaded
-- [ ] AppImage uploaded
+- [x] Linux tarball uploaded
+- [x] AppImage uploaded
 
 **Itch.io (Option A - Butler, recommended):**
 ```bash
 # From Linux environment
 ./build/push-itch-linux.sh [alpha|beta|release] [version]
 ```
-- [ ] Push Linux build via butler
+- [x] Push Linux build via butler
 
 **Itch.io (Option B - Manual upload):**
-- [ ] Upload Linux tarball manually
-- [ ] Upload AppImage manually
-- [ ] Mark as Linux compatible
+- [ ] Upload Linux tarball manually - N/A used butler
+- [ ] Upload AppImage manually - N/A used butler
+- [x] Mark as Linux compatible
 
 **Flathub (STABLE RELEASES ONLY):**
 
@@ -547,11 +547,11 @@ Post-acceptance (for Verified badge):
 > **TIP:** Use Docker to generate .SRCINFO if not on Arch:
 > `docker run --rm -v "$(pwd):/pkg" -w /pkg archlinux bash -c "pacman -Sy --noconfirm base-devel && useradd builder && su builder -c 'makepkg --printsrcinfo' > .SRCINFO"`
 
-- [ ] Update PKGBUILD with new version and SHA256
-- [ ] Convert to Unix line endings: `sed -i 's/\r$//' PKGBUILD`
-- [ ] Generate .SRCINFO: `makepkg --printsrcinfo > .SRCINFO`
-- [ ] Push to AUR: `git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git`
-- [ ] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
+- [x] Update PKGBUILD with new version and SHA256
+- [x] Convert to Unix line endings: `sed -i 's/\r$//' PKGBUILD`
+- [x] Generate .SRCINFO: `makepkg --printsrcinfo > .SRCINFO`
+- [x] Push to AUR: `git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git`
+- [x] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
 
 ### 7.3 Download Verification (Smoke Test)
 
@@ -569,19 +569,21 @@ After uploading, download and verify the builds work:
 
 ### 7.5 Update Wiki
 
+**N/A for 0.9.1 - no content changes (controller fixes only)**
+
 **Auto-generated pages (if game_content.json changed):**
 ```bash
 python docs/generate_wiki.py
 ```
-- [ ] Run wiki generator if enemy/exploit/network data changed
-- [ ] Review generated pages for accuracy
+- [ ] Run wiki generator if enemy/exploit/network data changed - N/A
+- [ ] Review generated pages for accuracy - N/A
 
 **Manual wiki pages to review:**
-- [ ] `docs/wiki/Home.md` - Version number (already in Phase 1)
-- [ ] `docs/wiki/Keybindings.md` - If controls changed
-- [ ] `docs/wiki/Gameplay-Mechanics.md` - If mechanics changed
-- [ ] `docs/wiki/UI-and-HUD-Guide.md` - If UI changed
-- [ ] `docs/wiki/Settings-and-Configuration.md` - If settings changed
+- [ ] `docs/wiki/Home.md` - Version number (already in Phase 1) - N/A
+- [ ] `docs/wiki/Keybindings.md` - If controls changed - N/A
+- [ ] `docs/wiki/Gameplay-Mechanics.md` - If mechanics changed - N/A
+- [ ] `docs/wiki/UI-and-HUD-Guide.md` - If UI changed - N/A
+- [ ] `docs/wiki/Settings-and-Configuration.md` - If settings changed - N/A
 
 **Sync to GitHub Wiki:**
 ```bash
@@ -591,9 +593,9 @@ cp -r RogueSignalProtocol/docs/wiki/*.md RogueSignalProtocol.wiki/
 cd RogueSignalProtocol.wiki
 git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 ```
-- [ ] Clone wiki repo (first time) or pull latest
-- [ ] Copy updated wiki pages
-- [ ] Commit and push to wiki
+- [ ] Clone wiki repo (first time) or pull latest - N/A
+- [ ] Copy updated wiki pages - N/A
+- [ ] Commit and push to wiki - N/A
 
 ---
 
