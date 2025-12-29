@@ -487,22 +487,23 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 **Itch.io upload:**
 
 **IMPORTANT: Match existing naming convention!**
-- Check existing uploads on itch.io dashboard first
 - Naming format: `RogueSignalProtocol_beta_X.Y.Z.zip` (version-based, NOT date-based)
 - The build script creates date-based names - rename before uploading
-- Use the zip file, not the dist folder, to preserve the filename
+- Channel: `windows` (all releases use same channel, version distinguishes them)
 
 ```bash
-# Rename to match convention (build creates date-based names)
+# Step 1: Rename zip to version-based name (build creates date-based names)
 cp releases/RogueSignalProtocol_beta_YYYY-MM-DD.zip releases/RogueSignalProtocol_beta_X.Y.Z.zip
 
-# Upload via butler (uses the zip filename)
+# Step 2: Upload via butler script (or manual command)
+build\push-itch.bat beta X.Y.Z
+# Or manually:
 build\butler\butler.exe push releases/RogueSignalProtocol_beta_X.Y.Z.zip dragynrain/rogue-signal-protocol:windows --userversion X.Y.Z
 ```
 - [ ] Rename zip to version-based name
 - [ ] Push Windows build via butler
 - [ ] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
-- [ ] Verify filename matches existing uploads
+- [ ] Verify filename matches existing uploads (check itch.io dashboard)
 
 **Itch.io (Option B - Manual upload):**
 - [ ] Upload Windows .zip to itch.io manually
@@ -514,7 +515,14 @@ build\butler\butler.exe push releases/RogueSignalProtocol_beta_X.Y.Z.zip dragynr
 
 ### 7.2 Linux Distribution
 
-**GitHub Releases:**
+**GitHub Releases (automatic via workflow):**
+
+Naming convention for Linux builds:
+- Tarball: `RogueSignalProtocol-X.Y.Z-beta-Linux.tar.gz`
+- AppImage: `RogueSignalProtocol-X.Y.Z-beta-x86_64.AppImage`
+
+The version comes from the git tag (e.g., `v0.9.1-beta` -> `0.9.1-beta`).
+
 - [ ] Linux tarball uploaded
 - [ ] AppImage uploaded
 
