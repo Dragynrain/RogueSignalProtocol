@@ -426,9 +426,14 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 5.4 Create GitHub Release
 
+**IMPORTANT: Match existing naming conventions!**
+- Check previous releases for title/description format
+- Check existing tags: `git tag -l` (e.g., `v0.9.0-beta`, `v0.8.0-alpha`)
+- Keep consistency with itch.io channel names and version labels
+
 - [ ] Go to GitHub > Releases > Draft new release
 - [ ] Select the tag
-- [ ] Title format: `v1.0.0` or `v1.0.0-beta` (match tag)
+- [ ] Title format: `v1.0.0` or `v1.0.0-beta` (match tag and previous releases)
 - [ ] Upload Windows .zip from `releases/`
 - [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
 - [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
