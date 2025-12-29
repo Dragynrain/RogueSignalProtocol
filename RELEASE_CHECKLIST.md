@@ -2,6 +2,8 @@
 
 Reusable checklist for alpha, beta, and stable releases.
 
+**Minor releases (X.Y.Z -> X.Y.Z+1):** Skip Phase 6.2 (video), reduce Phase 8 marketing scope. Save migration testing (1.7) is especially important.
+
 ---
 
 ## STOP - READ THIS FIRST
@@ -112,7 +114,26 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 - [ ] Verify copyright year is current
 - [ ] Check any third-party attribution is up to date
 
-### 1.6 Clean Build Preparation
+### 1.6 CHANGELOG Review
+
+- [ ] Verify CHANGELOG.md has ALL changes since last release documented
+- [ ] Check that change descriptions are clear and user-facing (not internal refactors)
+- [ ] Ensure new version section header is ready to be filled in
+
+### 1.7 Save Migration Test
+
+- [ ] Locate a save file from the previous release version
+- [ ] Load the old save with the new code (before building)
+- [ ] Verify gameplay continues correctly with no errors
+- [ ] If save format changed, document migration path or breaking change
+
+### 1.8 Dependency Security Audit
+
+- [ ] Run `pip audit` (install with `pip install pip-audit` if needed)
+- [ ] Review any reported vulnerabilities
+- [ ] Update vulnerable packages or document accepted risks
+
+### 1.9 Clean Build Preparation
 
 - [ ] Delete `dist/` folder to ensure no stale files
 - [ ] Delete `build/` folder (PyInstaller build artifacts)
@@ -309,14 +330,35 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Mouse wheel scrolls where applicable (help, achievements)
 - [ ] Tooltips appear on hover (if implemented)
 
-### 4.10 Window/Display Testing
+### 4.10 Antivirus False Positive Check
+
+- [ ] Upload `RogueSignalProtocol.exe` to VirusTotal (https://www.virustotal.com/)
+- [ ] Document detection ratio (PyInstaller builds commonly trigger 2-5 false positives)
+- [ ] If detections > 10, investigate or consider signing the executable
+- [ ] Note: Expected false positives from heuristic scanners (e.g., "Gen:Variant.Tedy") are normal
+
+### 4.11 Clean Uninstall/Reinstall Test
+
+- [ ] Delete entire data directory (`%APPDATA%/RogueSignalProtocol` on Windows, `~/.local/share/RogueSignalProtocol` on Linux)
+- [ ] Delete any leftover install files
+- [ ] Fresh install from the release zip/package
+- [ ] Verify game launches and creates new data directory correctly
+
+### 4.12 Memory/Performance Smoke Test
+
+- [ ] Play for 15+ minutes continuously
+- [ ] Monitor memory usage (Task Manager or similar)
+- [ ] Verify no significant memory growth over time
+- [ ] Check for any performance degradation in later levels
+
+### 4.13 Window/Display Testing
 
 - [ ] Fullscreen toggle (Alt+Enter or F11) works
 - [ ] Window resize maintains aspect ratio
 - [ ] Game recovers from minimize/restore
 - [ ] Multi-monitor: game opens on correct display
 
-### 4.11 UI/UX Testing (Both Platforms)
+### 4.14 UI/UX Testing (Both Platforms)
 
 - [ ] Help menu (`?`) displays correctly
 - [ ] Inventory (`I`) works
@@ -326,7 +368,7 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Look mode (`L`) works with mouse and keyboard
 - [ ] Keybindings match help text exactly
 
-### 4.12 Linux Testing
+### 4.15 Linux Testing
 
 > **Detailed checklist:** See `packaging/linux/TEST_CHECKLIST.md` for comprehensive Linux testing procedures.
 
@@ -357,7 +399,14 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Note current version tag for rollback if needed: `git describe --tags --abbrev=0`
 - [ ] Ensure previous release is still available on GitHub/itch.io
 
-### 5.2 Commit and Tag
+### 5.2 Draft Release Notes
+
+- [ ] Write GitHub release description BEFORE creating the release
+- [ ] Include: summary of changes, highlights, known issues, upgrade notes
+- [ ] Copy key points from CHANGELOG.md
+- [ ] Have the text ready to paste when creating the GitHub release
+
+### 5.3 Commit and Tag
 
 - [ ] Stage all changes: `git add -A`
 - [ ] Commit with version message: `git commit -m "Release vX.Y.Z-beta"`
@@ -367,7 +416,7 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 **Note:** Replace `X.Y.Z` with actual version and `-beta` with release type (`-alpha`, `-beta`, or nothing for stable).
 
-### 5.3 Create GitHub Release
+### 5.4 Create GitHub Release
 
 - [ ] Go to GitHub > Releases > Draft new release
 - [ ] Select the tag
@@ -416,8 +465,19 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ### 7.1 Windows Distribution
 
-**Itch.io:**
-- [ ] Upload Windows .zip to itch.io
+**Itch.io (Option A - Butler, recommended):**
+```bash
+# First time only: butler login
+build\push-itch.bat [alpha|beta|release] [version]
+# Example: build\push-itch.bat beta 0.9.1
+```
+- [ ] Push Windows build via butler
+- [ ] Verify upload at https://dragynrain.itch.io/rogue-signal-protocol/edit
+
+**Itch.io (Option B - Manual upload):**
+- [ ] Upload Windows .zip to itch.io manually
+
+**After upload (either method):**
 - [ ] Update page description if needed
 - [ ] Set appropriate tags: roguelike, stealth, cyberpunk, turn-based, permadeath, controller-support
 - [ ] Mark build status (Alpha/Beta/Release)
@@ -428,9 +488,16 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Linux tarball uploaded
 - [ ] AppImage uploaded
 
-**Itch.io:**
-- [ ] Upload Linux tarball
-- [ ] Upload AppImage
+**Itch.io (Option A - Butler, recommended):**
+```bash
+# From Linux environment
+./build/push-itch-linux.sh [alpha|beta|release] [version]
+```
+- [ ] Push Linux build via butler
+
+**Itch.io (Option B - Manual upload):**
+- [ ] Upload Linux tarball manually
+- [ ] Upload AppImage manually
 - [ ] Mark as Linux compatible
 
 **Flathub (STABLE RELEASES ONLY):**
@@ -568,6 +635,7 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 - [ ] Respond to Reddit questions
 - [ ] Watch for crash reports in logs
 - [ ] Monitor GitHub issues for Linux-specific bugs
+- [ ] Post to Discord server (if applicable)
 
 ### 9.2 First Week Follow-up
 
@@ -580,6 +648,16 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 
 - [ ] Note any bugs found after release
 - [ ] Add to next version's fix list
+
+### 9.4 Rollback Procedure (If Critical Bug Found)
+
+If a critical bug is discovered post-release:
+- [ ] Immediately note the issue in GitHub release description
+- [ ] If severe: mark release as pre-release or delete it
+- [ ] Restore previous version on itch.io (upload old zip, mark as primary)
+- [ ] Post update on Reddit/Discord explaining the issue
+- [ ] Create hotfix branch: `git checkout -b hotfix/vX.Y.Z+1`
+- [ ] Fix, test, and release patched version ASAP
 
 ---
 
