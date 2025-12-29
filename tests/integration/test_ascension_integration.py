@@ -1093,6 +1093,52 @@ class TestAscensionUnlockScreen:
         console = tcod.console.Console(80, 50)
         screen.render(console)  # Should not raise
 
+    def test_unlock_screen_handles_gamepad_a_button(self):
+        """BUG FIX: Gamepad A button closes unlock screen (Steam Deck support)."""
+        from unittest.mock import Mock
+
+        import tcod.event
+
+        from game_menu_ascension import AscensionUnlockScreen
+
+        screen = AscensionUnlockScreen(unlocked_level=1)
+
+        # Create mock gamepad button event (A = 0)
+        button_event = Mock(spec=tcod.event.ControllerButton)
+        button_event.button = 0  # A button
+        button_event.pressed = True
+
+        result = screen.handle_input(button_event)
+        assert result is True, "Gamepad A button should close unlock screen"
+
+    def test_unlock_screen_handles_gamepad_b_button(self):
+        """BUG FIX: Gamepad B button closes unlock screen (Steam Deck support)."""
+        from unittest.mock import Mock
+
+        import tcod.event
+
+        from game_menu_ascension import AscensionUnlockScreen
+
+        screen = AscensionUnlockScreen(unlocked_level=1)
+
+        # Create mock gamepad button event (B = 1)
+        button_event = Mock(spec=tcod.event.ControllerButton)
+        button_event.button = 1  # B button
+        button_event.pressed = True
+
+        result = screen.handle_input(button_event)
+        assert result is True, "Gamepad B button should close unlock screen"
+
+    def test_unlock_screen_handles_wait_action(self):
+        """WAIT action (SPACE key) should close unlock screen."""
+        from game_input_actions import InputAction
+        from game_menu_ascension import AscensionUnlockScreen
+
+        screen = AscensionUnlockScreen(unlocked_level=1)
+
+        # WAIT (SPACE) should close
+        assert screen.execute_action(InputAction.WAIT) is True
+
 
 class TestAscensionMenuViewOnly:
     """Test the view-only mode of AscensionMenu."""

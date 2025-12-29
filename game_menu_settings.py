@@ -459,6 +459,10 @@ class SettingsMenu(BaseMenu):
         """Execute an InputAction and return menu command."""
         from game_input_actions import InputAction
 
+        # Handle confirmation dialog if active
+        if self.show_export_confirmation:
+            return self._execute_confirmation_action(action)
+
         # Navigation (UP/DOWN)
         if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
             self._navigate_skip_headers(-1)
@@ -498,66 +502,43 @@ class SettingsMenu(BaseMenu):
 
         return ""
 
-    # ========================================================================
-    # CONFIRMATION DIALOG INPUT (override execute_action when dialog shown)
-    # ========================================================================
+    def _execute_confirmation_action(self, action) -> str:
+        """Handle confirmation dialog actions through unified input system."""
+        from game_input_actions import InputAction
 
-    def handle_input(self, event) -> str:
-        """Override to handle confirmation dialog separately."""
-        # Priority: Handle confirmation dialogue if active
-        if self.show_export_confirmation:
-            return self._handle_confirmation_input(event)
+        # Navigation (swap between Yes/No)
+        if action in (
+            InputAction.NAVIGATE_UP,
+            InputAction.NAVIGATE_DOWN,
+            InputAction.NAVIGATE_LEFT,
+            InputAction.NAVIGATE_RIGHT,
+            InputAction.MOVE_NORTH,
+            InputAction.MOVE_SOUTH,
+            InputAction.MOVE_WEST,
+            InputAction.MOVE_EAST,
+        ):
+            self.export_confirmation_selection = 1 - self.export_confirmation_selection
+            return ""
 
-        # Otherwise use base class unified input handling
-        return super().handle_input(event)
-
-    def _handle_confirmation_input(self, event) -> str:
-        """Handle input for export confirmation dialogue (keyboard + gamepad)."""
-        from game_input_actions import InputAction, InputContext
-
-        event_type = getattr(event, "type", "KEYDOWN")
-        input_action = None
-
-        if event_type == "KEYDOWN":
-            modifier = getattr(event, "mod", 0)
-            input_action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
-        elif event_type == "CONTROLLERAXISMOTION":
-            input_action = self.gamepad_handler.handle_axis_event(event, InputContext.DIALOGUE)
-        elif event_type in ("CONTROLLERBUTTONDOWN", "CONTROLLERBUTTONUP"):
-            # Handle both DOWN and UP to properly track button_held state for auto-repeat
-            input_action = self.gamepad_handler.handle_button_event(event, InputContext.DIALOGUE)
-
-        if input_action:
-            # Navigation (swap between Yes/No)
-            if input_action in (
-                InputAction.NAVIGATE_UP,
-                InputAction.NAVIGATE_DOWN,
-                InputAction.NAVIGATE_LEFT,
-                InputAction.NAVIGATE_RIGHT,
-                InputAction.MOVE_NORTH,
-                InputAction.MOVE_SOUTH,
-                InputAction.MOVE_WEST,
-                InputAction.MOVE_EAST,
-            ):
-                self.export_confirmation_selection = 1 - self.export_confirmation_selection
-                return ""
-
-            # Confirm selection
-            elif input_action == InputAction.CONFIRM:
-                if self.export_confirmation_selection == 0:  # Yes, Export
-                    self.show_export_confirmation = False
-                    return "export_debug_confirmed"
-                else:  # No, Cancel
-                    self.show_export_confirmation = False
-                return ""
-
-            # Cancel dialogue
-            elif input_action == InputAction.CANCEL:
+        # Confirm selection
+        elif action == InputAction.CONFIRM:
+            if self.export_confirmation_selection == 0:  # Yes, Export
                 self.show_export_confirmation = False
-                return ""
+                return "export_debug_confirmed"
+            else:  # No, Cancel
+                self.show_export_confirmation = False
+            return ""
 
-        # No special unmapped keys
+        # Cancel dialogue
+        elif action == InputAction.CANCEL:
+            self.show_export_confirmation = False
+            return ""
+
         return ""
+
+    # NOTE: handle_input() inherited from BaseInputHandler handles keyboard, gamepad, and mouse.
+    # Do NOT override - the base class routes events through execute_action() correctly.
+    # Confirmation dialog is handled via get_context() returning DIALOGUE and execute_action().
 
     def _navigate_skip_headers(self, direction: int):
         """Navigate options while skipping section headers and separators."""

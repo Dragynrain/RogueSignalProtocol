@@ -143,6 +143,10 @@ def mock_game_engine():
     game.targeting_mode = False
     game.menu_mode = False
 
+    # Mock autowalk (required for GameplayInputHandler unified input)
+    game.autowalk = Mock()
+    game.autowalk.is_active = Mock(return_value=False)
+
     # Mock pending flag
     game._pending_debug_export = False
 

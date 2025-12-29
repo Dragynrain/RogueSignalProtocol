@@ -55,57 +55,9 @@ class GameplayInputHandler(BaseInputHandler):
         """Gameplay handler returns True by default (event consumed)."""
         return True
 
-    def handle_input(self, event) -> bool:
-        """
-        Handle input during gameplay with special case handling.
-
-        Overrides BaseInputHandler to handle:
-        - Shift+F12 debug export
-        - Auto-walk cancellation
-
-        Args:
-            event: Input event (keyboard, gamepad, or mouse)
-
-        Returns:
-            True if event was handled
-        """
-        # Special case: Shift+F12 - Export Debug Package (not mapped to InputAction)
-        if isinstance(event, tcod.event.KeyDown):
-            if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.Modifier.SHIFT):
-                self.trigger_debug_export()
-                return True
-
-        # Check if auto-walk is active - cancel on most actions
-        if self.game.autowalk.is_active():
-            # Get action to check if we should cancel auto-walk
-            action = None
-            if isinstance(event, tcod.event.KeyDown) and hasattr(event, "sym"):
-                modifier = getattr(event, "mod", 0)
-                action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
-
-            # Cancel auto-walk on movement or exploit actions (but not UI toggles)
-            if action and action not in (
-                InputAction.TOGGLE_HELP,
-                InputAction.TOGGLE_INVENTORY,
-                InputAction.TOGGLE_LOOK_MODE,
-                InputAction.TOGGLE_LORE_VIEWER,
-                InputAction.TOGGLE_ACHIEVEMENTS,
-                InputAction.TOGGLE_ASCENSION,
-                InputAction.CANCEL,
-            ):
-                self.game.autowalk.cancel()
-                # Fall through to process the action normally
-
-        # Clear mouse hover when using keyboard/gamepad movement
-        if isinstance(
-            event, (tcod.event.KeyDown, tcod.event.ControllerButton, tcod.event.ControllerAxis)
-        ):
-            # Let BaseInputHandler process the event, which will call execute_action
-            # execute_action will clear mouse hover for movement actions
-            pass
-
-        # Everything else goes through standard BaseInputHandler processing
-        return super().handle_input(event)
+    # NOTE: handle_input() inherited from BaseInputHandler handles keyboard, gamepad, and mouse.
+    # Do NOT override - the base class routes events through execute_action() correctly.
+    # Auto-walk cancellation and DEBUG_EXPORT are handled in execute_action().
 
     def use_exploit_slot(self, slot: int) -> bool:
         """
@@ -320,6 +272,18 @@ class GameplayInputHandler(BaseInputHandler):
             logging.debug(f"No path to {world_pos}")
             return True
 
+    # Actions that don't cancel auto-walk (UI toggles that overlay gameplay)
+    _NO_CANCEL_AUTOWALK_ACTIONS = frozenset({
+        InputAction.TOGGLE_HELP,
+        InputAction.TOGGLE_INVENTORY,
+        InputAction.TOGGLE_LOOK_MODE,
+        InputAction.TOGGLE_LORE_VIEWER,
+        InputAction.TOGGLE_ACHIEVEMENTS,
+        InputAction.TOGGLE_ASCENSION,
+        InputAction.CANCEL,
+        InputAction.DEBUG_EXPORT,
+    })
+
     def execute_action(self, action: InputAction) -> bool:
         """
         Execute an InputAction in gameplay context.
@@ -333,6 +297,16 @@ class GameplayInputHandler(BaseInputHandler):
         Returns:
             True if action was handled
         """
+        # Cancel auto-walk on most actions (except UI toggles)
+        if self.game.autowalk.is_active():
+            if action not in self._NO_CANCEL_AUTOWALK_ACTIONS:
+                self.game.autowalk.cancel()
+
+        # Debug export (Shift+F12)
+        if action == InputAction.DEBUG_EXPORT:
+            self.trigger_debug_export()
+            return True
+
         # Clear mouse hover when using keyboard/gamepad movement
         if action in (
             InputAction.MOVE_NORTH,

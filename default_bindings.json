@@ -55,7 +55,9 @@
 
         "RETURN": "CONFIRM",
         "KP_ENTER": "CONFIRM",
-        "ESCAPE": "CANCEL"
+        "ESCAPE": "CANCEL",
+
+        "Shift+F12": "DEBUG_EXPORT"
     },
 
     "gamepad": {
