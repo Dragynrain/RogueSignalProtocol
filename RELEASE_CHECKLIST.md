@@ -43,8 +43,6 @@ Reusable checklist for alpha, beta, and stable releases.
 
 ---
 
----
-
 ## Phase 1: Pre-Build Preparation
 
 ### 1.1 Version String Updates
@@ -72,10 +70,13 @@ Update version in ALL these locations (search for old version string):
 
 **Linux packaging files:**
 - [ ] `packaging/linux/README.md` - Line ~5
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml` - Line ~83 (release version)
+- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml`:
+  - Line ~88: version number in `<release>` tag
+  - Line ~88: `type="development"` → `type="stable"` (for stable releases only)
+  - Update `<description>` text for new release
 - [ ] `packaging/linux/PKGBUILD` - Line ~3 (pkgver)
 - [ ] `packaging/linux/AppImageBuilder.yml` - version field
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL
+- [ ] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL (SHA256 updated in Phase 3.3)
 
 **Quick command to find all version strings:**
 ```bash
@@ -104,6 +105,18 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 - [ ] Verify all URLs are correct: `grep -rn "discord.gg\|itch.io\|forms.gle" --include="*.py" --include="*.md" --include="*.txt" --include="*.html"`
 - [ ] Test feedback form URL is accessible
 - [ ] Test itch.io page URL is correct
+
+### 1.5 About/Credits Verification
+
+- [ ] Check About screen (`game_menu_about.py`) credits are current
+- [ ] Verify copyright year is current
+- [ ] Check any third-party attribution is up to date
+
+### 1.6 Clean Build Preparation
+
+- [ ] Delete `dist/` folder to ensure no stale files
+- [ ] Delete `build/` folder (PyInstaller build artifacts)
+- [ ] Verify `releases/` folder exists for output
 
 ---
 
@@ -151,6 +164,10 @@ Check the `dist/` folder contains:
 ---
 
 ## Phase 3: Linux Build
+
+> **CRITICAL:** AppImage mounts as read-only. Any code using relative paths for saves/logs/metrics will FAIL.
+> All file operations MUST use `get_data_directory()` from `game_file_paths.py`.
+> The test `test_build_verification.py::TestNoRelativeDataPaths` catches this - run it before release.
 
 ### 3.1 Build Linux Binary
 
@@ -284,7 +301,22 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Check help menu (?) is comprehensive - verify all pages including gamepad
 - [ ] Ensure first death shows feedback link clearly
 
-### 4.9 UI/UX Testing (Both Platforms)
+### 4.9 Mouse Testing
+
+- [ ] Click to move works correctly
+- [ ] Click on enemies shows look info
+- [ ] Menu buttons respond to mouse clicks
+- [ ] Mouse wheel scrolls where applicable (help, achievements)
+- [ ] Tooltips appear on hover (if implemented)
+
+### 4.10 Window/Display Testing
+
+- [ ] Fullscreen toggle (Alt+Enter or F11) works
+- [ ] Window resize maintains aspect ratio
+- [ ] Game recovers from minimize/restore
+- [ ] Multi-monitor: game opens on correct display
+
+### 4.11 UI/UX Testing (Both Platforms)
 
 - [ ] Help menu (`?`) displays correctly
 - [ ] Inventory (`I`) works
@@ -294,7 +326,7 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Look mode (`L`) works with mouse and keyboard
 - [ ] Keybindings match help text exactly
 
-### 4.10 Linux Testing
+### 4.12 Linux Testing
 
 > **Detailed checklist:** See `packaging/linux/TEST_CHECKLIST.md` for comprehensive Linux testing procedures.
 
@@ -320,33 +352,31 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 ## Phase 5: Git & Version Control
 
-### 5.1 Commit and Tag
+### 5.1 Backup Previous Release
 
-```bash
-# Stage all changes
-git add -A
+- [ ] Note current version tag for rollback if needed: `git describe --tags --abbrev=0`
+- [ ] Ensure previous release is still available on GitHub/itch.io
 
-# Commit with version message (replace X.Y.Z with actual version)
-git commit -m "Release vX.Y.Z-beta"
+### 5.2 Commit and Tag
 
-# Create annotated tag
-git tag -a vX.Y.Z-beta -m "Beta release X.Y.Z"
-
-# Push to remote
-git push origin main
-git push origin vX.Y.Z-beta
-```
+- [ ] Stage all changes: `git add -A`
+- [ ] Commit with version message: `git commit -m "Release vX.Y.Z-beta"`
+- [ ] Create annotated tag: `git tag -a vX.Y.Z-beta -m "Beta release X.Y.Z"`
+- [ ] Push commits: `git push origin main`
+- [ ] Push tag: `git push origin vX.Y.Z-beta`
 
 **Note:** Replace `X.Y.Z` with actual version and `-beta` with release type (`-alpha`, `-beta`, or nothing for stable).
 
-### 5.2 Create GitHub Release
+### 5.3 Create GitHub Release
 
 - [ ] Go to GitHub > Releases > Draft new release
 - [ ] Select the tag
+- [ ] Title format: `v1.0.0` or `v1.0.0-beta` (match tag)
 - [ ] Upload Windows .zip from `releases/`
 - [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
 - [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
 - [ ] Write release notes from CHANGELOG.md
+- [ ] For pre-releases: check "Set as a pre-release" checkbox
 
 ---
 
@@ -409,6 +439,10 @@ git push origin vX.Y.Z-beta
 > **WARNING 2:** Flathub explicitly BANS AI-generated submissions. YOU must submit manually.
 > Claude can prepare files but CANNOT submit the PR.
 
+Domain verification (do BEFORE submitting):
+- [ ] Verify `https://aforster.info` loads over HTTPS
+- [ ] Verify page mentions Rogue Signal Protocol (visible proof of ownership)
+
 Prerequisites (do these FIRST):
 - [ ] Update `packaging/linux/info.aforster.roguesignalprotocol.yml` with new SHA256
 - [ ] Test Flatpak locally on Linux: `flatpak-builder --user --install --force-clean build-dir packaging/linux/info.aforster.roguesignalprotocol.yml`
@@ -444,14 +478,21 @@ Post-acceptance (for Verified badge):
 - [ ] Push to AUR: `git clone ssh://aur@aur.archlinux.org/rogue-signal-protocol-bin.git`
 - [ ] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
 
-### 7.3 Verify Feedback Collection
+### 7.3 Download Verification (Smoke Test)
+
+After uploading, download and verify the builds work:
+- [ ] Download Windows .zip from itch.io, extract and run
+- [ ] Download Linux tarball from GitHub, extract and run
+- [ ] Download AppImage from GitHub, make executable and run
+
+### 7.4 Verify Feedback Collection
 
 - [ ] Feedback form URL works in README.txt
 - [ ] Feedback form URL works in README.md
 - [ ] Feedback form URL visible on itch.io page
 - [ ] Feedback form URL in Reddit post draft
 
-### 7.4 Update Wiki
+### 7.5 Update Wiki
 
 **Auto-generated pages (if game_content.json changed):**
 ```bash
@@ -559,7 +600,7 @@ git add . && git commit -m "Update wiki for vX.Y.Z" && git push
 | `bug_report.md` | 1 |
 | `docs/wiki/Home.md` | 1 |
 | `packaging/linux/README.md` | 1 |
-| `packaging/linux/*.xml` | 1 |
+| `packaging/linux/*.xml` | 3 (version, type, description) |
 | `packaging/linux/PKGBUILD` | 1 |
 | `CHANGELOG.md` | 1 |
 

@@ -1,3 +1,10 @@
+# Rogue Signal Protocol - Coffee break cyberspace stealth roguelike
+# https://github.com/Dragynrain/RogueSignalProtocol
+#
+# This is a PyInstaller-bundled Python game (not buildable from source in Flatpak).
+# The binary bundles Python runtime + native libraries (SDL2, libtcod, numpy).
+# See flathub.json for architecture limitation explanation.
+
 app-id: info.aforster.roguesignalprotocol
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
@@ -13,6 +20,8 @@ finish-args:
 
 modules:
   - name: RogueSignalProtocol
+    # Using 'simple' buildsystem: this is a pre-built PyInstaller binary.
+    # No source compilation possible - Python and all dependencies are bundled.
     buildsystem: simple
     build-commands:
       # Install game binary and assets
@@ -24,7 +33,8 @@ modules:
       - test -f README.txt && install -Dm644 README.txt /app/lib/rogue-signal-protocol/ || true
       - test -f debug_mode.flag && install -Dm644 debug_mode.flag /app/lib/rogue-signal-protocol/ || true
 
-      # Install wrapper script
+      # Wrapper script (cd's to game dir before exec - required for asset loading)
+      # Source: https://github.com/Dragynrain/RogueSignalProtocol/blob/main/packaging/linux/rogue-signal-protocol
       - install -Dm755 rogue-signal-protocol /app/bin/
 
       # Install desktop integration

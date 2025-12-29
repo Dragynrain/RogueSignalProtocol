@@ -253,7 +253,7 @@ DISABLE DEBUG LOGGING:
 
 COMMUNITY & FEEDBACK
 --------------------
-This is an ALPHA release. Your feedback helps improve the game!
+This is a BETA release. Your feedback helps improve the game!
 
 ** SHARE YOUR FEEDBACK (2 minute survey): **
 https://forms.gle/jbwGdn8VGPa6NG9p9

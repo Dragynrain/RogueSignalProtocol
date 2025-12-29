@@ -27,28 +27,28 @@ cd /path/to/RogueSignalProtocol
 
 ### 2. Flatpak (Flathub)
 
-**Files**: `com.dragynrain.roguesignalprotocol.yml`, `rogue-signal-protocol.desktop`, `com.dragynrain.roguesignalprotocol.metainfo.xml`
+**Files**: `info.aforster.roguesignalprotocol.yml`, `info.aforster.roguesignalprotocol.desktop`, `info.aforster.roguesignalprotocol.metainfo.xml`
 
 Flatpaks are sandboxed applications distributed via Flathub.
 
 **Local testing**:
 ```bash
 # Install flatpak-builder first
-flatpak-builder --user --install --force-clean build-dir com.dragynrain.roguesignalprotocol.yml
-flatpak run com.dragynrain.roguesignalprotocol
+flatpak-builder --user --install --force-clean build-dir info.aforster.roguesignalprotocol.yml
+flatpak run info.aforster.roguesignalprotocol
 ```
 
 **Flathub BETA submission** (for 0.9.0-beta):
 1. Fork https://github.com/flathub/flathub
-2. Create branch: `com.dragynrain.roguesignalprotocol`
-3. Add `com.dragynrain.roguesignalprotocol.yml`
+2. Create branch: `info.aforster.roguesignalprotocol`
+3. Add `info.aforster.roguesignalprotocol.yml`
 4. Submit PR targeting the **beta branch**
 5. Wait for review (1-7 days)
 
 **User installation from beta channel**:
 ```bash
 flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
-flatpak install flathub-beta com.dragynrain.roguesignalprotocol
+flatpak install flathub-beta info.aforster.roguesignalprotocol
 ```
 
 **Note**: Beta apps don't appear in main Flathub listings. When ready for 1.0 stable, submit new PR to stable branch (users must reinstall).
@@ -79,9 +79,9 @@ makepkg -si
 |------|---------|
 | `AppImageBuilder.yml` | AppImage recipe (alternative builder) |
 | `build-appimage.sh` | Shell script for AppImage creation |
-| `com.dragynrain.roguesignalprotocol.yml` | Flatpak manifest |
-| `rogue-signal-protocol.desktop` | Desktop entry for app menus |
-| `com.dragynrain.roguesignalprotocol.metainfo.xml` | AppStream metadata |
+| `info.aforster.roguesignalprotocol.yml` | Flatpak manifest |
+| `info.aforster.roguesignalprotocol.desktop` | Desktop entry for app menus |
+| `info.aforster.roguesignalprotocol.metainfo.xml` | AppStream metadata |
 | `PKGBUILD` | AUR package build script |
 
 ## Updating for New Releases
