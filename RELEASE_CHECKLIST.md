@@ -125,6 +125,11 @@ git add -A && git commit -m "Update to NEW-beta" && git push origin master
 
 **STOP at any step if verification fails. Investigate before proceeding.**
 
+**Known gotchas from past releases:**
+1. **Workflow uses tag's code, not latest main** - If the workflow fails and you push a fix to main, you must delete and recreate the tag at the new commit. The workflow clones from the tag, not HEAD.
+2. **push-all.bat expects simple version** - Script looks for `v0.9.2` but beta tags are `v0.9.2-beta`. Download Linux builds manually with `gh release download vX.Y.Z-beta --pattern "*Linux*" --dir releases/` then push each with butler directly.
+3. **AUR API cache delay** - After pushing to AUR, the version in the API may take a few minutes to update. The git push succeeding is what matters.
+
 **Rollback procedures (if something fails mid-release):**
 ```bash
 # If commit/tag pushed but release creation failed:
@@ -626,6 +631,8 @@ gh run list --workflow=release.yml -L 1
 ### 5.5 Wait for GitHub Actions Workflow
 
 The release workflow builds Linux packages automatically. This takes ~5-10 minutes.
+
+> **Note:** The workflow runs smoke tests with `--cov-fail-under=0` because smoke tests are a limited subset (~32% coverage) and shouldn't fail on the full test suite's 70% threshold from pytest.ini.
 
 **Monitor workflow:**
 ```bash
