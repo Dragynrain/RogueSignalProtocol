@@ -63,7 +63,7 @@ class GameTurnManager:
         2. Process player turn effects (virus damage, status effects)
         3. Process special tiles (nodes, items, upgrades, fragments)
         4. Update memory system (FOV, explored tiles, ghost positions)
-        5. Update enemies (three-phase: awareness -> movement -> attacks)
+        5. Update enemies (two-pass: awareness -> action)
         6. Check admin spawn (if trace >= 100%)
         7. Apply passive trace increase (based on level config)
 
@@ -121,7 +121,7 @@ class GameTurnManager:
         # NOTE: Passive trace level increase is handled in TurnProcessor._process_trace_increase()
         # which applies ascension modifiers (A3 trace gain multiplier)
 
-        # Occasional atmospheric flavor text (10% chance, reduced from 15% to avoid spam)
+        # Occasional atmospheric flavor text (10% chance per turn)
         atmo_msg = self.game_engine.narrative_manager.trigger_random_atmospheric(chance=0.10)
         if atmo_msg:
             self.game_engine.message_log.add_message(atmo_msg)
@@ -263,16 +263,11 @@ class GameTurnManager:
                 actual_benefit = min(wanted_reduction, self.game_engine.player.trace_level)
                 if actual_benefit > 0:
                     restored = node.use(int(actual_benefit))
-                    old_trace = self.game_engine.player.trace_level
                     self.game_engine.player.trace_level = max(
                         0, self.game_engine.player.trace_level - restored
                     )
-                    actual_reduction = old_trace - self.game_engine.player.trace_level
-
-                    # Only play sound when first stepping on the node or when there's actual reduction
-                    if should_play_sound or actual_reduction > 0:
-                        if should_play_sound:
-                            self.game_engine.sound_manager.play_sound("node_activate")
+                    if restored > 0 and should_play_sound:
+                        self.game_engine.sound_manager.play_sound("node_activate")
                     # Track restoration node usage for floor_is_lava achievement
                     if restored > 0:
                         from game_metrics import track
@@ -415,15 +410,14 @@ class GameTurnManager:
 
     def _update_enemies(self):
         """
-        Update all enemy states and actions in single-pass system.
+        Update all enemy states and actions in two-pass system.
 
-        For each enemy:
-        1. Update awareness state and communicate alerts
-        2. Decide action: if adjacent to player, attack; otherwise move
-        3. Execute action (ensuring move OR attack, not both)
+        Pass 1 - Awareness (all enemies):
+            Update awareness state and propagate alerts before any movement.
 
-        This simplification removes the three-phase approach while preserving
-        the "move OR attack" constraint essential for game balance.
+        Pass 2 - Actions (per enemy):
+            If adjacent to player, attack; otherwise move.
+            Ensures move OR attack per enemy, not both.
         """
         # First pass: Update awareness for all enemies
         # This must be separate to ensure alert propagation before movement
@@ -472,6 +466,8 @@ class GameTurnManager:
                         f"{enemy.type_data.name} attacked for {damage} CPU damage! ({cpu_remaining} remaining)",
                         Colors.RED,
                     )
+                    # Check for death from combat damage at source
+                    self.game_engine.death_handler.check_death("combat", enemy.type_data.name)
                 elif enemy.type == "virus":
                     virus_turns = self.game_engine.player.temporary_effects.get("virus_turns", 0)
                     self.game_engine.message_log.add_message(
@@ -488,32 +484,27 @@ class GameTurnManager:
                     )
 
                 # Track attacks for inventory warning
-                if damage >= 0 or (
-                    hasattr(enemy.type_data, "effects")
-                    and (
-                        "virus" in enemy.type_data.effects or "inhibitor" in enemy.type_data.effects
-                    )
-                ):
-                    attacking_enemy_count += 1
-                    if damage > 0:
-                        total_damage_taken += damage
+                # (We're inside can_attack block, so an attack occurred)
+                attacking_enemy_count += 1
+                if damage > 0:
+                    total_damage_taken += damage
 
-                    if self.game_engine.show_inventory:
-                        player_attacked_in_inventory = True
+                if self.game_engine.show_inventory:
+                    player_attacked_in_inventory = True
 
-                        if total_damage_taken > 0:
-                            if attacking_enemy_count > 1:
-                                warning_msg = f"{attacking_enemy_count} enemies attacked for {total_damage_taken} damage! Close inventory to defend."
-                            else:
-                                warning_msg = (
-                                    f"Attacked for {damage} damage! Close inventory to defend."
-                                )
-                            self.game_engine.message_log.add_message(warning_msg, Colors.RED)
+                    if total_damage_taken > 0:
+                        if attacking_enemy_count > 1:
+                            warning_msg = f"{attacking_enemy_count} enemies attacked for {total_damage_taken} damage! Close inventory to defend."
                         else:
-                            self.game_engine.message_log.add_message(
-                                "Enemy attacked with status effect! Close inventory to defend.",
-                                Colors.YELLOW,
+                            warning_msg = (
+                                f"Attacked for {damage} damage! Close inventory to defend."
                             )
+                        self.game_engine.message_log.add_message(warning_msg, Colors.RED)
+                    else:
+                        self.game_engine.message_log.add_message(
+                            "Enemy attacked with status effect! Close inventory to defend.",
+                            Colors.YELLOW,
+                        )
 
             else:
                 # Enemy is not adjacent - move toward player
@@ -828,13 +819,12 @@ class GameTurnManager:
             spawn_x = int(self.game_engine.player.x + distance * math.cos(angle))
             spawn_y = int(self.game_engine.player.y + distance * math.sin(angle))
             position = Position(spawn_x, spawn_y)
+            dist_to_player = position.distance_to(self.game_engine.player.position)
 
             if (
                 self.game_engine.game_map.is_valid_position(position)
-                and position.distance_to(self.game_engine.player.position)
-                >= 5  # Not too close to player
-                and position.distance_to(self.game_engine.player.position)
-                <= player_vision  # Within sight
+                and dist_to_player >= 5  # Not too close to player
+                and dist_to_player <= player_vision  # Within sight
                 and self.game_engine.game_map.has_line_of_sight(
                     self.game_engine.player.position, position
                 )  # Actually visible
