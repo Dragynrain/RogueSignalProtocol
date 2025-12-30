@@ -73,7 +73,8 @@ jobs:
       run: |
         # Run critical smoke tests before building
         # This catches import errors, config issues, and basic game logic bugs
-        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x
+        # Override cov-fail-under since smoke tests are a limited subset
+        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x --cov-fail-under=0
       shell: powershell
 
     - name: Build executable with PyInstaller
@@ -281,7 +282,8 @@ jobs:
       run: |
         # Run critical smoke tests before building
         # This catches import errors, config issues, and basic game logic bugs
-        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x
+        # Override cov-fail-under since smoke tests are a limited subset
+        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x --cov-fail-under=0
 
     - name: Build executable with PyInstaller
       run: |
