@@ -327,9 +327,7 @@
     "nightmare": 1.6
   },
   "metadata": {
-    "version": "0.9.1 Beta",
     "description": "Game data definitions for Rogue Signal Protocol",
-    "last_updated": "2025-12-29",
-    "balance_version": "0.9.1 Beta"
+    "last_updated": "2025-12-29"
   }
 }

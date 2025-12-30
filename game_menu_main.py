@@ -22,6 +22,7 @@ from game_menu_base import BaseMenu
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
 from game_ui import render_char_safe
+from game_version import VERSION_DISPLAY
 
 
 class MainMenu(BaseMenu):
@@ -237,7 +238,7 @@ class MainMenu(BaseMenu):
 
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
-        version = "Version 0.9.1 Beta"
+        version = VERSION_DISPLAY
         subtitle = "Cyberspace Stealth Exfiltration"
 
         # Get UI color from settings
