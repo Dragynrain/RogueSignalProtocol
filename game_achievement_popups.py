@@ -173,9 +173,10 @@ class AchievementPopupManager:
             popup_width, popup_height, console.width, console.height
         )
 
-        # Set popup area to opaque (critical for graphics mode)
+        # Set popup area transparency with fade effect
+        alpha = self.active_popup.get_alpha()
         CoordinateHelpers.set_alpha_region(
-            console, x=box_x, y=box_y, width=popup_width, height=popup_height, alpha=255
+            console, x=box_x, y=box_y, width=popup_width, height=popup_height, alpha=alpha
         )
 
         # Color scheme using consolidated colors

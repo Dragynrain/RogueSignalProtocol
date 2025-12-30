@@ -10,6 +10,8 @@ with intelligent stop conditions for safety.
 import logging
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from game_entities import Position
 from game_pathfinding import PathfindingHelper
 
@@ -66,8 +68,6 @@ class AutoWalk:
         game_map = game_engine.game_map
 
         # Create cost map for pathfinding (no enemy collision for player autowalk)
-        import numpy as np
-
         walkability = game_map.get_walkability_map()
         cost_map = np.where(walkability, 10, 0).astype(np.int32)
 
@@ -123,7 +123,12 @@ class AutoWalk:
 
         # Sanity check: move should be adjacent (1 tile in any direction)
         if abs(dx) > 1 or abs(dy) > 1:
-            logging.warning(f"AutoWalk: Non-adjacent move ({dx},{dy}), stopping")
+            player_pos = (game_engine.player.x, game_engine.player.y)
+            logging.warning(
+                f"AutoWalk: Non-adjacent move detected - "
+                f"player={player_pos}, next={next_pos}, delta=({dx},{dy}), "
+                f"step={self.current_step}/{len(self.path)}, dest={self.destination}"
+            )
             self.stop("Path error - non-adjacent move")
             return None
 

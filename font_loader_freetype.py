@@ -138,7 +138,7 @@ def load_truetype_font_custom(
             tileset.set_tile(codepoint, output)
 
         except Exception as e:
-            # Skip characters that can't be rendered (suppress warnings to avoid Unicode errors)
+            # Skip characters that can't be rendered, log error for debugging
             GameErrorHandler.handle_error(e, "font_render", "Font rendering failed")
 
     return tileset

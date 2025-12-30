@@ -36,7 +36,7 @@ class EnemyMovement(Enum):
     RANDOM: Wanders randomly
     SEEK: Actively seeks player (used for hostile behavior)
     ADMIN: Perfect vision and constant seeking (boss-type enemy)
-    TRACK: Legacy tracking behavior
+    TRACK: RESERVED - Legacy tracking behavior (not currently assigned to any enemy)
     VIRUS: Randomly selects STATIC, PATROL, or RANDOM on spawn (unpredictable)
     """
 
@@ -56,7 +56,7 @@ class TargetingMode(Enum):
     NONE: No targeting required (instant self-buff/debuff)
     SINGLE: Single target selection
     AREA: Area of effect around target point
-    DIRECTION: Directional targeting (not currently used)
+    DIRECTION: RESERVED - Directional targeting (planned for future exploits)
     """
 
     NONE = "none"

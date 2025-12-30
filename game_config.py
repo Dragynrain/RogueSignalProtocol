@@ -12,6 +12,7 @@ GameSettings persists to user_settings.json (can use defaults if missing).
 GameConfig and GameBalance load from game_rules.json (fail-fast if missing).
 """
 
+import copy
 import json
 import logging
 import os
@@ -106,8 +107,8 @@ class GameSettings:
             value = settings_dict.get(key, default_value)
 
             # Deep copy mutable types to avoid shared references
-            if isinstance(value, dict):
-                setattr(self, key, value.copy())
+            if isinstance(value, (dict, list)):
+                setattr(self, key, copy.deepcopy(value))
             else:
                 setattr(self, key, value)
 

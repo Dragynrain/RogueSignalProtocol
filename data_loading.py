@@ -36,6 +36,18 @@ class DataLoader:
     _config = None
 
     @classmethod
+    def clear_cache(cls) -> None:
+        """
+        Clear all cached data for testing isolation or runtime reloading.
+
+        Resets all class-level cache variables to None, forcing fresh loads
+        on next access.
+        """
+        cls._story_fragments = None
+        cls._game_data = None
+        cls._config = None
+
+    @classmethod
     def _load_json_file(cls, filename: str, key: str = None) -> Any:
         """
         Load JSON file with standardized error handling.
@@ -162,8 +174,6 @@ class PersistentStorage:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            from game_errors import GameErrorHandler
-
             GameErrorHandler.handle_error(
                 e, f"PersistentStorage.save_data({filename})", "Failed to save game data"
             )

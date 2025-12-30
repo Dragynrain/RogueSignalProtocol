@@ -138,7 +138,7 @@ class InventoryInputHandler(BaseInputHandler):
 
         # Ask the UI renderer which inventory item (if any) is being hovered
         # This is the single source of truth - no duplicated calculations!
-        item_index = UIRenderer.get_inventory_item_at_coords(self.game, tile_x, tile_y)
+        item_index = UIRenderer.get_inventory_item_at_click(tile_y)
 
         if item_index is not None:
             # Update selection to hovered item
@@ -160,7 +160,7 @@ class InventoryInputHandler(BaseInputHandler):
         )
 
         # Check if clicking on an item
-        item_index = UIRenderer.get_inventory_item_at_coords(self.game, tile_x, tile_y)
+        item_index = UIRenderer.get_inventory_item_at_click(tile_y)
 
         if item_index is not None:
             # Set selection and use item

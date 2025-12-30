@@ -104,20 +104,11 @@ class InputCoordinateConverter:
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
         status_bar_height = GameConfig.STATUS_BAR_HEIGHT()
 
-        # In GRAPHICS mode, grid coords from pixel_to_sprite_grid are RENDERING positions
-        # Sprites render at: pixel = (viewport_x, viewport_y + status_bar) * tile_dimensions
-        # So grid coords INCLUDE status bar offset - we need to subtract it
-        # In GLYPH mode, tile coords from pixel_to_char_coords are CONSOLE positions
-        # Console tiles map directly: viewport = console_tile - status_bar
-
-        if graphics_mode == "graphics":
-            # Grid coordinates include status bar offset, subtract to get viewport
-            viewport_x = tile_x
-            viewport_y = tile_y - status_bar_height
-        else:
-            # Console coordinates, subtract status bar to get viewport
-            viewport_x = tile_x
-            viewport_y = tile_y - status_bar_height
+        # Both graphics and glyph modes: subtract status bar height to get viewport position
+        # In GRAPHICS mode, grid coords from pixel_to_sprite_grid include status bar offset
+        # In GLYPH mode, console tile coords also need status bar subtracted
+        viewport_x = tile_x
+        viewport_y = tile_y - status_bar_height
 
         # Validate viewport coordinates
         if viewport_y < 0 or viewport_y >= viewport_height:

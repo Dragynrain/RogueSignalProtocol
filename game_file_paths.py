@@ -56,7 +56,8 @@ def _test_write_permission(directory: Path) -> bool:
         test_file.write_text("test")
         test_file.unlink()
         return True
-    except (OSError, PermissionError):
+    except OSError:
+        # Catches OSError and its subclasses (including PermissionError)
         return False
 
 

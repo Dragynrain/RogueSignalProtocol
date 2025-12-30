@@ -96,4 +96,6 @@ class GameErrorHandler:
         elif isinstance(exception, KeyError):
             raise KeyError(f"{operation} - required key missing") from exception
         else:
-            raise type(exception)(f"{operation}: {str(exception)}") from exception
+            # Re-raise original - avoid type(exception)() which fails for
+            # exceptions with non-standard constructors (e.g. UnicodeDecodeError)
+            raise

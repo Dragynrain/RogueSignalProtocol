@@ -322,14 +322,15 @@ class UnifiedRenderer:
         # Determine which option is being hovered (if any)
         hovered_option = None
         if mouse_tile_x is not None and mouse_tile_y is not None and mouse_tile_y == options_y:
-            # Use same logic as get_option_at_click to determine hovered option
-            if len(dialogue.options) == 1:
-                if options_x <= mouse_tile_x < options_x + len(options_text):
-                    hovered_option = 0
-            elif len(dialogue.options) >= 2:
-                mid_x = options_x + len(options_text) // 2
-                if options_x <= mouse_tile_x < options_x + len(options_text):
-                    hovered_option = 0 if mouse_tile_x < mid_x else 1
+            # Calculate actual rendered position for each option
+            # Options are rendered with 2-char separator between them
+            option_x = options_x
+            for i, option in enumerate(dialogue.options):
+                option_end_x = option_x + len(option)
+                if option_x <= mouse_tile_x < option_end_x:
+                    hovered_option = i
+                    break
+                option_x = option_end_x + 2  # +2 for "  " separator
 
         # Render each option individually with hover highlighting
         current_x = options_x
