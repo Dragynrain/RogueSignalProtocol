@@ -2,8 +2,8 @@
 setlocal enabledelayedexpansion
 
 REM Push all builds to itch.io using butler
-REM Usage: push-all.bat [version]
-REM Example: push-all.bat 0.9.1
+REM Usage: push-all.bat [version] [type]
+REM Example: push-all.bat 0.9.2 beta
 REM
 REM Downloads Linux builds from GitHub release if not present locally,
 REM then pushes Windows, Linux tarball, and AppImage to itch.io channels.
@@ -11,11 +11,25 @@ REM then pushes Windows, Linux tarball, and AppImage to itch.io channels.
 cd /d "%~dp0.."
 
 set VERSION=%1
+set TYPE=%2
 
 if "%VERSION%"=="" (
-    echo Usage: push-all.bat [version]
-    echo Example: push-all.bat 0.9.1
+    echo Usage: push-all.bat [version] [type]
+    echo Example: push-all.bat 0.9.2 beta
     exit /b 1
+)
+
+if "%TYPE%"=="" (
+    set TYPE=beta
+)
+
+REM Construct tag and filename suffix based on type
+if "%TYPE%"=="release" (
+    set TAG=v%VERSION%
+    set SUFFIX=%VERSION%
+) else (
+    set TAG=v%VERSION%-%TYPE%
+    set SUFFIX=%VERSION%-%TYPE%
 )
 
 REM Find butler (check build\butler first, then PATH)
@@ -48,18 +62,20 @@ if %ERRORLEVEL% EQU 0 (
 
 set PROJECT=dragynrain/rogue-signal-protocol
 
-REM Expected filenames
+REM Expected filenames (match what GitHub workflow creates)
 set WIN_ZIP=
 for %%f in (releases\*%VERSION%*.zip) do (
-    set WIN_ZIP=%%f
+    if not "%%f"=="releases\*.zip" set WIN_ZIP=%%f
 )
-set TARBALL=releases\RogueSignalProtocol-%VERSION%-Linux.tar.gz
-set APPIMAGE=releases\RogueSignalProtocol-%VERSION%-x86_64.AppImage
+set TARBALL=releases\RogueSignalProtocol-%SUFFIX%-Linux.tar.gz
+set APPIMAGE=releases\RogueSignalProtocol-%SUFFIX%-x86_64.AppImage
 
 echo.
 echo ======================================
 echo Pushing all builds to itch.io
 echo Version: %VERSION%
+echo Type: %TYPE%
+echo Tag: %TAG%
 echo ======================================
 echo.
 
@@ -67,7 +83,7 @@ REM Check Windows build
 if "%WIN_ZIP%"=="" (
     echo ERROR: No Windows zip found for version %VERSION%
     echo Expected in releases\ folder
-    echo Run build.bat first: build\build.bat beta %VERSION%
+    echo Run build.bat first: build\build.bat %TYPE% %VERSION%
     exit /b 1
 )
 echo Windows build: %WIN_ZIP%
@@ -80,9 +96,9 @@ if not exist "%TARBALL%" (
         echo Either install gh or manually download from GitHub release
         exit /b 1
     )
-    %GH% release download v%VERSION% --pattern "RogueSignalProtocol-*-Linux.tar.gz" --dir releases/
+    %GH% release download %TAG% --pattern "RogueSignalProtocol-*-Linux.tar.gz" --dir releases/
     if !ERRORLEVEL! NEQ 0 (
-        echo ERROR: Failed to download tarball from GitHub
+        echo ERROR: Failed to download tarball from GitHub release %TAG%
         exit /b 1
     )
 )
@@ -95,9 +111,9 @@ if not exist "%APPIMAGE%" (
         echo Either install gh or manually download from GitHub release
         exit /b 1
     )
-    %GH% release download v%VERSION% --pattern "RogueSignalProtocol-*-x86_64.AppImage" --dir releases/
+    %GH% release download %TAG% --pattern "RogueSignalProtocol-*-x86_64.AppImage" --dir releases/
     if !ERRORLEVEL! NEQ 0 (
-        echo ERROR: Failed to download AppImage from GitHub
+        echo ERROR: Failed to download AppImage from GitHub release %TAG%
         exit /b 1
     )
 )

@@ -114,7 +114,7 @@ gh run list --workflow=release.yml -L 1  # Poll until "completed"
 gh release view vNEW-beta --json assets -q '.assets[].name'  # VERIFY: tarball + AppImage
 
 # 7. Push to itch.io (skip if ENABLE_ITCH_PUSH=true in GitHub repo vars - workflow does it)
-build\push-all.bat NEW
+build\push-all.bat NEW beta
 build\butler\butler.exe status dragynrain/rogue-signal-protocol  # VERIFY: all channels show NEW
 
 # 8. Update AUR (optional)
@@ -127,8 +127,7 @@ git add -A && git commit -m "Update to NEW-beta" && git push origin master
 
 **Known gotchas from past releases:**
 1. **Workflow uses tag's code, not latest main** - If the workflow fails and you push a fix to main, you must delete and recreate the tag at the new commit. The workflow clones from the tag, not HEAD.
-2. **push-all.bat expects simple version** - Script looks for `v0.9.2` but beta tags are `v0.9.2-beta`. Download Linux builds manually with `gh release download vX.Y.Z-beta --pattern "*Linux*" --dir releases/` then push each with butler directly.
-3. **AUR API cache delay** - After pushing to AUR, the version in the API may take a few minutes to update. The git push succeeding is what matters.
+2. **AUR API cache delay** - After pushing to AUR, the version in the API may take a few minutes to update. The git push succeeding is what matters.
 
 **Rollback procedures (if something fails mid-release):**
 ```bash
