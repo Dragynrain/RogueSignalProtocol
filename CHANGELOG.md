@@ -2,6 +2,36 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
+## [0.9.2 Beta] - 2025-12-30 - Bug Fixes & Code Quality
+
+### Fixed
+
+#### Gameplay
+- **Combat death check now triggers immediately** - explicit check_death after damage ensures enemies die correctly
+- **Dialogue hover logic fixed for 3+ options** - hover states now work correctly in dialogues with many choices
+
+#### Audio
+- **Audio cooldown now recorded after validation** - fixes timing issue where cooldown was set before confirming sound played
+
+#### Configuration
+- **Deep copy for nested config dicts** - prevents mutations from affecting shared config state
+- **Max CPU attribute error resolved** - fixed AttributeError in character initialization
+
+#### Input
+- **Modal input signature mismatch fixed** - corrected method parameters in game_input_modals.py
+
+#### UI
+- **Achievement popup alpha fade now applied** - visual fade effect works correctly
+
+### Technical
+- Centralized version management via bump-version.py
+- Improved build automation and release process
+- Removed dead code branches and unused variables
+- Fixed misleading docstrings (single-pass/two-pass terminology)
+- Enhanced release checklist with fast path and verification steps
+
+---
+
 ## [0.9.1 Beta] - 2025-12-29 - Steam Deck Controller Fixes
 
 ### Fixed
