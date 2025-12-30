@@ -36,7 +36,7 @@ source=("${pkgname}-${pkgver}.tar.gz::https://github.com/Dragynrain/RogueSignalP
 
 # Update this checksum for each release
 # Generate with: sha256sum RogueSignalProtocol-X.Y.Z-beta-Linux.tar.gz
-sha256sums=('c165fd72c526573c238c32d27221cad73b3e87fc880417e27e2a8576657f5c90')
+sha256sums=('90ceae8bb18d137a17ffd86bfc81d168d8ca2e84de311672036cce79d30e6ef5')
 
 # Don't strip the binary - PyInstaller binaries don't like being stripped
 options=('!strip')
