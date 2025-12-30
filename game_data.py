@@ -50,8 +50,8 @@ class GameData:
 
         return enemy_types
 
-    # Load enemy types on module initialization
-    ENEMY_TYPES = _load_enemy_types.__func__()
+    # Will be populated at module level after class definition
+    ENEMY_TYPES = None
 
     EXPLOITS = {
         # Rebalanced for strategic resource management with damage values
@@ -222,6 +222,10 @@ class GameData:
             2,
         ),  # AoE damage with friendly fire, radius 2
     }
+
+
+# Load enemy types on module initialization (after class is defined)
+GameData.ENEMY_TYPES = GameData._load_enemy_types()
 
 
 class GameUpgrades:

@@ -596,7 +596,7 @@ class Enemy:
         # PRIORITY 1: Flee behavior for low-health enemies (unless Admin)
         if self._should_flee(player, game_map) and self.type != "admin":
             logging.debug(
-                f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.type_data.max_cpu})"
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.max_cpu})"
             )
             self._fill_flee_moves(game_map, player, game_engine)
             return
@@ -910,9 +910,8 @@ class Enemy:
             return False
 
         # Check health threshold
-        # Safety check for tests where max_cpu might be a mock
         try:
-            max_cpu = int(self.type_data.max_cpu)
+            max_cpu = int(self.max_cpu)
             if max_cpu <= 0:
                 return False
             health_percent = self.cpu / max_cpu

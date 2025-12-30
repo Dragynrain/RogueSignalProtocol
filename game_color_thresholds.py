@@ -13,7 +13,6 @@ This module provides:
 """
 
 
-from game_color_manager import ColorManager
 from game_entities import Colors
 
 
@@ -160,7 +159,7 @@ class ColorThresholdManager:
 
         # Priority 3: Virus effect - Green
         if player.has_active_effect("virus_turns"):
-            return ColorManager.get("status_effects", "virus")
+            return Colors.VIRUS
 
         # Priority 4: Slow effect - Cyan
         if player.has_active_effect("movement_slowed_turns"):

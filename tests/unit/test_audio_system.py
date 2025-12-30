@@ -154,6 +154,25 @@ class TestSoundPlayback(unittest.TestCase):
         expected_volume = 0.8 * 0.9 * 0.5  # sfx * master * modifier
         mock_sound.set_volume.assert_called_with(expected_volume)
 
+    def test_cooldown_not_recorded_when_sound_missing(self):
+        """Test cooldown is NOT recorded when sound doesn't exist.
+
+        Bug: Cooldown was recorded BEFORE validating sound exists (line 290).
+        If KeyError raised, subsequent valid play attempts would be blocked.
+        Fix: Record cooldown AFTER sound validation succeeds.
+        """
+        self.sound_manager.enabled = True
+
+        # Try to play non-existent sound
+        with self.assertRaises(KeyError):
+            self.sound_manager.play_sound("nonexistent_sound")
+
+        # Cooldown should NOT have been recorded for the failed sound
+        assert "nonexistent_sound" not in self.sound_manager._sound_last_played, (
+            "Bug: Cooldown was recorded for a sound that doesn't exist. "
+            "Cooldown should only be recorded AFTER sound validation."
+        )
+
 
 class TestMusicPlayback(unittest.TestCase):
     """Test background music functionality."""

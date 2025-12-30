@@ -96,8 +96,13 @@ class TileManager:
 
         try:
             if not os.path.exists(mapping_file):
-                logging.warning(f"Tile mapping file not found: {mapping_file}")
-                logging.warning("Graphics mode will fail - no sprite mappings available")
+                if self.settings.graphics_mode == "graphics":
+                    raise FileNotFoundError(
+                        f"CRITICAL: Graphics mode enabled but tile mapping file not found: {mapping_file}. "
+                        "Graphics mode requires graphics_tiles.json to function."
+                    )
+                # In glyph mode, missing config is fine - just log and return
+                logging.debug(f"Tile mapping file not found: {mapping_file} (not needed in glyph mode)")
                 return
 
             with open(mapping_file, encoding="utf-8") as f:
@@ -405,25 +410,31 @@ class TileManager:
             attempts = 0
             max_attempts = 100  # Try lots of samples to find good colors
 
+            # Color extraction thresholds (tuned for typical game sprites)
+            ALPHA_MIN = 200  # Skip semi-transparent pixels (0-255 scale)
+            BRIGHTNESS_MIN = 100  # Skip near-black (R+G+B sum, max 765)
+            SATURATION_MIN = 30  # Skip grays (max-min channel difference)
+            EDGE_MARGIN = 0.1  # Avoid edge artifacts (10% border)
+
             # Sample random points until we get enough good colors
             while len(colors) < num_colors and attempts < max_attempts:
                 attempts += 1
 
-                # Random point, avoiding edges (10% margin)
-                x = np.random.randint(int(width * 0.1), int(width * 0.9))
-                y = np.random.randint(int(height * 0.1), int(height * 0.9))
+                # Random point, avoiding edges
+                x = np.random.randint(int(width * EDGE_MARGIN), int(width * (1 - EDGE_MARGIN)))
+                y = np.random.randint(int(height * EDGE_MARGIN), int(height * (1 - EDGE_MARGIN)))
 
                 # Get pixel color (RGBA)
                 pixel = pixels[y, x]
                 r, g, b, a = pixel
 
                 # Skip transparent/semi-transparent pixels
-                if a < 200:
+                if a < ALPHA_MIN:
                     continue
 
                 # Skip very dark pixels (likely background or shadows)
                 brightness = r + g + b
-                if brightness < 100:  # Skip near-black pixels
+                if brightness < BRIGHTNESS_MIN:
                     continue
 
                 # Skip pure black pixels
@@ -433,7 +444,7 @@ class TileManager:
                 # Skip very desaturated colors (grays)
                 max_channel = max(r, g, b)
                 min_channel = min(r, g, b)
-                if max_channel > 0 and (max_channel - min_channel) < 30:
+                if max_channel > 0 and (max_channel - min_channel) < SATURATION_MIN:
                     continue
 
                 # Good color found!

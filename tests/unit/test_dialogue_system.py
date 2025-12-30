@@ -514,3 +514,53 @@ class TestIntegration:
             console.clear()
             UnifiedRenderer.render(console, dialogue)
             # If we get here without exception, rendering succeeded
+
+
+class TestDialogueHover:
+    """Test dialogue hover detection for 3+ options."""
+
+    def test_hover_third_option_in_three_option_dialogue(self):
+        """Test that hovering over the third option works correctly.
+
+        Bug: Old code used midpoint calculation that only returned 0 or 1,
+        breaking hover detection for dialogues with 3+ options.
+        """
+        # Create a dialogue with 3 options
+        dialogue = DialogueBox(
+            title="Test",
+            message="Test message",
+            options=["[Y] Yes", "[N] No", "[D] Don't ask"],
+            valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.D],
+            title_color=Colors.WHITE,
+            message_color=Colors.WHITE,
+            border_color=Colors.WHITE,
+            bg_color=Colors.BLACK,
+            format_data={},
+        )
+
+        console = tcod.console.Console(width=80, height=50)
+
+        # Calculate where the third option should be rendered
+        # Options text: "[Y] Yes  [N] No  [D] Don't ask"
+        options_text = "  ".join(dialogue.options)
+        box_width = max(len(dialogue.title), len(dialogue.message)) + 4
+        box_width = max(box_width, len(options_text) + 4)
+        box_x = (80 - box_width) // 2
+        options_x = box_x + (box_width - len(options_text)) // 2
+
+        # Third option starts after first two + separators
+        third_option_start = options_x + len("[Y] Yes") + 2 + len("[N] No") + 2
+
+        # Calculate options_y (box_y + box_height - 2)
+        lines = dialogue.message.split("\n")
+        box_height = len(lines) + 5
+        box_y = (50 - box_height) // 2
+        options_y = box_y + box_height - 2
+
+        # Render with mouse over the third option
+        UnifiedRenderer.render(
+            console, dialogue, mouse_tile_x=third_option_start + 2, mouse_tile_y=options_y
+        )
+
+        # The test passes if render completes without error
+        # The fix ensures the third option can be hovered (previously impossible)

@@ -27,6 +27,7 @@ Technical details:
 
 import logging
 import os
+import random
 import time
 
 from game_errors import GameErrorHandler
@@ -286,10 +287,11 @@ class SoundManager:
             )
             return None
 
-        # Update last played time
+        sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
+
+        # Update last played time AFTER validating sound exists
         self._sound_last_played[sound_id] = current_time
 
-        sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
         final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
         sound.set_volume(final_volume)
 
@@ -304,8 +306,6 @@ class SoundManager:
                 channel.stop()
             elif priority >= 5:
                 # High priority: stop a random channel
-                import random
-
                 channel_id = random.randint(0, self.max_channels - 1)
                 channel = pygame.mixer.Channel(channel_id)
                 channel.stop()

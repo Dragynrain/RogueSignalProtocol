@@ -792,5 +792,62 @@ class TestEnemyStateHelpers(TestEnemyAIBehavior):
         assert enemy.move_queue == []
 
 
+class TestEnemyFleeBehavior(TestEnemyAIBehavior):
+    """Test enemy flee behavior when damaged."""
+
+    def test_should_flee_returns_true_when_damaged_below_threshold(self):
+        """Enemy should flee when health is below flee threshold and player visible.
+
+        This test exposes a bug where _should_flee accessed self.type_data.max_cpu
+        but EnemyTypeDefinition only has 'cpu' field. The correct attribute is self.max_cpu.
+        """
+        from game_config import GameConfig
+
+        # Create real mobile enemy (not STATIC - static enemies can't flee)
+        # Patrol has PATROL movement and 40 CPU
+        enemy = Enemy(Position(10, 10), "patrol")
+
+        # Verify enemy has max_cpu attribute set correctly
+        assert hasattr(enemy, "max_cpu"), "Enemy should have max_cpu attribute"
+        assert enemy.max_cpu > 0, f"Enemy max_cpu should be positive, got {enemy.max_cpu}"
+
+        # Verify not static (static enemies can't flee)
+        assert enemy.get_movement_type() != EnemyMovement.STATIC
+
+        # Verify flee threshold config is loaded
+        flee_threshold = GameConfig._get_required("balance.enemy_flee_health_threshold")
+        assert flee_threshold == 0.3, f"Flee threshold should be 0.3, got {flee_threshold}"
+
+        # Damage enemy to below 30% health (flee threshold)
+        # Patrol has 40 CPU, so 10 CPU = 25% health
+        enemy.cpu = 10
+        enemy.state = EnemyState.HOSTILE  # Knows player is nearby
+
+        # Verify health is below threshold
+        health_percent = enemy.cpu / enemy.max_cpu
+        assert health_percent < flee_threshold, (
+            f"Health {health_percent:.2f} should be below threshold {flee_threshold}"
+        )
+
+        # This should return True since enemy is damaged below threshold
+        # Bug: returned False because type_data.max_cpu threw AttributeError
+        result = enemy._should_flee(self.player, self.mock_game_map)
+
+        assert result is True, (
+            f"Bug: _should_flee returned False for damaged enemy. "
+            f"cpu={enemy.cpu}, max_cpu={enemy.max_cpu}, state={enemy.state}"
+        )
+
+    def test_should_flee_returns_false_when_healthy(self):
+        """Enemy should not flee when health is above threshold."""
+        enemy = Enemy(Position(10, 10), "scanner")
+        enemy.state = EnemyState.HOSTILE
+
+        # Full health - should not flee
+        result = enemy._should_flee(self.player, self.mock_game_map)
+
+        assert result is False
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

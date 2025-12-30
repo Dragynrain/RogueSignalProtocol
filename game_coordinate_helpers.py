@@ -198,13 +198,11 @@ class CoordinateHelpers:
         window_height: int,
         console_width: int = 80,
         console_height: int = 50,
-        tile_pixel_width: int = 10,
-        tile_pixel_height: int = 16,
     ) -> tuple[int, int]:
         """
         Convert SDL pixel coordinates to console character coordinates.
 
-        Accounts for TCOD's aspect-ratio-preserving scaling and letterboxing.
+        Console fills entire window (no letterboxing).
         USE THIS FOR MENUS that render using console characters only.
 
         Args:
@@ -214,13 +212,10 @@ class CoordinateHelpers:
             window_height: Window height in pixels
             console_width: Console width in characters (default 80)
             console_height: Console height in characters (default 50)
-            tile_pixel_width: Tileset tile width in pixels (default 10)
-            tile_pixel_height: Tileset tile height in pixels (default 16)
 
         Returns:
             Tuple of (console_x, console_y) in console character grid (0-79, 0-49)
         """
-        # Console fills entire window - no letterboxing
         # Direct conversion: window pixels to console chars
         pixels_per_tile_x = window_width / console_width
         pixels_per_tile_y = window_height / console_height
