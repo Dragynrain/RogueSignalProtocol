@@ -1,9 +1,24 @@
 name: Build Release
 
-# Only run when a new release is created
+# Run when a new release is created, or manually via workflow_dispatch
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type (alpha/beta/release)'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - release
+      version:
+        description: 'Version number (e.g., 0.9.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -54,15 +69,30 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Run smoke tests
+      run: |
+        # Run critical smoke tests before building
+        # This catches import errors, config issues, and basic game logic bugs
+        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x
+      shell: powershell
+
     - name: Build executable with PyInstaller
       run: |
         # Use spec file for consistent build settings with local builds
         pyinstaller --clean RogueSignalProtocol.spec
 
+        # Determine build type (from workflow_dispatch input or default to beta for releases)
+        $buildType = "${{ github.event.inputs.build_type }}"
+        if (-not $buildType) { $buildType = "beta" }
+
         # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
-        # For stable releases, comment out these lines (no flag = minimal logging)
-        Write-Host "Creating debug_mode.flag for alpha/beta build..."
-        "Debug mode enabled for alpha/beta build" | Out-File -FilePath "dist\debug_mode.flag" -Encoding ASCII
+        # Release builds have no flag = minimal logging
+        if ($buildType -ne "release") {
+          Write-Host "Creating debug_mode.flag for $buildType build..."
+          "Debug mode enabled for $buildType build" | Out-File -FilePath "dist\debug_mode.flag" -Encoding ASCII
+        } else {
+          Write-Host "Release build - no debug_mode.flag (minimal logging)"
+        }
       shell: powershell
 
     - name: Verify executable was created
@@ -121,26 +151,85 @@ jobs:
         Write-Host "All assets copied successfully."
       shell: powershell
 
+    - name: Validate package structure
+      run: |
+        # Verify all critical files are present in dist/
+        $required = @(
+          "dist\RogueSignalProtocol.exe",
+          "dist\game_content.json",
+          "dist\game_rules.json",
+          "dist\narrative_content.json",
+          "dist\graphics_tiles.json",
+          "dist\default_bindings.json",
+          "dist\KreativeSquare.ttf",
+          "dist\graphics",
+          "dist\sound",
+          "dist\music"
+        )
+
+        $missing = @()
+        foreach ($path in $required) {
+          if (-not (Test-Path $path)) {
+            $missing += $path
+          }
+        }
+
+        if ($missing.Count -gt 0) {
+          Write-Error "Package validation failed! Missing: $($missing -join ', ')"
+          exit 1
+        }
+
+        # Check executable size is reasonable (should be > 10MB with dependencies)
+        $exeSize = (Get-Item "dist\RogueSignalProtocol.exe").Length / 1MB
+        if ($exeSize -lt 10) {
+          Write-Warning "Executable seems small ($([math]::Round($exeSize, 2)) MB) - may be missing dependencies"
+        }
+
+        Write-Host "Package validation passed - all required files present"
+        Write-Host "Executable size: $([math]::Round($exeSize, 2)) MB"
+      shell: powershell
+
     - name: Create release archive
       run: |
-        Compress-Archive -Path dist\* -DestinationPath RogueSignalProtocol-Windows.zip -Force
+        # Get version from release tag or workflow input
+        $version = "${{ github.event.inputs.version }}"
+        if (-not $version) {
+          # Extract from release tag (strips leading 'v' if present)
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+        }
+
+        $zipName = "RogueSignalProtocol-$version-Windows.zip"
+        Write-Host "Creating archive: $zipName"
+
+        Compress-Archive -Path dist\* -DestinationPath $zipName -Force
 
         # Verify zip was created
-        if (-not (Test-Path "RogueSignalProtocol-Windows.zip")) {
+        if (-not (Test-Path $zipName)) {
           Write-Error "Failed to create release archive!"
           exit 1
         }
 
-        $zipSize = (Get-Item "RogueSignalProtocol-Windows.zip").Length / 1MB
+        $zipSize = (Get-Item $zipName).Length / 1MB
         Write-Host "Release archive created: $([math]::Round($zipSize, 2)) MB"
+
+        # Save filename for upload step
+        echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
       shell: powershell
 
     - name: Upload release asset
       uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
       with:
-        files: RogueSignalProtocol-Windows.zip
+        files: ${{ env.ZIP_NAME }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifact (for workflow_dispatch)
+      uses: actions/upload-artifact@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        name: windows-build
+        path: ${{ env.ZIP_NAME }}
 
   build-linux:
     runs-on: ubuntu-latest
@@ -188,13 +277,28 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Run smoke tests
+      run: |
+        # Run critical smoke tests before building
+        # This catches import errors, config issues, and basic game logic bugs
+        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x
+
     - name: Build executable with PyInstaller
       run: |
         pyinstaller RogueSignalProtocol-linux.spec
 
+        # Determine build type (from workflow_dispatch input or default to beta for releases)
+        BUILD_TYPE="${{ github.event.inputs.build_type }}"
+        if [ -z "$BUILD_TYPE" ]; then BUILD_TYPE="beta"; fi
+
         # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
-        # For stable releases, comment out this line (no flag = minimal logging)
-        echo "Debug mode enabled for alpha/beta build" > dist/debug_mode.flag
+        # Release builds have no flag = minimal logging
+        if [ "$BUILD_TYPE" != "release" ]; then
+          echo "Creating debug_mode.flag for $BUILD_TYPE build..."
+          echo "Debug mode enabled for $BUILD_TYPE build" > dist/debug_mode.flag
+        else
+          echo "Release build - no debug_mode.flag (minimal logging)"
+        fi
 
     - name: Verify executable was created
       run: |
@@ -256,10 +360,52 @@ jobs:
 
         echo "All assets copied successfully."
 
+    - name: Validate package structure
+      run: |
+        # Verify all critical files are present in dist/
+        required=(
+          "dist/RogueSignalProtocol"
+          "dist/game_content.json"
+          "dist/game_rules.json"
+          "dist/narrative_content.json"
+          "dist/graphics_tiles.json"
+          "dist/default_bindings.json"
+          "dist/KreativeSquare.ttf"
+          "dist/graphics"
+          "dist/sound"
+          "dist/music"
+        )
+
+        missing=""
+        for path in "${required[@]}"; do
+          if [ ! -e "$path" ]; then
+            missing="$missing $path"
+          fi
+        done
+
+        if [ -n "$missing" ]; then
+          echo "Package validation failed! Missing:$missing"
+          exit 1
+        fi
+
+        # Check executable size is reasonable (should be > 10MB with dependencies)
+        exe_size=$(stat -c%s "dist/RogueSignalProtocol")
+        exe_mb=$((exe_size / 1048576))
+        if [ $exe_mb -lt 10 ]; then
+          echo "Warning: Executable seems small (${exe_mb} MB) - may be missing dependencies"
+        fi
+
+        echo "Package validation passed - all required files present"
+        echo "Executable size: ${exe_mb} MB"
+
     - name: Create release archive
       run: |
-        # Get version from release tag (strips leading 'v' if present)
-        VERSION="${GITHUB_REF_NAME#v}"
+        # Get version from workflow input or release tag (strips leading 'v' if present)
+        VERSION="${{ github.event.inputs.version }}"
+        if [ -z "$VERSION" ]; then
+          VERSION="${GITHUB_REF_NAME#v}"
+        fi
+
         TARBALL="RogueSignalProtocol-${VERSION}-Linux.tar.gz"
         echo "Creating tarball: $TARBALL"
 
@@ -275,13 +421,14 @@ jobs:
         size=$(du -h "$TARBALL" | cut -f1)
         echo "Release archive created: $size"
 
-        # Save filename for upload step
+        # Save filename and version for upload steps
         echo "TARBALL_NAME=$TARBALL" >> $GITHUB_ENV
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Build AppImage
       run: |
-        # Get version from release tag (strips leading 'v' if present)
-        VERSION="${GITHUB_REF_NAME#v}"
+        # Use version from previous step (already in env)
+        VERSION="${{ env.VERSION }}"
         echo "Building AppImage version: $VERSION"
 
         # Create AppDir structure
@@ -371,6 +518,7 @@ jobs:
 
     - name: Upload tarball release asset
       uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
       with:
         files: RogueSignalProtocol-*-Linux.tar.gz
       env:
@@ -378,7 +526,74 @@ jobs:
 
     - name: Upload AppImage release asset
       uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
       with:
         files: RogueSignalProtocol-*-x86_64.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifacts (for workflow_dispatch)
+      uses: actions/upload-artifact@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        name: linux-build
+        path: |
+          RogueSignalProtocol-*-Linux.tar.gz
+          RogueSignalProtocol-*-x86_64.AppImage
+
+  # Push to itch.io using butler (only on release, requires BUTLER_API_KEY secret)
+  push-itch:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux]
+    if: github.event_name == 'release' && vars.ENABLE_ITCH_PUSH == 'true'
+
+    steps:
+    - name: Get version from tag
+      run: |
+        VERSION="${GITHUB_REF_NAME#v}"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Pushing version $VERSION to itch.io"
+
+    - name: Download release assets
+      run: |
+        mkdir -p releases
+        gh release download "${{ github.ref_name }}" --dir releases/
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install butler
+      run: |
+        curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+        unzip butler.zip
+        chmod +x butler
+        ./butler -V
+
+    - name: Push Windows build to itch.io
+      run: |
+        ./butler push releases/RogueSignalProtocol-*-Windows.zip \
+          dragynrain/rogue-signal-protocol:windows \
+          --userversion "${{ env.VERSION }}"
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+
+    - name: Push Linux tarball to itch.io
+      run: |
+        ./butler push releases/RogueSignalProtocol-*-Linux.tar.gz \
+          dragynrain/rogue-signal-protocol:linux \
+          --userversion "${{ env.VERSION }}"
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+
+    - name: Push AppImage to itch.io
+      run: |
+        ./butler push releases/RogueSignalProtocol-*-x86_64.AppImage \
+          dragynrain/rogue-signal-protocol:linux-appimage \
+          --userversion "${{ env.VERSION }}"
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+
+    - name: Verify itch.io status
+      run: |
+        ./butler status dragynrain/rogue-signal-protocol
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}

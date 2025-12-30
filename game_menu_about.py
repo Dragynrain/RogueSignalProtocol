@@ -17,6 +17,7 @@ from game_entities import Colors
 from game_help_hints import get_about_menu_help
 from game_menu_base import BaseMenu
 from game_ui import render_char_safe
+from game_version import VERSION_DISPLAY
 
 
 class AboutMenu(BaseMenu):
@@ -126,7 +127,7 @@ class AboutMenu(BaseMenu):
                 "without being",
                 "detected.",
                 "",
-                "Version 0.9.1 Beta",
+                VERSION_DISPLAY,
                 "by Adam Forster",
                 "",
                 "roguesignalprotocol",
@@ -142,7 +143,7 @@ class AboutMenu(BaseMenu):
                 "roguelike where you exfiltrate from",
                 "corporate networks without detection.",
                 "",
-                "Version 0.9.1 Beta",
+                VERSION_DISPLAY,
                 "by Adam Forster",
                 "",
                 "roguesignalprotocol@gmail.com",

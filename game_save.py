@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from game_config import GameConfig
 from game_file_paths import get_data_directory
 from game_position import serialize_position_dict, tuple_to_coord_string
+from game_version import VERSION
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -78,7 +79,7 @@ class SaveGameManager:
 
         # Gather all game state data
         save_data = {
-            "version": "0.9.1 Beta",
+            "version": VERSION,
             "timestamp": time.time(),
             # Game state
             "level": game.level,
