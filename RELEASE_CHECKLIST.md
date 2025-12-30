@@ -59,40 +59,135 @@ This ensures you have a permanent record of progress for each release and preven
 
 ---
 
+## Minor Release Fast Path (Skip Testing)
+
+**Use this when:** Testing completed via uncompiled code, no major changes.
+
+**Pre-flight checks (run these FIRST):**
+```bash
+# Verify clean working tree
+git status
+# Expected: nothing to commit, working tree clean (or only untracked .coverage files)
+
+# Verify gh is authenticated
+gh auth status
+# Expected: shows "Logged in to github.com"
+
+# Verify butler is authenticated (if pushing to itch.io)
+build\butler\butler.exe status dragynrain/rogue-signal-protocol
+# Expected: shows channel list (not "butler login required")
+
+# Get current version
+grep '"version"' game_rules.json
+# Note the OLD version for bump command
+```
+
+**Release steps (replace OLD/NEW with actual versions, e.g., 0.9.1/0.9.2):**
+```bash
+# 1. Bump version (OLD -> NEW)
+python build/bump-version.py OLD NEW beta
+python build/bump-version.py --check NEW beta  # VERIFY
+
+# 2. Update CHANGELOG.md manually
+# Add section header: ## [NEW Beta] - YYYY-MM-DD - Brief Title
+# Document all changes since last release
+
+# 3. Build Windows
+build\build.bat beta NEW
+dir releases\*NEW*.zip  # VERIFY: zip exists
+
+# 4. Commit, tag, push
+git add -A && git commit -m "Release vNEW-beta"
+git tag -a vNEW-beta -m "Beta release NEW"
+git push origin main && git push origin vNEW-beta
+git ls-remote --tags origin | grep "NEW"  # VERIFY: tag on remote
+
+# 5. Create GitHub release (triggers Linux build workflow)
+# Extract latest changelog section for release notes
+sed -n '/^## \[NEW/,/^## \[/p' CHANGELOG.md | head -n -1 > release_notes.tmp
+gh release create vNEW-beta --title "vNEW-beta" --notes-file release_notes.tmp --prerelease "releases/RogueSignalProtocol_beta_NEW.zip"
+rm release_notes.tmp
+gh release view vNEW-beta  # VERIFY: release exists
+
+# 6. Wait for workflow (~5-10 min)
+gh run list --workflow=release.yml -L 1  # Poll until "completed"
+gh release view vNEW-beta --json assets -q '.assets[].name'  # VERIFY: tarball + AppImage
+
+# 7. Push to itch.io (skip if ENABLE_ITCH_PUSH=true in GitHub repo vars - workflow does it)
+build\push-all.bat NEW
+build\butler\butler.exe status dragynrain/rogue-signal-protocol  # VERIFY: all channels show NEW
+
+# 8. Update AUR (optional)
+build\update-aur.bat NEW beta
+cd /d/Projects/aur-rogue-signal-protocol-bin
+git add -A && git commit -m "Update to NEW-beta" && git push origin master
+```
+
+**STOP at any step if verification fails. Investigate before proceeding.**
+
+**Rollback procedures (if something fails mid-release):**
+```bash
+# If commit/tag pushed but release creation failed:
+git tag -d vNEW-beta                    # Delete local tag
+git push origin :refs/tags/vNEW-beta    # Delete remote tag
+git reset --soft HEAD~1                 # Undo commit (keeps changes staged)
+
+# If release created but workflow failed:
+gh release delete vNEW-beta --yes       # Delete the release
+# Then fix issue and re-run from step 5
+
+# If itch.io push failed after GitHub release succeeded:
+# Just re-run push-all.bat - it's idempotent
+```
+
+---
+
 ## Phase 1: Pre-Build Preparation
 
 ### 1.1 Version String Updates
 
-Update version in ALL these locations (search for old version string):
+**Source of truth:** `game_rules.json` line 2 - all Python code reads from `game_version.py` which loads this.
 
-**Code files:**
-- [ ] `game_menu_about.py` - Lines ~129, ~145 (2 locations)
-- [ ] `game_menu_main.py` - Line ~240
-- [ ] `game_save.py` - Line ~81 (save file version)
-- [ ] `game_story.py` - Line ~52 (progress data version)
+**Automated by `bump-version.py`:**
+- `game_rules.json` - version field (source of truth)
+- `README.txt`, `README.md`, `README_DEV.md` - version strings and badge URLs
+- `docs/wiki/Home.md` - current version display
+- `packaging/linux/PKGBUILD` - pkgver and _vertag
+- `packaging/linux/AppImageBuilder.yml` - version field
+- `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL
+- `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml` - adds new release entry
 
-**Config files:**
-- [ ] `game_rules.json` - Line ~2 (version), line ~915 (welcome message), line ~962 (metadata)
-- [ ] `game_content.json` - Lines ~330, ~333 (metadata section)
-- [ ] `narrative_content.json` - Line ~253 (metadata)
+**Requires manual update:**
+- [ ] `CHANGELOG.md` - Add new version section with all changes (content, not version string)
+- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml` - release description text (auto-added entry has placeholder)
 
-**Documentation:**
-- [ ] `README.txt` - Line ~3
-- [ ] `README.md` - Lines ~5, ~8 (badge URL)
-- [ ] `README_DEV.md` - Lines ~3, ~16 (badge URL)
-- [ ] `.github/ISSUE_TEMPLATE/bug_report.md` - Line ~29
-- [ ] `docs/wiki/Home.md` - Line ~9
-- [ ] `CHANGELOG.md` - Add new version section with all changes
+**NOT needed (centralized via game_version.py):**
+- ~~game_menu_about.py~~ - imports VERSION_DISPLAY
+- ~~game_menu_main.py~~ - imports VERSION_DISPLAY
+- ~~game_save.py~~ - imports VERSION
+- ~~game_story.py~~ - imports VERSION
+- ~~game_content.json~~ - no version field
+- ~~narrative_content.json~~ - no version field
 
-**Linux packaging files:**
-- [ ] `packaging/linux/README.md` - Line ~5
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml`:
-  - Line ~88: version number in `<release>` tag
-  - Line ~88: `type="development"` → `type="stable"` (for stable releases only)
-  - Update `<description>` text for new release
-- [ ] `packaging/linux/PKGBUILD` - Line ~3 (pkgver)
-- [ ] `packaging/linux/AppImageBuilder.yml` - version field
-- [ ] `packaging/linux/info.aforster.roguesignalprotocol.yml` - source URL (SHA256 updated in Phase 3.3)
+**Automated version bump (recommended):**
+```bash
+python build/bump-version.py OLD_VER NEW_VER beta
+# Example: python build/bump-version.py 0.9.1 0.9.2 beta
+```
+
+**Verification (STOP if fails):**
+```bash
+# Verify version was updated correctly
+python build/bump-version.py --check NEW_VER beta
+# Expected: "All files consistent with version X.Y.Z beta"
+
+# Double-check source of truth
+grep '"version"' game_rules.json
+# Expected: "version": "X.Y.Z Beta"
+```
+
+**Manual files still requiring update:**
+- [ ] `CHANGELOG.md` - Add new version section with changes (script cannot write changelog content)
 
 **Quick command to find all version strings:**
 ```bash
@@ -104,6 +199,21 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 
 ### 1.2 Code Quality Checks
 
+**Automated validation (recommended - runs all checks):**
+```bash
+python build/validate-release.py
+```
+
+**Verification (STOP if fails):**
+```bash
+# Expected output ends with:
+# "All checks passed - ready to build!"
+# Exit code 0
+
+# If any check fails, fix the issue before proceeding
+```
+
+**Individual checks (if needed):**
 - [ ] Run full test suite: `pytest tests/ -v`
 - [ ] Run Unicode logging test: `pytest tests/test_no_unicode_in_logging.py -v`
 - [ ] Check for debug prints: `grep -rn "print(" game_*.py | grep -v "console.print"`
@@ -161,17 +271,33 @@ grep -rn "OLD_VER\|NEW_VER" --include="*.py" --include="*.json" --include="*.md"
 
 ```bash
 # For beta/alpha builds (DEBUG logging enabled by default):
-build\build.bat beta
+build\build.bat beta X.Y.Z
 # or
-build\build.bat alpha
+build\build.bat alpha X.Y.Z
 
 # For stable releases (minimal logging):
-build\build.bat release
+build\build.bat release X.Y.Z
+```
+
+**Verification (STOP if fails):**
+```bash
+# Verify exe was created
+dir dist\RogueSignalProtocol.exe
+# Expected: file exists, ~39MB
+
+# Verify release archive was created
+dir releases\*X.Y.Z*.zip
+# Expected: RogueSignalProtocol_beta_X.Y.Z.zip exists, ~195MB
+
+# Verify checksum file was generated
+dir releases\*X.Y.Z*.sha256
+# Expected: checksum file exists
 ```
 
 **Build creates:**
 - `dist/RogueSignalProtocol.exe` (~39MB)
-- `releases/RogueSignalProtocol_[type]_YYYY-MM-DD.zip` (~195MB)
+- `releases/RogueSignalProtocol_[type]_X.Y.Z.zip` (~195MB)
+- `releases/RogueSignalProtocol_[type]_X.Y.Z.zip.sha256`
 
 ### 2.2 Verify Windows Build Contents
 
@@ -428,6 +554,25 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - [ ] Push commits: `git push origin main`
 - [ ] Push tag: `git push origin vX.Y.Z-beta`
 
+**Verification (STOP if any fail):**
+```bash
+# Verify commit exists
+git log -1 --oneline
+# Expected: shows "Release vX.Y.Z-beta" message
+
+# Verify tag exists locally
+git tag -l "vX.Y.Z*"
+# Expected: shows vX.Y.Z-beta
+
+# Verify push succeeded
+git status
+# Expected: "Your branch is up to date with 'origin/main'"
+
+# Verify tag on remote
+git ls-remote --tags origin | grep "vX.Y.Z"
+# Expected: shows the tag ref
+```
+
 **Note:** Replace `X.Y.Z` with actual version and `-beta` with release type (`-alpha`, `-beta`, or nothing for stable).
 
 ### 5.4 Create GitHub Release
@@ -437,14 +582,73 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 - Check existing tags: `git tag -l` (e.g., `v0.9.0-beta`, `v0.8.0-alpha`)
 - Keep consistency with itch.io channel names and version labels
 
+**Option A: GitHub CLI (recommended for automation)**
+```bash
+# Extract just the latest version's changelog section
+sed -n '/^## \[X.Y.Z/,/^## \[/p' CHANGELOG.md | head -n -1 > release_notes.tmp
+
+# Create release with extracted notes
+gh release create vX.Y.Z-beta \
+  --title "vX.Y.Z-beta" \
+  --notes-file release_notes.tmp \
+  --prerelease \
+  "releases/RogueSignalProtocol_beta_X.Y.Z.zip"
+
+rm release_notes.tmp
+
+# Alternative: simple inline notes (less informative)
+gh release create vX.Y.Z-beta \
+  --title "vX.Y.Z-beta" \
+  --notes "See CHANGELOG.md for full details" \
+  --prerelease \
+  "releases/RogueSignalProtocol_beta_X.Y.Z.zip"
+```
+
+**Option B: GitHub Web UI**
 - [ ] Go to GitHub > Releases > Draft new release
 - [ ] Select the tag
 - [ ] Title format: `v1.0.0` or `v1.0.0-beta` (match tag and previous releases)
 - [ ] Upload Windows .zip from `releases/`
-- [ ] Upload Linux tarball (`RogueSignalProtocol-linux.tar.gz`)
-- [ ] Upload AppImage (`RogueSignalProtocol-*-x86_64.AppImage`)
 - [ ] Write release notes from CHANGELOG.md
 - [ ] For pre-releases: check "Set as a pre-release" checkbox
+
+**Verification (STOP if fails):**
+```bash
+# Verify release was created
+gh release view vX.Y.Z-beta
+# Expected: shows release title, tag, and attached Windows zip
+
+# Verify workflow was triggered
+gh run list --workflow=release.yml -L 1
+# Expected: shows "in_progress" or "queued" status
+```
+
+### 5.5 Wait for GitHub Actions Workflow
+
+The release workflow builds Linux packages automatically. This takes ~5-10 minutes.
+
+**Monitor workflow:**
+```bash
+# Watch workflow status (poll every 30 seconds)
+gh run list --workflow=release.yml -L 1
+
+# Or watch a specific run
+gh run watch <run-id>
+```
+
+**Verification (STOP if fails):**
+```bash
+# Verify workflow completed successfully
+gh run list --workflow=release.yml -L 1 --json status,conclusion -q '.[0]'
+# Expected: {"status":"completed","conclusion":"success"}
+
+# Verify Linux artifacts were uploaded to release
+gh release view vX.Y.Z-beta --json assets -q '.assets[].name'
+# Expected: shows tarball AND AppImage filenames
+
+# If workflow failed, check logs:
+gh run view <run-id> --log-failed
+```
 
 ---
 
@@ -486,6 +690,12 @@ sha256sum RogueSignalProtocol-linux.tar.gz
 
 Butler provides incremental updates for itch.io desktop app users. Use consistent channel names so users get automatic updates.
 
+**GitHub Actions auto-push (if enabled):**
+The release workflow has a `push-itch` job that automatically pushes all builds to itch.io.
+- Requires: `BUTLER_API_KEY` secret set in GitHub repo
+- Requires: `ENABLE_ITCH_PUSH` repository variable set to `true`
+- If enabled, skip manual push steps below - just verify with `butler status`
+
 **Channels:**
 | Channel | Platform | File |
 |---------|----------|------|
@@ -511,18 +721,34 @@ build\butler\butler.exe push releases/RogueSignalProtocol-X.Y.Z-beta-Linux.tar.g
 build\butler\butler.exe push releases/RogueSignalProtocol-X.Y.Z-beta-x86_64.AppImage dragynrain/rogue-signal-protocol:linux-appimage --userversion X.Y.Z
 ```
 
+**Automated option (recommended):**
+```bash
+build\push-all.bat X.Y.Z
+# Downloads Linux builds from GitHub if not local, pushes all 3 channels
+```
+
 **Checklist:**
 - [ ] Push Windows build to `windows` channel
 - [ ] Download Linux builds from GitHub release
 - [ ] Push tarball to `linux` channel
 - [ ] Push AppImage to `linux-appimage` channel
+
+**Verification (STOP if any fail):**
+```bash
+# Verify all channels have correct version
+build\butler\butler.exe status dragynrain/rogue-signal-protocol
+# Expected output should show:
+#   windows: X.Y.Z
+#   linux: X.Y.Z
+#   linux-appimage: X.Y.Z
+
+# Verify page is accessible
+curl -s -o /dev/null -w "%{http_code}" https://dragynrain.itch.io/rogue-signal-protocol
+# Expected: 200
+```
+
 - [ ] Verify at https://dragynrain.itch.io/rogue-signal-protocol/edit
 - [ ] Ensure Linux channels are tagged with Linux platform
-
-**Verify uploads:**
-```bash
-build\butler\butler.exe status dragynrain/rogue-signal-protocol
-```
 
 ### 7.2 GitHub Releases (Automatic)
 
@@ -608,9 +834,31 @@ git commit -m "Update to X.Y.Z-beta"
 git push origin master
 ```
 
+**Automated option (recommended):**
+```bash
+build\update-aur.bat X.Y.Z beta
+# Updates PKGBUILD, generates .SRCINFO via Docker, copies to AUR repo
+```
+
 - [ ] Update PKGBUILD with new version and SHA256
 - [ ] Generate .SRCINFO
 - [ ] Push to AUR
+
+**Verification (STOP if fails):**
+```bash
+# Verify PKGBUILD has correct version
+grep "pkgver=" packaging/linux/PKGBUILD
+# Expected: pkgver=X.Y.Z_beta
+
+# Verify SHA256 is set (not placeholder)
+grep "sha256sums=" packaging/linux/PKGBUILD
+# Expected: sha256sums=('<64-char-hash>')
+
+# After pushing to AUR, verify update (may take a few minutes to propagate)
+curl -s "https://aur.archlinux.org/rpc/v5/info?arg[]=rogue-signal-protocol-bin" | grep -o '"Version":"[^"]*"'
+# Expected: "Version":"X.Y.Z_beta-1"
+```
+
 - [ ] Verify at: https://aur.archlinux.org/packages/rogue-signal-protocol-bin
 
 ### 7.3 Download Verification (Smoke Test)
@@ -731,26 +979,34 @@ If a critical bug is discovered post-release:
 
 ## Quick Reference: Files with Version Strings
 
+**Centralized (auto-read from game_rules.json via game_version.py):**
+| File | Note |
+|------|------|
+| `game_menu_about.py` | imports VERSION_DISPLAY |
+| `game_menu_main.py` | imports VERSION_DISPLAY |
+| `game_save.py` | imports VERSION |
+| `game_story.py` | imports VERSION |
+
+**Updated by bump-version.py:**
 | File | Locations |
 |------|-----------|
-| `game_menu_about.py` | 2 |
-| `game_menu_main.py` | 1 |
-| `game_save.py` | 1 |
-| `game_story.py` | 1 |
-| `game_rules.json` | 3 |
-| `game_content.json` | 2 |
-| `narrative_content.json` | 1 |
+| `game_rules.json` | 1 (source of truth) |
 | `README.txt` | 1 |
 | `README.md` | 2 |
 | `README_DEV.md` | 2 |
-| `bug_report.md` | 1 |
 | `docs/wiki/Home.md` | 1 |
 | `packaging/linux/README.md` | 1 |
-| `packaging/linux/*.xml` | 3 (version, type, description) |
-| `packaging/linux/PKGBUILD` | 1 |
-| `CHANGELOG.md` | 1 |
+| `packaging/linux/PKGBUILD` | 2 (pkgver, _vertag) |
+| `packaging/linux/AppImageBuilder.yml` | 1 |
+| `packaging/linux/*.yml` (Flatpak) | 1 |
+| `packaging/linux/*.xml` (metainfo) | 1 (adds new release entry) |
 
-**Total: ~21 locations to update**
+**Manual only:**
+| File | Note |
+|------|------|
+| `CHANGELOG.md` | Content must be written manually |
+
+**Total: 1 manual file, ~12 automated by bump-version.py**
 
 ---
 
