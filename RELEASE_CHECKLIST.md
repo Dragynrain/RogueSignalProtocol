@@ -632,7 +632,7 @@ gh run list --workflow=release.yml -L 1
 
 The release workflow builds Linux packages automatically. This takes ~5-10 minutes.
 
-> **Note:** The workflow runs smoke tests with `--cov-fail-under=0` because smoke tests are a limited subset (~32% coverage) and shouldn't fail on the full test suite's 70% threshold from pytest.ini.
+> **Note:** The workflow runs the full test suite with `--no-cov` (coverage already enforced by pre-commit hook locally). This catches Linux-specific issues that can't be caught on Windows.
 
 **Monitor workflow:**
 ```bash

@@ -69,12 +69,12 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Run smoke tests
+    - name: Run tests
       run: |
-        # Run critical smoke tests before building
-        # This catches import errors, config issues, and basic game logic bugs
-        # Override cov-fail-under since smoke tests are a limited subset
-        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x --cov-fail-under=0
+        # Run full test suite on Linux/Windows to catch platform-specific issues
+        # Pre-commit already runs tests locally, but this tests on different OS
+        # Use --no-cov to skip coverage (already enforced by pre-commit hook)
+        python -m pytest tests/ -v --tb=short --no-cov -x
       shell: powershell
 
     - name: Build executable with PyInstaller
@@ -278,12 +278,12 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Run smoke tests
+    - name: Run tests
       run: |
-        # Run critical smoke tests before building
-        # This catches import errors, config issues, and basic game logic bugs
-        # Override cov-fail-under since smoke tests are a limited subset
-        python -m pytest tests/smoke/ tests/integration/test_game_smoke.py -v --tb=short -x --cov-fail-under=0
+        # Run full test suite on Linux to catch platform-specific issues
+        # Pre-commit already runs tests locally, but this tests on Linux
+        # Use --no-cov to skip coverage (already enforced by pre-commit hook)
+        python -m pytest tests/ -v --tb=short --no-cov -x
 
     - name: Build executable with PyInstaller
       run: |
