@@ -25,7 +25,7 @@ import tcod.sdl.joystick
 @pytest.fixture
 def settings():
     """Create GameSettings with gamepad enabled and ascension reset."""
-    from game_config import GameSettings
+    from rsp.core.config import GameSettings
 
     s = GameSettings()
     s.gamepad_enabled = True
@@ -39,7 +39,7 @@ def settings():
 @pytest.fixture
 def input_mapper():
     """Create InputMapper with default bindings."""
-    from game_input_mappings import InputMapper
+    from rsp.input.mappings import InputMapper
 
     return InputMapper()
 
@@ -86,8 +86,8 @@ class TestMainMenuInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """MainMenu responds to arrow keys."""
-        from game_menu_main import MainMenu
-        from game_save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
+        from rsp.systems.save import SaveGameManager
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -99,8 +99,8 @@ class TestMainMenuInputSupport:
 
     def test_dpad_navigation(self, settings):
         """MainMenu responds to D-pad."""
-        from game_menu_main import MainMenu
-        from game_save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
+        from rsp.systems.save import SaveGameManager
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -114,8 +114,8 @@ class TestMainMenuInputSupport:
 
     def test_keyboard_confirm(self, settings):
         """MainMenu responds to Enter key."""
-        from game_menu_main import MainMenu
-        from game_save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
+        from rsp.systems.save import SaveGameManager
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -126,8 +126,8 @@ class TestMainMenuInputSupport:
 
     def test_gamepad_confirm(self, settings):
         """MainMenu responds to A button."""
-        from game_menu_main import MainMenu
-        from game_save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
+        from rsp.systems.save import SaveGameManager
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -147,7 +147,7 @@ class TestSettingsMenuInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """SettingsMenu responds to arrow keys."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
         initial = menu.selected_option
@@ -157,7 +157,7 @@ class TestSettingsMenuInputSupport:
 
     def test_dpad_navigation(self, settings):
         """SettingsMenu responds to D-pad."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
         initial = menu.selected_option
@@ -167,7 +167,7 @@ class TestSettingsMenuInputSupport:
 
     def test_keyboard_horizontal_adjusts_slider(self, settings):
         """Left/Right arrows adjust slider values."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
         menu.selected_option = 0  # Master Volume (slider)
@@ -178,7 +178,7 @@ class TestSettingsMenuInputSupport:
 
     def test_dpad_horizontal_adjusts_slider(self, settings):
         """D-pad left/right adjust slider values."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
         menu.selected_option = 0  # Master Volume
@@ -198,7 +198,7 @@ class TestControlsMenuHubInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """ControlsMenuHub responds to arrow keys."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         menu = ControlsMenuHub(settings, None)
         initial = menu.selected_option
@@ -208,7 +208,7 @@ class TestControlsMenuHubInputSupport:
 
     def test_dpad_navigation(self, settings):
         """ControlsMenuHub responds to D-pad."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         menu = ControlsMenuHub(settings, None)
         initial = menu.selected_option
@@ -218,7 +218,7 @@ class TestControlsMenuHubInputSupport:
 
     def test_keyboard_confirm(self, settings):
         """ControlsMenuHub responds to Enter."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         menu = ControlsMenuHub(settings, None)
         menu.selected_option = 0  # Keyboard Bindings
@@ -228,7 +228,7 @@ class TestControlsMenuHubInputSupport:
 
     def test_gamepad_confirm(self, settings):
         """ControlsMenuHub responds to A button."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         menu = ControlsMenuHub(settings, None)
         menu.selected_option = 0
@@ -247,7 +247,7 @@ class TestGamepadSettingsMenuInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """GamepadSettingsMenu responds to arrow keys."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         initial = menu.selected_option
@@ -257,7 +257,7 @@ class TestGamepadSettingsMenuInputSupport:
 
     def test_dpad_navigation(self, settings):
         """GamepadSettingsMenu responds to D-pad."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         initial = menu.selected_option
@@ -267,7 +267,7 @@ class TestGamepadSettingsMenuInputSupport:
 
     def test_keyboard_horizontal_adjusts_deadzone(self, settings):
         """Left/Right arrows adjust deadzone slider."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 1  # Stick Deadzone
@@ -278,7 +278,7 @@ class TestGamepadSettingsMenuInputSupport:
 
     def test_dpad_horizontal_adjusts_deadzone(self, settings):
         """D-pad left/right adjust deadzone slider."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 1  # Stick Deadzone
@@ -298,7 +298,7 @@ class TestAchievementsMenuInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """AchievementsMenu responds to arrow keys."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         initial = menu.scroll_offset
@@ -310,7 +310,7 @@ class TestAchievementsMenuInputSupport:
 
     def test_dpad_navigation(self, settings):
         """AchievementsMenu responds to D-pad."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         initial_offset = menu.scroll_offset
@@ -324,7 +324,7 @@ class TestAchievementsMenuInputSupport:
 
     def test_keyboard_cancel(self, settings):
         """AchievementsMenu responds to ESC."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
 
@@ -333,7 +333,7 @@ class TestAchievementsMenuInputSupport:
 
     def test_gamepad_cancel(self, settings):
         """AchievementsMenu responds to B button."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
 
@@ -351,7 +351,7 @@ class TestAboutMenuInputSupport:
 
     def test_keyboard_cancel(self, settings):
         """AboutMenu responds to ESC."""
-        from game_menu_about import AboutMenu
+        from rsp.ui.menu_about import AboutMenu
 
         menu = AboutMenu()
 
@@ -360,7 +360,7 @@ class TestAboutMenuInputSupport:
 
     def test_gamepad_cancel(self, settings):
         """AboutMenu responds to B button."""
-        from game_menu_about import AboutMenu
+        from rsp.ui.menu_about import AboutMenu
 
         menu = AboutMenu()
 

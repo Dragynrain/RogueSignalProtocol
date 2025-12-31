@@ -7,7 +7,7 @@ Comprehensive tests for save/load system data integrity and error handling.
 import json
 from unittest.mock import Mock, patch
 
-from game_save import SaveGameManager
+from rsp.systems.save import SaveGameManager
 from tests.fixtures.simple_fixtures import player
 
 

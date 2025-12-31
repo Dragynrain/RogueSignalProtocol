@@ -16,7 +16,7 @@ Layer 3: Console UI Overlay (with transparency)
 Final Frame
 ```
 
-**Implementation** (game_loop.py:86-91):
+**Implementation** (rsp.core.loop):
 ```python
 from tcod import render as tcod_render
 atlas = tcod_render.SDLTilesetAtlas(context.sdl_renderer, tileset)
@@ -40,7 +40,7 @@ This is the **official TCOD API** for mixing SDL graphics with console rendering
 
 ### Layer 1: High-Resolution Backgrounds (Menu Only)
 
-**Implementation:** `game_menu_background.py`
+**Implementation:** `rsp.ui.menu_background`
 
 - Loads random PNG backgrounds (1920x1080+)
 - 25 available cyberspace-themed images
@@ -62,7 +62,7 @@ renderer.copy(background_texture, dest=bg_rect)
 
 ### Layer 2: High-Resolution Sprites (Gameplay)
 
-**Implementation:** `game_rendering_graphics.py`
+**Implementation:** `rsp.rendering.graphics`
 
 **Graphics mode tile dimensions:**
 - Viewport: 27x21 tiles
@@ -84,7 +84,7 @@ renderer.copy(texture, dest=tile_rect)
 
 ### Layer 3: Console UI Overlay
 
-**Implementation:** `game_rendering_ui.py`
+**Implementation:** `rsp.rendering.ui`
 
 **Console rendered as transparent texture:**
 - Full 80x50 character grid
@@ -134,6 +134,6 @@ See TCOD_GUIDE.md for coordinate conversion details.
 ## Related Docs
 
 - **TCOD_GUIDE.md** - CoordinateHelpers, transparency, mouse conversion
-- **game_rendering_core.py** - Main rendering pipeline
-- **game_rendering_graphics.py** - SDL sprite rendering
-- **game_rendering_glyphs.py** - Console text rendering
+- **rsp.rendering.core** - Main rendering pipeline
+- **rsp.rendering.graphics** - SDL sprite rendering
+- **rsp.rendering.glyphs** - Console text rendering

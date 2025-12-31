@@ -8,8 +8,8 @@ import time
 
 import pytest
 
-from game_achievement_popups import AchievementPopup, AchievementPopupManager, get_popup_duration
-from game_achievements import ALL_ACHIEVEMENTS, AchievementManager
+from rsp.systems.achievement_popups import AchievementPopup, AchievementPopupManager, get_popup_duration
+from rsp.systems.achievements import ALL_ACHIEVEMENTS, AchievementManager
 
 # Note: clean_achievement_state and test_console fixtures now available from conftest.py
 
@@ -178,7 +178,7 @@ def test_popup_alpha_fade():
 def test_full_workflow(clean_achievement_state, popup_manager, test_console):
     """Test full workflow: achievement unlock -> popup display -> dismiss."""
     # Step 1: Unlock achievement via manager
-    from game_metrics import SessionMetrics
+    from rsp.systems.metrics import SessionMetrics
 
     session = SessionMetrics(
         session_id="test", timestamp_start=1000.0, victory=True, turns_taken=85

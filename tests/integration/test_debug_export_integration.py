@@ -21,11 +21,11 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from debug_export import DebugExporter
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_input import InputHandler
-from game_menus import SettingsMenu
+from rsp.utils.debug_export import DebugExporter
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
+from rsp.ui.menus import SettingsMenu
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def temp_game_files(tmp_path, monkeypatch):
     (metrics_dir / "test_session.json").write_text('{"session": "test"}')
 
     # Mock get_data_directory to return temp path
-    import game_file_paths
+    import rsp.core.file_paths as game_file_paths
 
     monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: tmp_path)
 
@@ -441,7 +441,7 @@ def test_settings_menu_mouse_click_confirm_no(settings_menu):
 
 def test_debug_package_created_with_game_state(temp_export_dir, temp_game_files, mock_game_engine):
     """Test that debug package includes game state snapshot."""
-    from debug_export import export_debug_package
+    from rsp.utils.debug_export import export_debug_package
 
     # Create debug package with game engine
     zip_path = export_debug_package(game_engine=mock_game_engine)
@@ -459,7 +459,7 @@ def test_debug_package_creation_error_handling(
     input_handler, mock_game_engine, temp_export_dir, temp_game_files
 ):
     """Test that debug package creation errors are handled gracefully."""
-    with patch("debug_export.export_debug_package", side_effect=Exception("Disk full")):
+    with patch("rsp.utils.debug_export.export_debug_package", side_effect=Exception("Disk full")):
         # Trigger debug export
         input_handler._perform_debug_export()
 
@@ -504,7 +504,7 @@ def test_debug_export_shows_failure_message(
     input_handler, mock_game_engine, temp_export_dir, temp_game_files
 ):
     """Test that user sees failure message when export fails."""
-    with patch("debug_export.export_debug_package", return_value=None):
+    with patch("rsp.utils.debug_export.export_debug_package", return_value=None):
         # Perform debug export (will fail)
         input_handler._perform_debug_export()
 

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from game_map import RestoreNode
+from rsp.level.map import RestoreNode
 
 
 class TestAscensionSaveLoadRoundtrip:
@@ -71,7 +71,7 @@ class TestAscensionSaveLoadRoundtrip:
 
     def test_ascension_level_saved_in_data(self, mock_game_engine):
         """Ascension level should be included in save data."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         save_data = SaveGameManager.create_save_data(mock_game_engine)
 
@@ -80,7 +80,7 @@ class TestAscensionSaveLoadRoundtrip:
 
     def test_ascension_level_zero_saved(self, mock_game_engine):
         """A0 should also be saved correctly."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         mock_game_engine.ascension_level = 0
         save_data = SaveGameManager.create_save_data(mock_game_engine)
@@ -89,7 +89,7 @@ class TestAscensionSaveLoadRoundtrip:
 
     def test_ascension_level_max_saved(self, mock_game_engine):
         """A20 should be saved correctly."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         mock_game_engine.ascension_level = 20
         save_data = SaveGameManager.create_save_data(mock_game_engine)
@@ -241,7 +241,7 @@ class TestAscensionModifiersRecalculatedOnLoad:
 
     def test_modifiers_recalculated_from_saved_level(self):
         """Loading A7 save should recalculate A7 modifiers."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         # Simulate what happens on load
         saved_ascension = 7
@@ -264,9 +264,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace increase should be multiplied by A3 modifier."""
         from unittest.mock import MagicMock
 
-        from game_ascension import calculate_ascension_modifiers
-        from game_config import GameBalance
-        from game_state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
+        from rsp.core.config import GameBalance
+        from rsp.core.state import TurnProcessor
 
         # Setup: A3 has 2.0x trace multiplier
         modifiers = calculate_ascension_modifiers(3)
@@ -296,9 +296,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace should only increase once per TRACE_INCREASE_INTERVAL, not twice."""
         from unittest.mock import MagicMock
 
-        from game_ascension import calculate_ascension_modifiers
-        from game_config import GameBalance
-        from game_state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
+        from rsp.core.config import GameBalance
+        from rsp.core.state import TurnProcessor
 
         # Use A0 (no modifier) for simpler calculation
         modifiers = calculate_ascension_modifiers(0)
@@ -329,9 +329,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace should not increase before reaching the interval."""
         from unittest.mock import MagicMock
 
-        from game_ascension import calculate_ascension_modifiers
-        from game_config import GameBalance
-        from game_state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
+        from rsp.core.config import GameBalance
+        from rsp.core.state import TurnProcessor
 
         modifiers = calculate_ascension_modifiers(0)
 

@@ -13,8 +13,8 @@ import inspect
 
 import pytest
 
-from game_metrics import track, init_session_metrics, get_current_session
-import game_metrics
+from rsp.systems.metrics import track, init_session_metrics, get_current_session
+import rsp.systems.metrics as game_metrics
 
 
 class TestTrackFunctionAcceptsGameParameter:

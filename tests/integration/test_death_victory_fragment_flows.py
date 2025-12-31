@@ -18,9 +18,9 @@ Key integration points tested:
 
 import pytest
 
-from game_entities import Position
-from game_inventory import StoryFragment
-from game_story import StoryFragmentManager
+from rsp.entities.base import Position
+from rsp.combat.inventory import StoryFragment
+from rsp.utils.story import StoryFragmentManager
 
 
 class TestDeathHandlerIntegration:
@@ -73,7 +73,7 @@ class TestDeathHandlerIntegration:
 
     def test_death_from_overheat(self, basic_game_engine):
         """Overheating from bump attack should trigger death check."""
-        from game_characters import Enemy
+        from rsp.entities.characters import Enemy
 
         engine = basic_game_engine
 
@@ -243,7 +243,7 @@ class TestStoryFragmentIntegration:
         # Mock PersistentStorage to use our temp directory
         original_get_data_dir = None
         try:
-            import game_file_paths
+            import rsp.core.file_paths as game_file_paths
 
             original_get_data_dir = game_file_paths.get_data_directory
 
@@ -466,7 +466,7 @@ class TestMetricsFinalizationIdempotency:
 
     def test_finalize_session_is_idempotent(self, basic_game_engine):
         """Calling finalize_and_save_session multiple times should be safe."""
-        from game_metrics import finalize_and_save_session, get_current_session
+        from rsp.systems.metrics import finalize_and_save_session, get_current_session
 
         session = get_current_session()
         if session is None:
@@ -541,8 +541,8 @@ class TestEnemyAttackOnDeadPlayer:
         engine.player.cpu = 0
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -571,8 +571,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -598,8 +598,8 @@ class TestBumpAttackOverheat:
         engine.player.heat = engine.player.max_heat - 3  # 97 heat
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -624,8 +624,8 @@ class TestBumpAttackOverheat:
         engine.player.heat = engine.player.max_heat - 5
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -647,8 +647,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -676,8 +676,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -768,7 +768,7 @@ class TestVictorySaveHandling:
 
     def test_victory_handles_save_deletion_gracefully(self, basic_game_engine, monkeypatch):
         """Victory should complete even if save deletion fails."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         engine = basic_game_engine
 
@@ -796,7 +796,7 @@ class TestVictorySaveHandling:
         """Victory should log error if save deletion fails."""
         import logging
 
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         engine = basic_game_engine
 
@@ -815,7 +815,7 @@ class TestVictorySaveHandling:
 
     def test_victory_message_differs_on_save_failure(self, basic_game_engine, monkeypatch):
         """Victory message should not mention 'purged' if save deletion fails."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         engine = basic_game_engine
 

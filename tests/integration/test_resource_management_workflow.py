@@ -14,9 +14,9 @@ Only external dependencies (sound, rendering) are mocked.
 
 import pytest
 
-from game_config import GameBalance, GameConfig
-from game_entities import Position
-from game_map import RestoreNode
+from rsp.core.config import GameBalance, GameConfig
+from rsp.entities.base import Position
+from rsp.level.map import RestoreNode
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -297,7 +297,7 @@ class TestCPUManagement:
         initial_cpu = basic_game_engine.player.cpu
 
         # Create a restore_cpu code hack with proper game setup
-        from game_inventory import CodeHack
+        from rsp.combat.inventory import CodeHack
 
         # Set up code hack effects in basic_game_engine (required for CodeHack.use())
         basic_game_engine.code_hack_effects = {"red": ("restore_cpu", "Restores CPU")}

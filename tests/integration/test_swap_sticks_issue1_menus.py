@@ -15,9 +15,9 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from game_menu_main import MainMenu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction, InputContext
+from rsp.ui.menu_main import MainMenu
 
 CA = tcod.sdl.joystick.ControllerAxis
 

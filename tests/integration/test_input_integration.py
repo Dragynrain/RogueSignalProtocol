@@ -12,8 +12,8 @@ Note: Extracted from test_input_critical_paths.py for maintainability.
 
 import pytest
 
-from game_config import GameSettings
-from game_input_actions import InputAction
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
 
 
 class TestContextTransitionsComprehensive:
@@ -116,8 +116,8 @@ class TestContextTransitionsComprehensive:
 
     def test_targeting_mode_cancel_returns_to_gameplay(self, game_engine):
         """Targeting Mode: Cancel returns to gameplay."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         engine = game_engine
 
@@ -242,8 +242,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Equip an exploit
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
@@ -262,8 +262,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Add items to inventory
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
@@ -409,8 +409,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Add exploits
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
@@ -516,8 +516,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Equip exploit
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
@@ -561,8 +561,8 @@ class TestInputIntegrationScenarios:
 
     def test_inventory_with_max_items(self, game_engine):
         """Boundary: Inventory with maximum items."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         engine = game_engine
 
@@ -620,8 +620,8 @@ class TestInputIntegrationScenarios:
 
     def test_targeting_mode_range_validation(self, game_engine):
         """Targeting: Range validation prevents invalid targets."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         engine = game_engine
 
@@ -772,8 +772,8 @@ class TestInputIntegrationScenarios:
     # Final Integration Test
     def test_complete_game_session_all_features(self, game_engine):
         """Integration: Complete game session using all features."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         engine = game_engine
 
@@ -834,8 +834,8 @@ class TestMultiScreenWorkflows:
 
     def test_main_to_settings_and_back_workflow(self):
         """Workflow: Main Menu → Settings → Main Menu."""
-        from game_menu_main import MainMenu
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_main import MainMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         settings = GameSettings()
 
@@ -855,8 +855,8 @@ class TestMultiScreenWorkflows:
 
     def test_main_to_about_and_back_workflow(self):
         """Workflow: Main Menu → About → Main Menu."""
-        from game_menu_about import AboutMenu
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_about import AboutMenu
+        from rsp.ui.menu_main import MainMenu
 
         settings = GameSettings()
 
@@ -1195,7 +1195,7 @@ class TestPerScreenInputMapping:
 
     def test_main_menu_input_mapping(self, game_engine):
         """Input: Main menu has correct input mapping."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu()
 

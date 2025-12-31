@@ -150,7 +150,7 @@ gh release delete vNEW-beta --yes       # Delete the release
 
 ### 1.1 Version String Updates
 
-**Source of truth:** `game_rules.json` line 2 - all Python code reads from `game_version.py` which loads this.
+**Source of truth:** `game_rules.json` line 2 - all Python code reads from `rsp.core.version` which loads this.
 
 **Automated by `bump-version.py`:**
 - `game_rules.json` - version field (source of truth)
@@ -165,11 +165,11 @@ gh release delete vNEW-beta --yes       # Delete the release
 - [ ] `CHANGELOG.md` - Add new version section with all changes (content, not version string)
 - [ ] `packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml` - release description text (auto-added entry has placeholder)
 
-**NOT needed (centralized via game_version.py):**
-- ~~game_menu_about.py~~ - imports VERSION_DISPLAY
-- ~~game_menu_main.py~~ - imports VERSION_DISPLAY
-- ~~game_save.py~~ - imports VERSION
-- ~~game_story.py~~ - imports VERSION
+**NOT needed (centralized via rsp.core.version):**
+- ~~rsp.ui.menu_about~~ - imports VERSION_DISPLAY
+- ~~rsp.ui.menu_main~~ - imports VERSION_DISPLAY
+- ~~rsp.systems.save~~ - imports VERSION
+- ~~rsp.utils.story~~ - imports VERSION
 - ~~game_content.json~~ - no version field
 - ~~narrative_content.json~~ - no version field
 
@@ -238,7 +238,7 @@ python build/validate-release.py
 
 ### 1.5 About/Credits Verification
 
-- [ ] Check About screen (`game_menu_about.py`) credits are current
+- [ ] Check About screen (`src/rsp/ui/menu_about.py`) credits are current
 - [ ] Verify copyright year is current
 - [ ] Check any third-party attribution is up to date
 
@@ -331,7 +331,7 @@ Check the `dist/` folder contains:
 ## Phase 3: Linux Build
 
 > **CRITICAL:** AppImage mounts as read-only. Any code using relative paths for saves/logs/metrics will FAIL.
-> All file operations MUST use `get_data_directory()` from `game_file_paths.py`.
+> All file operations MUST use `get_data_directory()` from `rsp.core.file_paths`.
 > The test `test_build_verification.py::TestNoRelativeDataPaths` catches this - run it before release.
 
 ### 3.1 Build Linux Binary
@@ -985,13 +985,13 @@ If a critical bug is discovered post-release:
 
 ## Quick Reference: Files with Version Strings
 
-**Centralized (auto-read from game_rules.json via game_version.py):**
+**Centralized (auto-read from game_rules.json via rsp.core.version):**
 | File | Note |
 |------|------|
-| `game_menu_about.py` | imports VERSION_DISPLAY |
-| `game_menu_main.py` | imports VERSION_DISPLAY |
-| `game_save.py` | imports VERSION |
-| `game_story.py` | imports VERSION |
+| `rsp.ui.menu_about` | imports VERSION_DISPLAY |
+| `rsp.ui.menu_main` | imports VERSION_DISPLAY |
+| `rsp.systems.save` | imports VERSION |
+| `rsp.utils.story` | imports VERSION |
 
 **Updated by bump-version.py:**
 | File | Locations |

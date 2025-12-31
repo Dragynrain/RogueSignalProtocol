@@ -56,7 +56,7 @@ if len(path) > 1:
 
 **Why this happens:** `path_to()` returns the full path including start → step1 → step2 → ... → goal. Many pathfinding libraries only return the steps (excluding start), but TCOD includes it.
 
-**This codebase's approach:** Instead of filtering, we check `len(path) > 1` and access `path[1]` directly. See `game_pathfinding.py` for the actual implementation.
+**This codebase's approach:** Instead of filtering, we check `len(path) > 1` and access `path[1]` directly. See `rsp.level.pathfinding` for the actual implementation.
 
 **Symptom if you get this wrong:** Movement fails silently - entities stay at starting position forever, trying to "move" with dx=0, dy=0.
 
@@ -123,7 +123,7 @@ dy = next_y - player_y
 
 **For console-based UI** (menus, dialogues, inventory):
 ```python
-# In event loops (game_loop.py)
+# In event loops (rsp.core.loop)
 for event in tcod.event.wait():
     if hasattr(event, 'position') and event.position:
         window_w, window_h = context.sdl_window.size
@@ -160,7 +160,7 @@ If alpha was previously 0 (transparent), rendering text with `bg=Colors.BLACK` w
 
 **99% of dialogue rendering should use UnifiedRenderer:**
 ```python
-from game_dialogue_system import UnifiedRenderer
+from rsp.ui.dialogue import UnifiedRenderer
 
 if dialogue_state.is_active():
     dialogue = dialogue_state.get_active()
@@ -176,7 +176,7 @@ if dialogue_state.is_active():
 
 Only use if UnifiedRenderer can't handle your use case:
 ```python
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.coordinates import CoordinateHelpers
 
 # 1. Make console transparent
 CoordinateHelpers.set_alpha_region(console, x=0, y=0,
@@ -197,7 +197,7 @@ CoordinateHelpers.set_alpha_region(console, x=9, y=4, width=20, height=3, alpha=
 ### Core Functions
 
 ```python
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.coordinates import CoordinateHelpers
 
 # Set alpha for a region (handles [y, x] ordering)
 CoordinateHelpers.set_alpha_region(

@@ -16,7 +16,7 @@ Only external dependencies (sound, rendering) are mocked.
 
 import pytest
 
-from game_entities import EnemyState, Position
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
 

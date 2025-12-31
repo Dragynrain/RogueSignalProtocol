@@ -21,7 +21,7 @@ class TestAboutMenuNavigation:
     @pytest.fixture
     def about_menu(self):
         """Create About menu for testing."""
-        from game_menu_about import AboutMenu
+        from rsp.ui.menu_about import AboutMenu
 
         menu = AboutMenu(background=None)
         yield menu

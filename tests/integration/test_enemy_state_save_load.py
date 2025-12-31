@@ -9,8 +9,8 @@ Tests roundtrip save/load for enemy fields that were previously missing:
 """
 
 
-from game_characters import Enemy
-from game_entities import EnemyMovement, EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.entities.base import EnemyMovement, EnemyState, Position
 
 
 class TestEnemyPatrolStateRoundtrip:
@@ -18,7 +18,7 @@ class TestEnemyPatrolStateRoundtrip:
 
     def test_original_patrol_index_serialized(self):
         """Verify original_patrol_index is included in serialized data."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         enemy = Enemy(Position(5, 5), "scanner")
         enemy.patrol_points = [Position(1, 1), Position(3, 3), Position(5, 5)]
@@ -33,7 +33,7 @@ class TestEnemyPatrolStateRoundtrip:
 
     def test_original_patrol_index_restored(self, basic_game_engine):
         """Verify original_patrol_index is restored from save data."""
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.persistence import GameStatePersistence
 
         enemy_data = {
             "id": "test_enemy",
@@ -63,7 +63,7 @@ class TestEnemyPatrolStateRoundtrip:
 
     def test_original_patrol_index_defaults_to_zero(self, basic_game_engine):
         """Old saves without original_patrol_index should default to 0."""
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.persistence import GameStatePersistence
 
         # Simulate old save format without original_patrol_index
         enemy_data = {
@@ -92,7 +92,7 @@ class TestVirusMovementTypeRoundtrip:
 
     def test_original_movement_type_serialized(self):
         """Verify original_movement_type is included in serialized data."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         enemy = Enemy(Position(5, 5), "virus")
         enemy.original_movement_type = EnemyMovement.PATROL
@@ -105,7 +105,7 @@ class TestVirusMovementTypeRoundtrip:
 
     def test_original_movement_type_not_serialized_when_none(self):
         """Verify original_movement_type is omitted when None."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         enemy = Enemy(Position(5, 5), "scanner")
         # Default is None for non-virus enemies
@@ -117,7 +117,7 @@ class TestVirusMovementTypeRoundtrip:
 
     def test_original_movement_type_restored(self, basic_game_engine):
         """Verify original_movement_type is restored from save data."""
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.persistence import GameStatePersistence
 
         enemy_data = {
             "id": "virus_enemy",
@@ -150,7 +150,7 @@ class TestEnemyMaxCpuRoundtrip:
 
     def test_max_cpu_serialized(self):
         """Verify max_cpu is included in serialized data."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         enemy = Enemy(Position(5, 5), "scanner")
         enemy.cpu = 20
@@ -165,7 +165,7 @@ class TestEnemyMaxCpuRoundtrip:
 
     def test_max_cpu_restored_exactly(self, basic_game_engine):
         """Verify max_cpu is restored to exact saved value."""
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.persistence import GameStatePersistence
 
         enemy_data = {
             "id": "damaged_enemy",
@@ -193,7 +193,7 @@ class TestEnemyMaxCpuRoundtrip:
 
     def test_max_cpu_defaults_to_type_max_for_old_saves(self, basic_game_engine):
         """Old saves without max_cpu should use enemy type default."""
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.persistence import GameStatePersistence
 
         # Simulate old save format without max_cpu
         enemy_data = {
@@ -225,8 +225,8 @@ class TestEnemyStateFullRoundtrip:
 
     def test_hostile_patrol_enemy_roundtrip(self, basic_game_engine):
         """Test patrol enemy that became hostile roundtrips correctly."""
-        from game_save import SaveGameManager
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
+        from rsp.systems.persistence import GameStatePersistence
 
         # Create an enemy that was patrolling and became hostile
         enemy = Enemy(Position(5, 5), "scanner")
@@ -263,8 +263,8 @@ class TestEnemyStateFullRoundtrip:
 
     def test_virus_mimic_enemy_roundtrip(self, basic_game_engine):
         """Test virus enemy with mimic behavior roundtrips correctly."""
-        from game_save import SaveGameManager
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
+        from rsp.systems.persistence import GameStatePersistence
 
         # Create a virus that was mimicking a static enemy
         enemy = Enemy(Position(7, 7), "virus")

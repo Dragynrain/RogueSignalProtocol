@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_save import SaveGameManager
+from rsp.systems.save import SaveGameManager
 
 
 class TestDeathHandlerExceptionResilience:
@@ -47,7 +47,7 @@ class TestDeathHandlerExceptionResilience:
 
         # Mock metrics to fail - patch in game_metrics where it's imported from
         with patch(
-            "game_metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
+            "rsp.systems.metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
         ):
             # Trigger death check
             result = engine.death_handler.check_death("virus")
@@ -65,8 +65,8 @@ class TestDeathHandlerExceptionResilience:
         # Set up an active dialogue
         import tcod.event
 
-        from game_dialogue_system import DialogueBox
-        from game_entities import Colors
+        from rsp.ui.dialogue import DialogueBox
+        from rsp.entities.base import Colors
 
         dialogue = DialogueBox(
             title="TEST",
@@ -134,7 +134,7 @@ class TestDeathHandlerExceptionResilience:
 
         # Mock metrics to fail - patch in game_metrics where it's imported from
         with patch(
-            "game_metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
+            "rsp.systems.metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
         ):
             engine.death_handler.check_death("combat", source="TestEnemy")
 
@@ -294,7 +294,7 @@ class TestFragmentPickupFlow:
         """Test that stepping on a fragment triggers discovery."""
         engine = basic_game_engine
 
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         # Get next undiscovered fragment
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
@@ -321,7 +321,7 @@ class TestFragmentPickupFlow:
         """Test that fragment is removed from map after pickup."""
         engine = basic_game_engine
 
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
         if next_index is None:
@@ -343,7 +343,7 @@ class TestFragmentPickupFlow:
         """Test that discovered fragments are saved to progress file."""
         engine = basic_game_engine
 
-        from data_loading import PersistentStorage
+        from rsp.core.data_loading import PersistentStorage
 
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
         if next_index is None:
@@ -444,8 +444,8 @@ class TestDeathDialogueQueuing:
 
         import tcod.event
 
-        from game_dialogue_system import DialogueBox
-        from game_entities import Colors
+        from rsp.ui.dialogue import DialogueBox
+        from rsp.entities.base import Colors
 
         # Clear any queued dialogues first
         engine.dialogue_state.dialogue_queue = []

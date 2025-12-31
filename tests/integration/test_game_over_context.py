@@ -10,9 +10,9 @@ Game over screen handles death and victory conditions!
 
 from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_input import InputHandler
-from game_input_actions import InputAction, InputContext
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
+from rsp.input.actions import InputAction, InputContext
 
 
 class TestGameOverActions:

@@ -11,8 +11,8 @@ from unittest.mock import Mock
 import numpy as np
 import tcod.console
 
-from game_coordinate_helpers import CoordinateHelpers
-from game_dialogue_system import (
+from rsp.rendering.coordinates import CoordinateHelpers
+from rsp.ui.dialogue import (
     DialogueState,
     UnifiedRenderer,
     create_death_dialogue,
@@ -304,7 +304,7 @@ class TestEdgeCases:
         """Dialogue with empty message renders without crash."""
         console = tcod.console.Console(width=80, height=50)
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         dialogue = DialogueBox(
             title="Empty",
@@ -328,7 +328,7 @@ class TestEdgeCases:
         """Dialogue with very long message wraps correctly."""
         console = tcod.console.Console(width=80, height=50)
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         long_message = "This is a very long message " * 20
 

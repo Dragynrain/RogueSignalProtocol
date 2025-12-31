@@ -9,9 +9,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_config import GameConfig
-from game_entities import Position
-from game_rendering_graphics import GraphicsMapRenderer
+from rsp.core.config import GameConfig
+from rsp.entities.base import Position
+from rsp.rendering.graphics import GraphicsMapRenderer
 
 
 class TestViewportRenderingBounds:

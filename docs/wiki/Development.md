@@ -84,12 +84,12 @@ See `.claude/BUILD_REFERENCE.md` for complete build documentation.
 
 ### Key Modules
 - **RogueSignalProtocol.py** - Main entry point
-- **game_engine.py** - Core game loop and state management
-- **game_map.py** - Map generation and terrain
-- **game_entities.py** - Player, enemies, items
-- **game_input.py** - Input handling and controls
-- **game_rendering.py** - Rendering system
-- **game_ai.py** - Enemy AI and behaviors
+- **src/rsp/core/engine.py** - Core game loop and state management
+- **src/rsp/level/map.py** - Map generation and terrain
+- **src/rsp/entities/** - Player, enemies, items
+- **src/rsp/input/** - Input handling and controls
+- **src/rsp/rendering/** - Rendering system
+- **src/rsp/entities/enemies.py** - Enemy AI and behaviors
 
 ### Configuration Files
 All game data is loaded from JSON:

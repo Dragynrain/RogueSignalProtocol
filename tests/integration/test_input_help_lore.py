@@ -17,8 +17,8 @@ import tcod
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
 
 
 class TestGraphicalHelpMenuCriticalPath:
@@ -31,7 +31,7 @@ class TestGraphicalHelpMenuCriticalPath:
     @pytest.fixture
     def help_menu(self):
         """Create graphical help menu instance with mocked dependencies."""
-        from game_menu_help_graphics import GraphicalHelpMenu
+        from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
         # Mock context and tile_manager (same pattern as test_gamepad_help_variants.py)
         mock_context = MagicMock()
@@ -48,7 +48,7 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_keyboard_navigate_pages(self, help_menu):
         """Keyboard: Arrow keys navigate pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         help_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -56,14 +56,14 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_navigation(self, help_menu):
         """D-pad: Navigate help pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         help_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -71,7 +71,7 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_face_button_navigation(self, help_menu):
         """Face buttons: Navigate or exit."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.CONFIRM)
         result = help_menu.execute_action(InputAction.CANCEL)
@@ -98,14 +98,14 @@ class TestHelpMenuCriticalPath:
     @pytest.fixture
     def help_menu(self):
         """Create help menu instance (text mode)."""
-        from game_menu_help_lore import HelpMenu
+        from rsp.ui.menu_help_lore import HelpMenu
 
         menu = HelpMenu()
         yield menu
 
     def test_keyboard_navigate_right(self, help_menu):
         """Keyboard: Right arrow navigates to next page."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -113,7 +113,7 @@ class TestHelpMenuCriticalPath:
 
     def test_keyboard_navigate_left(self, help_menu):
         """Keyboard: Left arrow navigates to previous page."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         # First go right to ensure we're not on first page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -123,14 +123,14 @@ class TestHelpMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_left_right_navigate(self, help_menu):
         """D-pad: Left/right navigate pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -138,7 +138,7 @@ class TestHelpMenuCriticalPath:
 
     def test_left_stick_horizontal_navigate(self, help_menu):
         """Left stick: Horizontal movement navigates pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.MOVE_EAST)
         help_menu.execute_action(InputAction.MOVE_WEST)
@@ -146,7 +146,7 @@ class TestHelpMenuCriticalPath:
 
     def test_face_button_b_exits(self, help_menu):
         """Face button B: Exits help menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
@@ -162,7 +162,7 @@ class TestLoreMenuCriticalPath:
     @pytest.fixture
     def lore_menu(self):
         """Create lore menu instance."""
-        from game_menu_help_lore import LoreMenu
+        from rsp.ui.menu_help_lore import LoreMenu
 
         menu = LoreMenu()
         # Load story fragments so we have data
@@ -172,7 +172,7 @@ class TestLoreMenuCriticalPath:
     def test_keyboard_navigate_fragments(self, lore_menu):
         """Keyboard: Up/down navigate fragment list."""
         # LoreMenu.execute_action() loads fragments internally
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -186,7 +186,7 @@ class TestLoreMenuCriticalPath:
 
     def test_keyboard_confirm_enters_reading(self, lore_menu):
         """Keyboard: Enter enters reading mode."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -200,7 +200,7 @@ class TestLoreMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, lore_menu):
         """Keyboard: Escape exits lore menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         lore_menu.lore_viewer_mode = "list"
         result = lore_menu.execute_action(InputAction.CANCEL)
@@ -208,7 +208,7 @@ class TestLoreMenuCriticalPath:
 
     def test_reading_mode_escape_returns_to_list(self, lore_menu):
         """Reading mode: Escape returns to fragment list."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -221,7 +221,7 @@ class TestLoreMenuCriticalPath:
 
     def test_dpad_navigation(self, lore_menu):
         """D-pad: Navigate fragment list."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -243,8 +243,8 @@ class TestGraphicsPreviewMenuCriticalPath:
     @pytest.fixture
     def graphics_menu(self):
         """Create graphics preview menu instance with mocked context."""
-        from game_graphics_tiles import TileManager
-        from game_menu_graphics_preview import GraphicsPreviewMenu
+        from rsp.rendering.tiles import TileManager
+        from rsp.ui.menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context (same pattern as test_graphics_preview_gamepad.py)
         context = Mock()
@@ -259,7 +259,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_navigate_entities(self, graphics_menu):
         """Keyboard: Navigate through entity types."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
@@ -267,7 +267,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_navigate_variants(self, graphics_menu):
         """Keyboard: Navigate variants (left/right)."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
         graphics_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -275,14 +275,14 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, graphics_menu):
         """Keyboard: Escape exits preview."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
 
     def test_dpad_navigation(self, graphics_menu):
         """D-pad: Navigate entities and variants."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
@@ -292,7 +292,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_face_buttons(self, graphics_menu):
         """Face buttons: Confirm and cancel."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.CONFIRM)
         result = graphics_menu.execute_action(InputAction.CANCEL)
@@ -309,7 +309,7 @@ class TestHelpMenuInputComprehensive:
 
     @pytest.fixture
     def help_menu(self):
-        from game_menu_help_lore import HelpMenu
+        from rsp.ui.menu_help_lore import HelpMenu
 
         menu = HelpMenu()
         yield menu
@@ -422,7 +422,7 @@ class TestLoreMenuInputComprehensive:
     @pytest.fixture
     def lore_menu(self):
         """Create lore menu instance."""
-        from game_menu_help_lore import LoreMenu
+        from rsp.ui.menu_help_lore import LoreMenu
 
         menu = LoreMenu()
         yield menu

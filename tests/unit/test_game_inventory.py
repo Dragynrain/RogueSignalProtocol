@@ -19,8 +19,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_entities import ExploitDefinition, TargetingMode
-from game_inventory import CodeHack, ExploitItem, InventoryItem, InventoryManager
+from rsp.entities.base import ExploitDefinition, TargetingMode
+from rsp.combat.inventory import CodeHack, ExploitItem, InventoryItem, InventoryManager
 
 
 class TestInventoryManagerInitialization:
@@ -199,7 +199,7 @@ class TestInventoryManagerEquipping:
 
     def test_equip_exploit_adds_to_equipped_list(self, real_game_data):
         """equip_exploit should add exploit to equipped_exploits."""
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         mock_player = Mock()
         mock_player.ram_total = 10
@@ -218,7 +218,7 @@ class TestInventoryManagerEquipping:
 
     def test_equip_exploit_removes_from_inventory(self, real_game_data):
         """equip_exploit should remove exploit from items."""
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         mock_player = Mock()
         mock_player.ram_total = 10
@@ -235,7 +235,7 @@ class TestInventoryManagerEquipping:
 
     def test_equip_exploit_fails_if_already_equipped(self, real_game_data):
         """Cannot equip the same exploit twice."""
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         mock_player = Mock()
         mock_player.ram_total = 10
@@ -251,7 +251,7 @@ class TestInventoryManagerEquipping:
 
     def test_equip_exploit_fails_if_slots_full(self, real_game_data):
         """Cannot equip more than max_equipped_exploits."""
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         mock_player = Mock()
         mock_player.ram_total = 100  # Enough RAM
@@ -268,7 +268,7 @@ class TestInventoryManagerEquipping:
 
     def test_equip_exploit_fails_if_insufficient_ram(self, real_game_data):
         """Cannot equip exploit if not enough RAM."""
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         mock_player = Mock()
         mock_player.ram_total = 2  # Very limited RAM

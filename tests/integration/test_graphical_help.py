@@ -11,9 +11,9 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_menu_help_graphics import GraphicalHelpMenu
-from game_menu_help_lore import HelpMenu, create_help_menu
+from rsp.core.config import GameSettings
+from rsp.ui.menu_help_graphics import GraphicalHelpMenu
+from rsp.ui.menu_help_lore import HelpMenu, create_help_menu
 
 
 class TestGraphicalHelpFactory:

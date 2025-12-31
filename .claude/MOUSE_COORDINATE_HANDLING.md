@@ -9,14 +9,14 @@
 - **Used by**: Main menu, settings, graphics preview, help screens, achievements
 - **Returns**: Tile position (0-79, 0-49)
 - **Tool**: `MenuMouseHandler.convert_to_tile_coords()`
-- **File**: `game_mouse_utils.py`
+- **File**: `src/rsp/utils/mouse.py`
 
 ### 2. **World Coordinates** (Game Map)
 - **What**: Position on game map (50×50 in this game)
 - **Used by**: In-game clicks, targeting, look mode, movement
 - **Returns**: World position (0-49, 0-49) or None
 - **Tool**: `InputCoordinateConverter.pixel_to_world_position()`
-- **File**: `game_input_coordinates.py`
+- **File**: `src/rsp/input/coordinates.py`
 
 **These are fundamentally different operations and should NOT be unified.**
 
@@ -57,10 +57,10 @@ Adding mouse support to Graphics Preview took multiple debugging sessions becaus
 
 ### For Menu/UI Coordinates
 
-Use `MenuMouseHandler` from `game_mouse_utils.py`:
+Use `MenuMouseHandler` from `rsp.utils.mouse`:
 
 ```python
-from game_mouse_utils import MenuMouseHandler
+from rsp.utils.mouse import MenuMouseHandler
 
 # In menu event loop:
 for event in tcod.event.get():
@@ -76,10 +76,10 @@ for event in tcod.event.get():
 
 ### For World Coordinates
 
-Use `InputCoordinateConverter.pixel_to_world_position()` from `game_input_coordinates.py`:
+Use `InputCoordinateConverter.pixel_to_world_position()` from `rsp.input.coordinates`:
 
 ```python
-from game_input_coordinates import InputCoordinateConverter
+from rsp.input.coordinates import InputCoordinateConverter
 
 # In game input handling:
 world_pos = InputCoordinateConverter.pixel_to_world_position(
@@ -99,14 +99,14 @@ if world_pos:
 
 ## Implementation Details
 
-**MenuMouseHandler (game_mouse_utils.py):**
+**MenuMouseHandler (rsp.utils.mouse):**
 - Converts pixel → console tile (0-79, 0-49)
 - Simple and stateless - no game state needed
 
-**InputCoordinateConverter.pixel_to_world_position (game_input_coordinates.py):**
+**InputCoordinateConverter.pixel_to_world_position (rsp.input.coordinates):**
 - Converts pixel → world position (0-49, 0-49)
 - Complex and stateful - needs graphics mode, camera offset, map bounds, viewport config
-- Used by input handlers in `game_input_gameplay.py` and `game_input_modals.py`
+- Used by input handlers in `rsp.input.gameplay` and `rsp.input.modals`
 
 ## Testing Checklist
 
@@ -125,7 +125,7 @@ When adding mouse support to a new screen:
 ### Adding Mouse Support to a Menu/UI Screen
 
 ```python
-from game_mouse_utils import MenuMouseHandler
+from rsp.utils.mouse import MenuMouseHandler
 
 # In your menu event loop:
 for event in tcod.event.get():
@@ -150,7 +150,7 @@ def handle_mouse_click(self, event) -> str:
 
 ### Adding Mouse Support to In-Game
 
-See `game_input_gameplay.py` and `game_input_modals.py` for examples - use `InputCoordinateConverter.pixel_to_world_position()`
+See `rsp.input.gameplay` and `rsp.input.modals` for examples - use `InputCoordinateConverter.pixel_to_world_position()`
 
 ## Key Takeaways
 
@@ -178,10 +178,9 @@ See `game_input_gameplay.py` and `game_input_modals.py` for examples - use `Inpu
 ## Files Modified During Graphics Preview Fix
 
 **What was fixed:**
-- `game_loop.py:320-343` - Manual coordinate conversion in graphics preview loop
-- `game_menu_graphics_preview.py:967-1020` - Mouse handlers using event.tile
-- `game_menu_graphics_preview.py:822-920` - Arrow region tracking for clickable areas
+- `rsp.core.loop` - Manual coordinate conversion in graphics preview loop
+- `rsp.ui.menu_graphics_preview` - Mouse handlers using event.tile, arrow region tracking
 
 **What was created:**
-- `game_mouse_utils.py` - Menu mouse coordinate conversion utility
+- `rsp.utils.mouse` - Menu mouse coordinate conversion utility
 - `.claude/MOUSE_COORDINATE_HANDLING.md` - This post-mortem document

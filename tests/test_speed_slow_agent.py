@@ -20,7 +20,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from game_inventory import CodeHack
+from rsp.combat.inventory import CodeHack
 from tests.test_agent import GameTestAgent
 
 # Configure logging to see the test details
@@ -199,7 +199,7 @@ def test_speed_reduced_by_inhibitor():
     player_x, player_y = agent.player.x, agent.player.y
     inhibitor = agent.spawn_enemy("inhibitor", player_x + 1, player_y)
 
-    from game_entities import EnemyState
+    from rsp.entities.base import EnemyState
 
     inhibitor.state = EnemyState.HOSTILE
 
@@ -277,7 +277,7 @@ def test_speed_chase_scenario():
     player_x, player_y = agent.player.x, agent.player.y
     enemy = agent.spawn_enemy("bot", player_x + 3, player_y)
 
-    from game_entities import EnemyState
+    from rsp.entities.base import EnemyState
 
     enemy.state = EnemyState.HOSTILE  # Make it chase
 
@@ -329,7 +329,7 @@ def test_slow_chase_scenario():
     enemy = agent.spawn_enemy("bot", player_x + 5, player_y)
 
     # Make enemy hostile so it chases
-    from game_entities import EnemyState
+    from rsp.entities.base import EnemyState
 
     enemy.state = EnemyState.HOSTILE
 

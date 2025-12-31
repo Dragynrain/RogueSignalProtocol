@@ -5,7 +5,7 @@ Tests real movement mechanics, collision detection, and map navigation.
 """
 
 
-from game_entities import Position
+from rsp.entities.base import Position
 
 
 class TestPlayerMovementIntegration:

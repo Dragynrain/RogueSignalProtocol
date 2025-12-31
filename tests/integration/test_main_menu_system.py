@@ -16,11 +16,11 @@ import tcod.event
 import tcod.sdl.joystick
 import tcod.tileset
 
-from game_audio import NullSoundManager
-from game_config import GameSettings
-from game_input_actions import InputContext
-from game_loop import initialize_game_systems
-from game_menus import MenuBackground
+from rsp.systems.audio import NullSoundManager
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputContext
+from rsp.core.loop import initialize_game_systems
+from rsp.ui.menus import MenuBackground
 
 
 class TestMainMenuSystem:

@@ -7,9 +7,9 @@ Tests Phase 4-5 features: T-junctions, landmark rooms, objective-oriented placem
 
 import pytest
 
-from game_config import GameConfig
-from game_level import LevelGenerator
-from game_map import GameMap
+from rsp.core.config import GameConfig
+from rsp.level.generator import LevelGenerator
+from rsp.level.map import GameMap
 
 
 class TestPhase4AdvancedFeatures:

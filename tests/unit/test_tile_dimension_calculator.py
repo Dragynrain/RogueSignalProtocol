@@ -7,8 +7,8 @@ and graphics modes. Validates minimum size enforcement and fallback handling.
 """
 
 
-from game_config import GameConfig
-from game_tile_dimension_calculator import TileDimensionCalculator
+from rsp.core.config import GameConfig
+from rsp.rendering.dimensions import TileDimensionCalculator
 
 
 class TestTileDimensionCalculatorGraphicsMode:

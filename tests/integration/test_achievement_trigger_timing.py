@@ -7,7 +7,7 @@ Tests achievement-related timing scenarios that can be validated in headless mod
 - Special game states (death, victory, combat)
 """
 
-from game_entities import EnemyState
+from rsp.entities.base import EnemyState
 from tests.test_agent import GameTestAgent
 
 

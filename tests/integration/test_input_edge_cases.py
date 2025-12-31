@@ -19,10 +19,10 @@ import tcod.context
 import tcod.event
 import tcod.tileset
 
-from game_audio import NullSoundManager
-from game_config import GameSettings
-from game_loop import initialize_game_systems
-from game_menus import MenuBackground
+from rsp.systems.audio import NullSoundManager
+from rsp.core.config import GameSettings
+from rsp.core.loop import initialize_game_systems
+from rsp.ui.menus import MenuBackground
 
 
 class TestScreenTransitions:
@@ -45,7 +45,7 @@ class TestScreenTransitions:
         """Opening and closing inventory preserves player position and game state."""
         engine = gameplay_with_menus_setup
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -84,7 +84,7 @@ class TestScreenTransitions:
         """Entering and exiting look mode preserves player position."""
         engine = gameplay_with_menus_setup
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -115,7 +115,7 @@ class TestScreenTransitions:
 
     def test_menu_selection_persists_across_transitions(self):
         """Main menu selection persists when returning from submenus."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu()
 
@@ -130,7 +130,7 @@ class TestScreenTransitions:
         """Rapidly opening and closing menus doesn't crash or corrupt state."""
         engine = gameplay_with_menus_setup
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -168,7 +168,7 @@ class TestInputPriority:
     @pytest.fixture
     def main_menu_for_priority_test(self):
         """Setup main menu for priority testing."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu()
         console = tcod.console.Console(80, 50, order="F")
@@ -226,7 +226,7 @@ class TestRapidInput:
     @pytest.fixture
     def main_menu_rapid_test(self):
         """Setup main menu for rapid input testing."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu()
         console = tcod.console.Console(80, 50, order="F")
@@ -304,7 +304,7 @@ class TestBoundaryConditions:
     @pytest.fixture
     def achievements_for_boundary_test(self):
         """Setup achievements menu for boundary testing."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         yield menu
@@ -349,7 +349,7 @@ class TestBoundaryConditions:
 
     def test_menu_wraparound_behavior(self):
         """Menu selection wraps around correctly at boundaries."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu()
 
@@ -526,7 +526,7 @@ class TestAnalogStickEdgeCases:
     def test_analog_stick_deadzone_ignored(self, gameplay_for_analog_test):
         """Small analog stick deflections are handled without error."""
         engine = gameplay_for_analog_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -546,7 +546,7 @@ class TestAnalogStickEdgeCases:
     def test_analog_stick_partial_deflection_moves(self, gameplay_for_analog_test):
         """Partial analog stick deflection is handled correctly."""
         engine = gameplay_for_analog_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -567,7 +567,7 @@ class TestAnalogStickEdgeCases:
     def test_analog_stick_diagonal_movement(self, gameplay_for_analog_test):
         """Diagonal analog stick input (both X and Y) is handled correctly."""
         engine = gameplay_for_analog_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -597,7 +597,7 @@ class TestAnalogStickEdgeCases:
     def test_analog_stick_release_stops_movement(self, gameplay_for_analog_test):
         """Releasing analog stick (returning to center) is handled correctly."""
         engine = gameplay_for_analog_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -642,7 +642,7 @@ class TestMultiStepWorkflows:
     def test_complete_inventory_workflow(self, full_game_for_workflows):
         """Complete workflow: open inventory -> navigate -> close -> game continues."""
         engine = full_game_for_workflows
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -686,7 +686,7 @@ class TestMultiStepWorkflows:
     def test_complete_look_mode_workflow(self, full_game_for_workflows):
         """Complete workflow: enter look mode -> move cursor -> inspect -> exit -> game continues."""
         engine = full_game_for_workflows
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -726,7 +726,7 @@ class TestMultiStepWorkflows:
         """Workflow: main menu -> submenu -> navigate -> return -> selection preserved."""
         from unittest.mock import Mock
 
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         mock_sound_manager = Mock()
         menu = MainMenu()
@@ -757,7 +757,7 @@ class TestMultiStepWorkflows:
     def test_gameplay_to_menu_and_back_workflow(self, full_game_for_workflows):
         """Workflow: gameplay -> open menu -> close -> gameplay continues seamlessly."""
         engine = full_game_for_workflows
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -813,7 +813,7 @@ class TestInputBuffering:
     def test_input_during_transition_is_handled(self, engine_for_buffering_test):
         """Input during state transition doesn't get lost."""
         engine = engine_for_buffering_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -837,7 +837,7 @@ class TestInputBuffering:
     def test_rapid_state_transitions(self, engine_for_buffering_test):
         """Rapidly opening and closing menus doesn't cause state corruption."""
         engine = engine_for_buffering_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 
@@ -865,7 +865,7 @@ class TestInputBuffering:
     def test_multiple_inputs_same_frame(self, engine_for_buffering_test):
         """Multiple inputs in same frame are all processed."""
         engine = engine_for_buffering_test
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, None)
 

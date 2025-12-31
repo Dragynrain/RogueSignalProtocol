@@ -4,7 +4,7 @@ Test achievements pagination logic.
 Regression test for incorrect page number display when at max scroll.
 """
 
-from game_menu_achievements import AchievementsMenu
+from rsp.ui.menu_achievements import AchievementsMenu
 
 
 class TestAchievementsPagination:
@@ -81,7 +81,7 @@ class TestAchievementsPagination:
         menu.scroll_offset = initial_offset
 
         # Execute page down action
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu.execute_action(InputAction.NAVIGATE_PAGE_DOWN)
 

@@ -21,14 +21,14 @@ class TestMenuBackNavigation:
         # Main Menu -> Settings -> Controls Hub -> Keyboard/Gamepad Bindings
         # "back" from Controls Hub should go to Settings, not Main Menu
 
-        from game_config import GameSettings
-        from game_menu_controls import ControlsMenuHub
+        from rsp.core.config import GameSettings
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         settings = GameSettings()
         hub = ControlsMenuHub(settings, None)
 
         # When user presses back in controls hub
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = hub.execute_action(InputAction.CANCEL)
 
@@ -39,10 +39,10 @@ class TestMenuBackNavigation:
 
     def test_keyboard_bindings_back_returns_to_controls_hub(self):
         """Keyboard bindings 'back' should return to controls hub."""
-        from game_config import GameSettings
-        from game_input_actions import InputAction
-        from game_input_mappings import InputMapper
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.core.config import GameSettings
+        from rsp.input.actions import InputAction
+        from rsp.input.mappings import InputMapper
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         settings = GameSettings()
         mapper = InputMapper()
@@ -58,9 +58,9 @@ class TestGamepadEnabledSetting:
     def test_gamepad_disabled_blocks_controller_button(self):
         """When gamepad_enabled is False, controller buttons should be ignored."""
         # This is a failing test - the setting isn't checked yet
-        from game_input_actions import InputContext
-        from game_input_gamepad import GamepadInputHandler
-        from game_input_mappings import InputMapper
+        from rsp.input.actions import InputContext
+        from rsp.input.gamepad import GamepadInputHandler
+        from rsp.input.mappings import InputMapper
 
         mapper = InputMapper()
 
@@ -87,9 +87,9 @@ class TestGamepadEnabledSetting:
 
     def test_gamepad_enabled_processes_controller_button(self):
         """When gamepad_enabled is True, controller buttons should be processed."""
-        from game_input_actions import InputAction, InputContext
-        from game_input_gamepad import GamepadInputHandler
-        from game_input_mappings import InputMapper
+        from rsp.input.actions import InputAction, InputContext
+        from rsp.input.gamepad import GamepadInputHandler
+        from rsp.input.mappings import InputMapper
 
         mapper = InputMapper()
 
@@ -120,7 +120,7 @@ class TestDeadzoneSetting:
 
     def test_deadzone_change_applies_at_runtime(self):
         """Changing deadzone setting should affect analog stick immediately."""
-        from game_input_analog import AnalogStickHandler
+        from rsp.input.analog import AnalogStickHandler
 
         handler = AnalogStickHandler(deadzone=0.15)
         assert handler.deadzone == 0.15
@@ -140,8 +140,8 @@ class TestDeadzoneSetting:
         The sync_settings_to_analog_handler() method syncs settings to the analog handler.
         It's also called automatically on every axis event (line 268-269 in game_input_gamepad.py).
         """
-        from game_input_gamepad import GamepadInputHandler
-        from game_input_mappings import InputMapper
+        from rsp.input.gamepad import GamepadInputHandler
+        from rsp.input.mappings import InputMapper
 
         mapper = InputMapper()
 
@@ -174,7 +174,7 @@ class TestLeftStickHorizontalInMenus:
     def test_left_stick_horizontal_adjusts_sliders(self):
         """Left stick horizontal movement should adjust slider values in menus."""
         # This is testing the game loop behavior - it currently only handles vertical
-        from game_input_analog import AnalogStickHandler
+        from rsp.input.analog import AnalogStickHandler
 
         handler = AnalogStickHandler()
 
@@ -189,7 +189,7 @@ class TestLeftStickHorizontalInMenus:
 
     def test_horizontal_stick_returns_correct_direction(self):
         """Horizontal stick movement should return correct dx values."""
-        from game_input_analog import AnalogStickHandler
+        from rsp.input.analog import AnalogStickHandler
 
         handler = AnalogStickHandler()
 
@@ -221,8 +221,8 @@ class TestKeyboardContextAwareness:
 
         import tcod.event
 
-        from game_input_actions import InputAction, InputContext
-        from game_input_base import BaseInputHandler
+        from rsp.input.actions import InputAction, InputContext
+        from rsp.input.base import BaseInputHandler
 
         # Create a concrete subclass for testing
         class TestMenu(BaseInputHandler):

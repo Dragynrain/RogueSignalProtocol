@@ -14,10 +14,10 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_input_actions import InputAction
-from game_input_mappings import MODIFIER_ONLY_KEYS, InputMapper
-from game_menu_controls import KeyboardBindingsMenu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
+from rsp.input.mappings import MODIFIER_ONLY_KEYS, InputMapper
+from rsp.ui.menu_controls import KeyboardBindingsMenu
 from tests.integration.input_test_utils import InputTestHelper
 
 
@@ -291,7 +291,7 @@ class TestHelpTextDisplaysModifierKey:
 
     def test_info_panel_shows_question_mark_for_help(self):
         """Info panel should display 'Press ?' for help (shows symbol, not Shift+/)."""
-        from game_info_panel import InfoProvider
+        from rsp.ui.info_panel import InfoProvider
 
         # Create a minimal mock game for testing
         class MockGame:

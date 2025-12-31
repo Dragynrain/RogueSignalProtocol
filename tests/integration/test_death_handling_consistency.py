@@ -11,7 +11,7 @@ All death types (combat, virus, overheat, self_damage) should:
 This test ensures the centralized PlayerDeathHandler is used for all deaths.
 """
 
-from game_metrics import init_session_metrics
+from rsp.systems.metrics import init_session_metrics
 from tests.test_agent import GameTestAgent
 
 
@@ -53,8 +53,8 @@ class TestDeathHandlingConsistency:
 
     def test_overheat_death_sets_correct_death_cause(self):
         """Overheat death should set death_cause to 'overheat'."""
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         agent = GameTestAgent(seed=42)
         init_session_metrics()
@@ -96,7 +96,7 @@ class TestDeathHandlingConsistency:
 
     def test_all_deaths_delete_save(self, tmp_path, monkeypatch):
         """All death types should delete the save file."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         # Patch save path
         test_save = tmp_path / "test_save.json"
@@ -155,8 +155,8 @@ class TestDeathCauseDetection:
 
     def test_overheat_detected_from_bump_attack(self):
         """Death from bump attack overheat should be classified as overheat."""
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         agent = GameTestAgent(seed=42)
         init_session_metrics()

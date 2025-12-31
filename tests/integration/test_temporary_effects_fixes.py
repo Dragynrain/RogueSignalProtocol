@@ -7,9 +7,9 @@ Tests real game scenarios to prevent double-decrementing bugs.
 import unittest
 from unittest.mock import Mock, patch
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_entities import Position
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
 
 
 class TestTemporaryEffectsDecayFixes(unittest.TestCase):
@@ -88,7 +88,7 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
     def test_system_crash_disables_enemies_for_four_turns(self):
         """Test that system crash properly disables enemies for 4 turns."""
         # Create an enemy and disable it with system crash
-        from game_characters import Enemy
+        from rsp.entities.characters import Enemy
 
         enemy = Enemy(Position(10, 10), "virus")
         enemy.disabled_turns = 4

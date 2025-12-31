@@ -10,8 +10,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_config import GameSettings
-from game_graphics_tiles import TileManager
+from rsp.core.config import GameSettings
+from rsp.rendering.tiles import TileManager
 
 
 class TestTileManagerInitialization:

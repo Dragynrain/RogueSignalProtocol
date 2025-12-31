@@ -17,8 +17,8 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_menu_main import MainMenu
+from rsp.core.config import GameSettings
+from rsp.ui.menu_main import MainMenu
 from tests.integration.input_test_utils import InputTestHelper
 
 

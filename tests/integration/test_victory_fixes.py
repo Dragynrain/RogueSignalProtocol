@@ -9,10 +9,10 @@ from unittest.mock import Mock, patch
 
 import tcod
 
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_map import RestoreNode
-from game_save import SaveGameManager
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.level.map import RestoreNode
+from rsp.systems.save import SaveGameManager
 
 
 class TestVictoryFixes(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestVictoryFixes(unittest.TestCase):
         console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
 
         # Create victory dialogue using new system
-        from game_dialogue_system import UnifiedRenderer, create_victory_dialogue
+        from rsp.ui.dialogue import UnifiedRenderer, create_victory_dialogue
 
         victory_dialogue = create_victory_dialogue()
 

@@ -35,8 +35,8 @@ import tcod.sdl.joystick
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from game_config import GameConfig
-from game_input import InputHandler
+from rsp.core.config import GameConfig
+from rsp.input.handler import InputHandler
 from tests.test_agent import GameTestAgent
 
 
@@ -864,7 +864,7 @@ class TestGamepadChaosAgent:
         # Create and show a test dialogue
         import tcod.event
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         test_dialogue = DialogueBox(
             title="TEST DIALOGUE",

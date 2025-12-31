@@ -15,10 +15,10 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from game_config import GameConfig
-from game_entities import Position
-from game_input import InputHandler
-from game_input_coordinates import InputCoordinateConverter
+from rsp.core.config import GameConfig
+from rsp.entities.base import Position
+from rsp.input.handler import InputHandler
+from rsp.input.coordinates import InputCoordinateConverter
 
 
 def create_mock_game():
@@ -123,11 +123,11 @@ class TestMousePixelToWorldConversion:
         valid_tile_y = status_bar_height + 5  # 5 tiles into viewport
 
         with patch(
-            "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+            "rsp.input.coordinates.InputCoordinateConverter.get_window_dimensions",
             return_value=(800, 600),
         ):
             with patch(
-                "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
                 return_value=(valid_tile_x, valid_tile_y),
             ):
                 world_pos = InputCoordinateConverter.pixel_to_world_position(
@@ -150,7 +150,7 @@ class TestMousePixelToWorldConversion:
 
         # Click in status bar (y=0, which is < status bar height)
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(40, 0)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(40, 0)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 10, renderer, game, "glyph"
@@ -170,7 +170,7 @@ class TestMousePixelToWorldConversion:
         # Click that would result in world coords beyond map bounds
         # Viewport coords that, when added to camera offset, exceed MAP_WIDTH/HEIGHT
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(100, 100)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(100, 100)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 800, 600, renderer, game, "glyph"
@@ -207,7 +207,7 @@ class TestMousePixelToWorldConversion:
 
         # Mock the coordinate conversion
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_sprite_grid", return_value=(15, 15)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_sprite_grid", return_value=(15, 15)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 480, 480, mock_renderer, game, "graphics"
@@ -226,7 +226,7 @@ class TestMousePixelToWorldConversion:
 
         # Test viewport x bounds
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(-5, 10)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(-5, 10)
         ):
             assert (
                 InputCoordinateConverter.pixel_to_world_position(0, 200, renderer, game, "glyph")
@@ -236,7 +236,7 @@ class TestMousePixelToWorldConversion:
         # Test viewport x upper bound (depends on VIEWPORT_WIDTH)
         viewport_width = GameConfig.VIEWPORT_WIDTH("glyph")
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
             return_value=(viewport_width + 10, 10),
         ):
             assert (
@@ -254,7 +254,7 @@ class TestMousePixelToWorldConversion:
 
         # Click that would put world coords beyond map width
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(20, 10)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(20, 10)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 600, 200, renderer, game, "glyph"
@@ -285,7 +285,7 @@ class TestLookModeMouseHandlers:
         event.position.y = 300
 
         with patch(
-            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            "rsp.input.coordinates.InputCoordinateConverter.pixel_to_world_position",
             return_value=Position(20, 15),
         ):
             handler._handle_look_mode_mouse_motion(event)
@@ -309,7 +309,7 @@ class TestLookModeMouseHandlers:
         event.position.y = -100
 
         with patch(
-            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            "rsp.input.coordinates.InputCoordinateConverter.pixel_to_world_position",
             return_value=None,
         ):
             handler._handle_look_mode_mouse_motion(event)
@@ -336,7 +336,7 @@ class TestTargetingMouseHandlers:
         event.position.y = 400
 
         with patch(
-            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            "rsp.input.coordinates.InputCoordinateConverter.pixel_to_world_position",
             return_value=Position(30, 25),
         ):
             handler._handle_targeting_mouse_motion(event)
@@ -360,7 +360,7 @@ class TestTargetingMouseHandlers:
         event.position.y = 10000
 
         with patch(
-            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            "rsp.input.coordinates.InputCoordinateConverter.pixel_to_world_position",
             return_value=None,
         ):
             handler._handle_targeting_mouse_motion(event)
@@ -454,11 +454,11 @@ class TestMouseMotionIntegration:
 
         with patch.object(handler, "_handle_look_mode_mouse_motion") as mock_handler:
             with patch(
-                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                "rsp.input.coordinates.InputCoordinateConverter.get_window_dimensions",
                 return_value=(800, 600),
             ):
                 with patch(
-                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
                     return_value=(40, 25),
                 ):
                     handler.handle_mouse_motion(event)
@@ -479,11 +479,11 @@ class TestMouseMotionIntegration:
 
         with patch.object(handler, "_handle_targeting_mouse_motion") as mock_handler:
             with patch(
-                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                "rsp.input.coordinates.InputCoordinateConverter.get_window_dimensions",
                 return_value=(800, 600),
             ):
                 with patch(
-                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
                     return_value=(40, 25),
                 ):
                     handler.handle_mouse_motion(event)
@@ -505,11 +505,11 @@ class TestMouseMotionIntegration:
 
         with patch.object(handler, "_handle_inventory_mouse_motion") as mock_handler:
             with patch(
-                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                "rsp.input.coordinates.InputCoordinateConverter.get_window_dimensions",
                 return_value=(800, 600),
             ):
                 with patch(
-                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
                     return_value=(40, 25),
                 ):
                     handler.handle_mouse_motion(event)
@@ -571,7 +571,7 @@ class TestEdgeCasesAndErrorHandling:
 
         # Mock CoordinateHelpers to raise an exception
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords",
             side_effect=Exception("Test error"),
         ):
             # Should return None, not crash
@@ -589,7 +589,7 @@ class TestEdgeCasesAndErrorHandling:
 
         # Should default to glyph mode and not crash
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(10, 10)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(10, 10)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 300, renderer, game, "glyph"  # Explicitly pass "glyph" as fallback
@@ -608,7 +608,7 @@ class TestEdgeCasesAndErrorHandling:
         renderer = None
 
         with patch(
-            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(15, 15)
+            "rsp.input.coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(15, 15)
         ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 300, renderer, game, "glyph"

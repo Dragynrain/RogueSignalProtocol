@@ -13,10 +13,10 @@ Coverage:
 - Edge cases (AOE multi-kills, stealth streaks, etc.)
 """
 
-from game_achievements import AchievementChecker, AchievementManager
-from game_combat import ExploitSystem
-from game_entities import EnemyState, Position
-from game_metrics import get_current_session, init_session_metrics
+from rsp.systems.achievements import AchievementChecker, AchievementManager
+from rsp.combat.combat import ExploitSystem
+from rsp.entities.base import EnemyState, Position
+from rsp.systems.metrics import get_current_session, init_session_metrics
 from tests.fixtures.simple_fixtures import enemy_builder
 from tests.test_agent import GameTestAgent
 
@@ -382,7 +382,7 @@ class TestCollectionAchievements:
         session = get_current_session()
 
         # Use all 12 exploits
-        from game_achievements import TOTAL_EXPLOITS
+        from rsp.systems.achievements import TOTAL_EXPLOITS
 
         session.unique_exploits_used_this_run = {f"exploit_{i}" for i in range(TOTAL_EXPLOITS)}
 
@@ -478,7 +478,7 @@ class TestLifetimeAchievements:
 
     def test_veteran_requires_10_games_played(self):
         """Veteran requires completing 10 games."""
-        from game_metrics import LifetimeMetrics
+        from rsp.systems.metrics import LifetimeMetrics
 
         lifetime = LifetimeMetrics()
         lifetime.total_games = 12
@@ -493,7 +493,7 @@ class TestLifetimeAchievements:
 
     def test_persistent_requires_5_victories(self):
         """Persistent requires 5 victories."""
-        from game_metrics import LifetimeMetrics
+        from rsp.systems.metrics import LifetimeMetrics
 
         lifetime = LifetimeMetrics()
         lifetime.total_victories = 7
@@ -508,7 +508,7 @@ class TestLifetimeAchievements:
 
     def test_legendary_requires_20_victories(self):
         """Legendary requires 20 victories."""
-        from game_metrics import LifetimeMetrics
+        from rsp.systems.metrics import LifetimeMetrics
 
         lifetime = LifetimeMetrics()
         lifetime.total_victories = 25
@@ -761,7 +761,7 @@ class TestTurnsWithKillsTracking:
 
     def test_single_kill_increments_turns_with_kills(self):
         """One kill in a turn should increment turns_with_kills by 1."""
-        from game_metrics import init_session_metrics, track_kill_this_turn
+        from rsp.systems.metrics import init_session_metrics, track_kill_this_turn
 
         session = init_session_metrics()
 
@@ -773,7 +773,7 @@ class TestTurnsWithKillsTracking:
 
     def test_multiple_kills_same_turn_increments_once(self):
         """Multiple kills in same turn should only increment turns_with_kills once."""
-        from game_metrics import init_session_metrics, track_kill_this_turn
+        from rsp.systems.metrics import init_session_metrics, track_kill_this_turn
 
         session = init_session_metrics()
 
@@ -788,7 +788,7 @@ class TestTurnsWithKillsTracking:
 
     def test_reset_flag_allows_new_turn_tracking(self):
         """After reset, new turn should be able to track kills."""
-        from game_metrics import (
+        from rsp.systems.metrics import (
             init_session_metrics,
             reset_turn_kill_flag,
             track_kill_this_turn,
@@ -813,7 +813,7 @@ class TestTurnsWithKillsTracking:
 
     def test_turns_without_kills_dont_increment(self):
         """Turns without kills should not increment turns_with_kills."""
-        from game_metrics import init_session_metrics, reset_turn_kill_flag
+        from rsp.systems.metrics import init_session_metrics, reset_turn_kill_flag
 
         session = init_session_metrics()
 

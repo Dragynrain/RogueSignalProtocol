@@ -6,7 +6,7 @@ Reproduces the AttributeError: 'AnalogStickHandler' object has no attribute 'get
 
 from unittest.mock import Mock
 
-from game_input_analog import AnalogStickHandler
+from rsp.input.analog import AnalogStickHandler
 
 
 class TestNewGameCrash:

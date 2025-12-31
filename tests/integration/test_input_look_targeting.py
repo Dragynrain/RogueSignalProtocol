@@ -15,7 +15,7 @@ import tcod
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction
+from rsp.input.actions import InputAction
 from tests.integration.input_test_utils import InputTestHelper
 
 
@@ -138,8 +138,8 @@ class TestTargetingModeCriticalPath:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
@@ -246,7 +246,7 @@ class TestInventoryScreenCriticalPath:
     def test_keyboard_navigate_down(self, inventory_engine):
         """Keyboard: Down arrow navigates inventory down."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -260,7 +260,7 @@ class TestInventoryScreenCriticalPath:
     def test_keyboard_navigate_up(self, inventory_engine):
         """Keyboard: Up arrow navigates inventory up."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         engine.inventory_selection = 1  # Start at second item
         handler = InputHandler(engine, renderer=None)
@@ -272,7 +272,7 @@ class TestInventoryScreenCriticalPath:
     def test_escape_closes_inventory(self, inventory_engine):
         """Escape closes inventory."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
 
@@ -283,7 +283,7 @@ class TestInventoryScreenCriticalPath:
     def test_toggle_inventory_action(self, inventory_engine):
         """TOGGLE_INVENTORY action closes inventory."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
 
@@ -294,7 +294,7 @@ class TestInventoryScreenCriticalPath:
     def test_dpad_navigate_down(self, inventory_engine):
         """D-pad: Down navigates inventory."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -306,7 +306,7 @@ class TestInventoryScreenCriticalPath:
     def test_dpad_navigate_up(self, inventory_engine):
         """D-pad: Up navigates inventory."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         engine.inventory_selection = 1
         handler = InputHandler(engine, renderer=None)
@@ -318,7 +318,7 @@ class TestInventoryScreenCriticalPath:
     def test_confirm_selects_item(self, inventory_engine):
         """Confirm action selects/uses item."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
 
@@ -331,7 +331,7 @@ class TestInventoryScreenCriticalPath:
     def test_page_up_navigation(self, inventory_engine):
         """Page up navigates 5 items up."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -344,7 +344,7 @@ class TestInventoryScreenCriticalPath:
     def test_page_down_navigation(self, inventory_engine):
         """Page down navigates 5 items down."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -357,7 +357,7 @@ class TestInventoryScreenCriticalPath:
     def test_inventory_navigation_wraps_around(self, inventory_engine):
         """Navigation wraps from last item to first."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
 
@@ -378,7 +378,7 @@ class TestInventoryScreenCriticalPath:
     def test_empty_inventory_navigation(self, inventory_engine):
         """Empty inventory handles navigation gracefully."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         # Clear all items
         engine.player.inventory_manager.equipped_exploits.clear()
@@ -394,7 +394,7 @@ class TestInventoryScreenCriticalPath:
     def test_rapid_navigation_input(self, inventory_engine):
         """Rapid navigation inputs are handled correctly."""
         engine = inventory_engine
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(engine, renderer=None)
 
@@ -806,8 +806,8 @@ class TestTargetingModeComprehensive:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
@@ -969,7 +969,7 @@ class TestTargetingModeComprehensive:
         Regression test: ESC during targeting should cancel targeting and continue
         gameplay, NOT exit to main menu. This tests the actual game_loop path.
         """
-        from game_loop import handle_game_input_events
+        from rsp.core.loop import handle_game_input_events
 
         engine = targeting_mode_engine
 
@@ -999,7 +999,7 @@ class TestTargetingModeComprehensive:
         Regression test: Key repeat can send multiple ESC events. The first should
         cancel targeting, subsequent ones should NOT go to main menu.
         """
-        from game_loop import handle_game_input_events
+        from rsp.core.loop import handle_game_input_events
 
         engine = targeting_mode_engine
 

@@ -18,7 +18,7 @@ This document describes the code quality tools installed and configured for Rogu
 .venv/Scripts/black.exe .
 
 # Format specific file
-.venv/Scripts/black.exe game_engine.py
+.venv/Scripts/black.exe src/rsp/core/engine.py
 ```
 
 **Current status:** 3 files need formatting (minor whitespace changes)
@@ -39,7 +39,7 @@ This document describes the code quality tools installed and configured for Rogu
 .venv/Scripts/ruff.exe check . --fix
 
 # Check specific file
-.venv/Scripts/ruff.exe check game_engine.py
+.venv/Scripts/ruff.exe check src/rsp/core/engine.py
 ```
 
 **Current findings:**
@@ -60,7 +60,7 @@ This document describes the code quality tools installed and configured for Rogu
 .venv/Scripts/mypy.exe .
 
 # Check specific file
-.venv/Scripts/mypy.exe game_engine.py
+.venv/Scripts/mypy.exe src/rsp/core/engine.py
 
 # More verbose output
 .venv/Scripts/mypy.exe . --show-error-codes

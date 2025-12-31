@@ -5,10 +5,10 @@ The achievements screen has many items to scroll through, so holding down
 arrow keys/dpad should repeat ~2x faster than in other contexts.
 """
 
-from game_config import GameConfig
-from game_input_actions import InputContext
-from game_input_gamepad import GamepadInputHandler
-from game_input_mappings import InputMapper
+from rsp.core.config import GameConfig
+from rsp.input.actions import InputContext
+from rsp.input.gamepad import GamepadInputHandler
+from rsp.input.mappings import InputMapper
 
 
 class TestAchievementsFastAutoRepeat:

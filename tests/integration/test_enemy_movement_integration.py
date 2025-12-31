@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from game_entities import EnemyState, Position
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -58,7 +58,7 @@ class TestEnemyCommunication:
 
     def test_nearby_enemies_alerted_when_enemy_goes_hostile(self, basic_game_engine):
         """When an enemy becomes HOSTILE, nearby enemies should be alerted."""
-        from game_session import GameSession
+        from rsp.core.session import GameSession
 
         # Create alerting enemy
         alerting_enemy = enemy_builder("scanner", pos=(10, 10), state=EnemyState.HOSTILE)
@@ -87,7 +87,7 @@ class TestEnemyCommunication:
 
     def test_alerted_enemies_skip_alert_warning(self, basic_game_engine):
         """Enemies alerted by communication skip ALERT and go straight to HOSTILE."""
-        from game_session import GameSession
+        from rsp.core.session import GameSession
 
         alerting_enemy = enemy_builder("scanner", pos=(10, 10), state=EnemyState.HOSTILE)
         nearby_enemy = enemy_builder("bot", pos=(12, 12), state=EnemyState.UNAWARE)
@@ -104,7 +104,7 @@ class TestEnemyCommunication:
 
     def test_already_hostile_enemies_not_re_alerted(self, basic_game_engine):
         """Enemies that are already HOSTILE should not be alerted again."""
-        from game_session import GameSession
+        from rsp.core.session import GameSession
 
         alerting_enemy = enemy_builder("scanner", pos=(10, 10), state=EnemyState.HOSTILE)
         already_hostile = enemy_builder(
@@ -263,7 +263,7 @@ class TestCompleteEnemyLifecycle:
 
         This tests the communication system between enemies.
         """
-        from game_session import GameSession
+        from rsp.core.session import GameSession
 
         # Create a chain of enemies
         primary = enemy_builder("scanner", pos=(10, 10), state=EnemyState.UNAWARE)

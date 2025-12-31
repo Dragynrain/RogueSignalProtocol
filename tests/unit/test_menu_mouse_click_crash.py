@@ -8,10 +8,10 @@ from unittest.mock import Mock
 
 import tcod.event
 
-from game_config import GameSettings
-from game_menu_achievements import AchievementsMenu
-from game_menu_main import MainMenu
-from game_menu_settings import SettingsMenu
+from rsp.core.config import GameSettings
+from rsp.ui.menu_achievements import AchievementsMenu
+from rsp.ui.menu_main import MainMenu
+from rsp.ui.menu_settings import SettingsMenu
 
 
 class TestMenuMouseClickCrash:

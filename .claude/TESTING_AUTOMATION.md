@@ -69,7 +69,7 @@ pytest tests/  # Takes 30k tokens to show all output
 
 **Smart selection:**
 ```bash
-# Changed game_combat.py?
+# Changed rsp/combat/combat.py?
 pytest tests/ -k "combat" -q  # Only 2k tokens!
 ```
 
@@ -77,7 +77,7 @@ pytest tests/ -k "combat" -q  # Only 2k tokens!
 
 **Pattern 1: Targeted Testing**
 ```bash
-# You changed: game_enemies.py
+# You changed: rsp/entities/enemies.py
 # Run only: enemy-related tests
 pytest tests/ -k "enemy" -q --tb=line
 ```
@@ -110,7 +110,7 @@ pytest tests/ -v
 ### During Development
 
 ```bash
-# You're coding... changed game_combat.py
+# You're coding... changed rsp/combat/combat.py
 
 # Quick check (200 tokens):
 pytest tests/unit/test_core.py -q --tb=no
@@ -199,7 +199,7 @@ pytest tests/ -v
 ### When You Ask Claude for Help
 
 ```
-You: "I changed game_combat.py, can you check if it works?"
+You: "I changed rsp/combat/combat.py, can you check if it works?"
 
 Claude:
 1. Runs targeted tests: pytest tests/ -k "combat" -q

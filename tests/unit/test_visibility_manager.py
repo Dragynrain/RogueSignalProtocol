@@ -9,9 +9,9 @@ calculations for the stealth-based game mechanics.
 
 from unittest.mock import Mock, patch
 
-from game_entities import Position
-from game_map import GameMap
-from game_visibility_manager import VisibilityManager
+from rsp.entities.base import Position
+from rsp.level.map import GameMap
+from rsp.level.visibility import VisibilityManager
 
 
 class TestVisibilityManagerInitialization:

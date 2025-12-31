@@ -7,7 +7,7 @@ not ~1.414 as with Euclidean distance.
 
 import pytest
 
-from game_entities import Position
+from rsp.entities.base import Position
 
 
 class TestGridDistance:
@@ -116,8 +116,8 @@ class TestBufferOverflowRange:
         """
         from unittest.mock import Mock
 
-        from game_combat import ExploitSystem
-        from game_data import GameData
+        from rsp.combat.combat import ExploitSystem
+        from rsp.core.data import GameData
 
         # Create mock game
         game = Mock()
@@ -240,7 +240,7 @@ class TestPositionSerialization:
 
     def test_parse_coordinate_string(self):
         """parse_coordinate_string parses valid string."""
-        from game_position import parse_coordinate_string
+        from rsp.entities.position import parse_coordinate_string
 
         result = parse_coordinate_string("10,25")
         assert result is not None
@@ -249,7 +249,7 @@ class TestPositionSerialization:
 
     def test_parse_coordinate_string_invalid(self):
         """parse_coordinate_string returns None for invalid input."""
-        from game_position import parse_coordinate_string
+        from rsp.entities.position import parse_coordinate_string
 
         assert parse_coordinate_string("invalid") is None
         assert parse_coordinate_string("10") is None
@@ -258,14 +258,14 @@ class TestPositionSerialization:
 
     def test_tuple_to_coord_string(self):
         """tuple_to_coord_string creates correct format."""
-        from game_position import tuple_to_coord_string
+        from rsp.entities.position import tuple_to_coord_string
 
         assert tuple_to_coord_string((10, 25)) == "10,25"
         assert tuple_to_coord_string((0, 0)) == "0,0"
 
     def test_serialize_position_dict(self):
         """serialize_position_dict converts dict keys correctly."""
-        from game_position import serialize_position_dict
+        from rsp.entities.position import serialize_position_dict
 
         # Test with tuple keys
         data = {(10, 25): "value1", (0, 0): "value2"}
@@ -279,7 +279,7 @@ class TestPositionSerialization:
 
     def test_deserialize_position_dict_as_tuple(self):
         """deserialize_position_dict with as_tuple=True."""
-        from game_position import deserialize_position_dict
+        from rsp.entities.position import deserialize_position_dict
 
         data = {"10,25": "value1", "0,0": "value2"}
         result = deserialize_position_dict(data, as_tuple=True)
@@ -287,7 +287,7 @@ class TestPositionSerialization:
 
     def test_deserialize_position_dict_as_position(self):
         """deserialize_position_dict with as_tuple=False."""
-        from game_position import deserialize_position_dict
+        from rsp.entities.position import deserialize_position_dict
 
         data = {"5,5": "value"}
         result = deserialize_position_dict(data, as_tuple=False)
@@ -296,7 +296,7 @@ class TestPositionSerialization:
 
     def test_deserialize_skips_invalid_keys(self):
         """deserialize_position_dict skips invalid coordinate strings."""
-        from game_position import deserialize_position_dict
+        from rsp.entities.position import deserialize_position_dict
 
         data = {"10,25": "valid", "invalid": "skip", "a,b": "skip2"}
         result = deserialize_position_dict(data)
@@ -304,7 +304,7 @@ class TestPositionSerialization:
 
     def test_serialize_deserialize_roundtrip(self):
         """Roundtrip serialization preserves data."""
-        from game_position import deserialize_position_dict, serialize_position_dict
+        from rsp.entities.position import deserialize_position_dict, serialize_position_dict
 
         original = {(5, 10): "data1", (20, 30): "data2"}
         serialized = serialize_position_dict(original)

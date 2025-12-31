@@ -7,8 +7,8 @@ is correctly saved and restored when loading a game.
 
 import pytest
 
-from game_characters import Enemy
-from game_entities import EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.entities.base import EnemyState, Position
 
 
 class TestBlindedTurnsSaveLoad:
@@ -16,7 +16,7 @@ class TestBlindedTurnsSaveLoad:
 
     def test_blinded_turns_saved_in_enemy_data(self):
         """Blinded turns should be included in serialized enemy data."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
         from tests.test_agent import GameTestAgent
 
         agent = GameTestAgent(seed=42)
@@ -101,8 +101,8 @@ class TestBlindedTurnsSaveLoad:
 
     def test_memory_leak_effect_value_preserved(self):
         """Memory Leak exploit duration value should be preserved in save data."""
-        from game_data import GameData
-        from game_save import SaveGameManager
+        from rsp.core.data import GameData
+        from rsp.systems.save import SaveGameManager
         from tests.test_agent import GameTestAgent
 
         agent = GameTestAgent(seed=42)

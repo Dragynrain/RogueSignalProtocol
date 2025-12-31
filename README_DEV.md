@@ -176,8 +176,16 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 ```
 RogueSignalProtocol/
 ├── RogueSignalProtocol.py       # Main entry point
-├── game_*.py                    # Core game modules (50+ files)
-├── data_loading.py              # Configuration management
+├── src/rsp/                     # Core game package
+│   ├── core/                    # Engine, config, state, loop
+│   ├── entities/                # Player, enemies, positions
+│   ├── combat/                  # Combat system, inventory
+│   ├── level/                   # Map, generation, pathfinding
+│   ├── input/                   # Input handling, gamepad
+│   ├── rendering/               # Graphics, glyphs, UI rendering
+│   ├── ui/                      # Menus, dialogs, screens
+│   ├── systems/                 # Audio, achievements, save
+│   └── utils/                   # Colors, unicode, debug
 │
 ├── Configuration (JSON-driven):
 ├── game_content.json            # Items, exploits, loot tables
@@ -189,7 +197,7 @@ RogueSignalProtocol/
 ├── graphics/                    # PNG sprites (150+ files)
 ├── sound/                       # WAV sound effects (40+ files)
 ├── music/                       # MP3 background music
-├── terminal10x16_gs_ro.png      # Font tileset
+├── KreativeSquare.ttf           # Game font
 │
 ├── Build System:
 ├── build/
@@ -428,7 +436,7 @@ Maps entities to sprite variants:
 
 **Add NEW exploits:**
 - Cannot just add to JSON
-- Requires code in `game_combat.py`:
+- Requires code in `src/rsp/combat/combat.py`:
   1. Add to `game_content.json` (stats/description)
   2. Add case in `_execute_specific_exploit()`
   3. Implement `_execute_your_exploit()` method
@@ -437,7 +445,7 @@ Maps entities to sprite variants:
 
 **Add NEW enemy behaviors:**
 - Cannot just add to JSON
-- Requires code in `game_enemies.py`
+- Requires code in `src/rsp/entities/enemies.py`
 
 **Add NEW mechanics:**
 - Always requires code
@@ -449,32 +457,51 @@ Maps entities to sprite variants:
 
 ### Module Organization
 
-**Core Systems:**
-- `game_loop.py` - Main game loop and rendering coordination
-- `game_engine.py` - Turn processing and game state
-- `game_session.py` - Session management and level progression
+All game code is in the `src/rsp/` package:
 
-**Rendering:**
-- `game_rendering_core.py` - Base rendering system
-- `game_rendering_graphics.py` - Graphics mode with sprites
-- `game_rendering_glyphs.py` - ASCII/glyph mode
-- `game_rendering_ui.py` - UI elements and panels
+**Core (rsp.core):**
+- `loop.py` - Main game loop and rendering coordination
+- `engine.py` - Turn processing and game state
+- `session.py` - Session management and level progression
+- `config.py` - Configuration management
+- `data.py` / `data_loading.py` - JSON loading and validation
 
-**Game Logic:**
-- `game_combat.py` - Exploit system and damage calculation
-- `game_enemies.py` - Enemy AI and behavior management
-- `game_characters.py` - Player and Enemy entities
-- `game_level.py` - Level generation and management
+**Rendering (rsp.rendering):**
+- `core.py` - Base rendering system
+- `graphics.py` - Graphics mode with sprites
+- `glyphs.py` - ASCII/glyph mode
+- `ui.py` - UI elements and panels
+- `coordinates.py` - TCOD coordinate helpers
 
-**Data & Config:**
-- `data_loading.py` - JSON loading and validation
-- `game_config.py` - Configuration management
-- `game_entities.py` - Core entity definitions and enums
+**Entities (rsp.entities):**
+- `player.py` - Player entity
+- `enemies.py` - Enemy AI and behavior management
+- `characters.py` - Character base classes
+- `position.py` - Position class and utilities
 
-**UI Systems:**
-- `game_menus.py` - Main menu, settings, etc.
-- `game_dialogue_system.py` - Dialogue boxes and prompts
-- `game_input.py` - Input handling and key mapping
+**Combat (rsp.combat):**
+- `combat.py` - Exploit system and damage calculation
+- `inventory.py` - Item management
+- `turn_manager.py` - Turn processing
+
+**Level (rsp.level):**
+- `generator.py` - Level generation
+- `map.py` - Map data structures
+- `pathfinding.py` - A* pathfinding
+
+**Input (rsp.input):**
+- `handler.py` - Main input handler
+- `gamepad.py` - Gamepad support
+- `mappings.py` - Key bindings
+
+**UI (rsp.ui):**
+- `menus.py` - Main menu, settings, etc.
+- `dialogue.py` - Dialogue boxes and prompts
+
+**Systems (rsp.systems):**
+- `audio.py` - Sound and music
+- `achievements.py` - Achievement tracking
+- `save.py` - Save/load system
 
 ### Important Design Patterns
 
@@ -510,7 +537,7 @@ message_log.add_message("Enemy detected!", Colors.RED)
 
 ```python
 # CORRECT - use helpers
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.coordinates import CoordinateHelpers
 CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=255)
 
 # CORRECT - TCOD functions use (x, y)
@@ -581,17 +608,17 @@ python test_commands.py full
 
 **Add NEW exploit (requires code):**
 1. Add to `game_content.json` (definition)
-2. Edit `game_combat.py`:
+2. Edit `src/rsp/combat/combat.py`:
    - Add case in `_execute_specific_exploit()`
    - Implement `_execute_your_exploit()` method
 3. Add sound file to `sound/` (optional)
-4. Update help screen in `game_menu_help_graphics.py`
+4. Update help screen in `src/rsp/ui/menu_help_graphics.py`
 5. Write integration test
 
 **Add new enemy type (requires code):**
 1. Define in `game_content.json` (stats)
 2. Add sprite to `graphics/` and update `graphics_tiles.json`
-3. Add AI behavior in `game_enemies.py` if special
+3. Add AI behavior in `src/rsp/entities/enemies.py` if special
 4. Update help screen
 5. Write integration test for spawning/behavior
 

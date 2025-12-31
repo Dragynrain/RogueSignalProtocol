@@ -12,12 +12,12 @@ from unittest.mock import Mock
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from game_characters import Enemy, Player
-from game_config import GameConfig
-from game_entities import EnemyState, Position
-from game_map import GameMap
-from game_save import SaveGameManager
-from game_state import GameStateManager, MessageLog, TurnProcessor
+from rsp.entities.characters import Enemy, Player
+from rsp.core.config import GameConfig
+from rsp.entities.base import EnemyState, Position
+from rsp.level.map import GameMap
+from rsp.systems.save import SaveGameManager
+from rsp.core.state import GameStateManager, MessageLog, TurnProcessor
 
 
 class TestEndToEndGameplayScenarios(unittest.TestCase):

@@ -8,10 +8,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_config import GameConfig
-from game_entities import Position
-from game_level import LevelGenerator
-from game_map import GameMap, RestoreNode
+from rsp.core.config import GameConfig
+from rsp.entities.base import Position
+from rsp.level.generator import LevelGenerator
+from rsp.level.map import GameMap, RestoreNode
 
 
 class TestLevelGenerator:
@@ -282,7 +282,7 @@ class TestSpecialTilePlacement:
 
         # Ghost nodes CAN be on blind spots (intentional design)
         # Just verify they're treated as blind spots
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         for ghost_pos in self.game_map.ghost_nodes:
             pos = Position(ghost_pos[0], ghost_pos[1])

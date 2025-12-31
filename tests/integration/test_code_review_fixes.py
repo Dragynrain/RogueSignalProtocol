@@ -13,10 +13,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from game_entities import Position
-from game_inventory import CodeHack
-from game_rendering_base import can_render_at_position
-from game_state import GameStateManager
+from rsp.entities.base import Position
+from rsp.combat.inventory import CodeHack
+from rsp.rendering.base import can_render_at_position
+from rsp.core.state import GameStateManager
 
 
 class TestCodeHackUnknownEffect:
@@ -59,8 +59,8 @@ class TestCodeHackUnknownEffect:
         """CodeHack with known effect key returns True."""
         code = CodeHack("crimson", "restore_cpu", "Crimson Code")
 
-        with patch("game_metrics.get_current_session", return_value=MagicMock()):
-            with patch("game_achievements.AchievementManager"):
+        with patch("rsp.systems.metrics.get_current_session", return_value=MagicMock()):
+            with patch("rsp.systems.achievements.AchievementManager"):
                 result = code.use(mock_player, mock_game)
 
         assert result is True
@@ -77,8 +77,8 @@ class TestCodeHackUnknownEffect:
 
         code = CodeHack("phantom", "unknown_effect_type", "Phantom Code")
 
-        with patch("game_metrics.get_current_session", return_value=MagicMock()):
-            with patch("game_achievements.AchievementManager"):
+        with patch("rsp.systems.metrics.get_current_session", return_value=MagicMock()):
+            with patch("rsp.systems.achievements.AchievementManager"):
                 with caplog.at_level(logging.WARNING):
                     result = code.use(mock_player, mock_game)
 
@@ -103,9 +103,9 @@ class TestCodeHackUnknownEffect:
         for color, effect in valid_effects:
             code = CodeHack(color, effect, f"{color.title()} Code")
 
-            with patch("game_metrics.get_current_session", return_value=MagicMock()):
-                with patch("game_achievements.AchievementManager"):
-                    with patch("game_config.GameConfig") as mock_config:
+            with patch("rsp.systems.metrics.get_current_session", return_value=MagicMock()):
+                with patch("rsp.systems.achievements.AchievementManager"):
+                    with patch("rsp.core.config.GameConfig") as mock_config:
                         # Provide mock config values for effects that need them
                         mock_config._get_required.return_value = 5
                         mock_config.get.return_value = 5
@@ -236,7 +236,7 @@ class TestPatrolRestoreIntegration:
 
     def test_restore_patrol_still_works_after_code_removal(self):
         """_restore_patrol in game_turn_manager.py still works correctly."""
-        from game_entities import EnemyMovement
+        from rsp.entities.base import EnemyMovement
 
         # Test the core logic of _restore_patrol without creating actual Enemy
         # This test verifies the algorithm works correctly
@@ -258,7 +258,7 @@ class TestPatrolRestoreIntegration:
         This is a unit test for the patrol index storage behavior in make_hostile().
         We test the logic directly without creating a full Enemy mock.
         """
-        from game_entities import EnemyMovement, EnemyState
+        from rsp.entities.base import EnemyMovement, EnemyState
 
         # Create a minimal mock enemy that has the key attributes
         mock_enemy = MagicMock()

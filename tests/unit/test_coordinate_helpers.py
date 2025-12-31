@@ -9,7 +9,7 @@ and character-to-pixel coordinate conversion.
 import numpy as np
 import tcod.console
 
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class TestCenterBox:

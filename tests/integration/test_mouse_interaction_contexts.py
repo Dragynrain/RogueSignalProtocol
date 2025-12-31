@@ -12,14 +12,14 @@ from unittest.mock import Mock, patch
 
 import tcod.event
 
-from game_engine import GameEngine
-from game_input import InputHandler
-from game_input_actions import InputContext
-from game_menu_about import AboutMenu
-from game_menu_achievements import AchievementsMenu
-from game_menu_help_lore import HelpMenu, LoreMenu
-from game_menu_main import MainMenu
-from game_menu_settings import SettingsMenu
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
+from rsp.input.actions import InputContext
+from rsp.ui.menu_about import AboutMenu
+from rsp.ui.menu_achievements import AchievementsMenu
+from rsp.ui.menu_help_lore import HelpMenu, LoreMenu
+from rsp.ui.menu_main import MainMenu
+from rsp.ui.menu_settings import SettingsMenu
 
 
 class TestMainMenuMouseInteraction:
@@ -58,7 +58,7 @@ class TestMainMenuMouseInteraction:
         event.position.x = 40
 
         # Mock save manager to avoid warning dialog
-        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+        with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
             result = menu.handle_mouse_click(event)
 
         # Should activate settings (note: actual action depends on index)
@@ -85,7 +85,7 @@ class TestSettingsMenuMouseInteraction:
 
     def test_mouse_hover_changes_selection(self):
         """Mouse hover changes selected setting."""
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
@@ -105,7 +105,7 @@ class TestSettingsMenuMouseInteraction:
 
     def test_mouse_right_click_goes_back(self):
         """Right-click exits settings menu."""
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
@@ -120,7 +120,7 @@ class TestSettingsMenuMouseInteraction:
 
     def test_mouse_wheel_scrolls_settings(self):
         """Mouse wheel scrolls in settings if scrollable."""
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
@@ -281,7 +281,7 @@ class TestMouseWheelIntegration:
 
     def test_inventory_mouse_wheel_scrolls(self):
         """Mouse wheel scrolls inventory through InputHandler."""
-        from game_inventory import InventoryItem
+        from rsp.combat.inventory import InventoryItem
 
         game = GameEngine()
         game.dialogue_state.close()
@@ -414,7 +414,7 @@ class TestMouseContextPriority:
         game = GameEngine()
 
         # Show dialogue (higher priority than menus)
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(

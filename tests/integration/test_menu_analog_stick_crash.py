@@ -30,8 +30,8 @@ def test_game_loop_has_input_enums_for_gamepad_handling():
     Note: InputAction is imported at module level, InputContext is imported
     locally where needed (inside functions). Both approaches prevent NameError.
     """
-    import game_loop
-    from game_input_actions import InputContext
+    import rsp.core.loop as game_loop
+    from rsp.input.actions import InputContext
 
     # Check if InputAction is available in game_loop module (imported at top)
     assert hasattr(
@@ -39,7 +39,7 @@ def test_game_loop_has_input_enums_for_gamepad_handling():
     ), "game_loop.py must import InputAction to handle analog stick navigation"
 
     # InputContext is imported locally inside functions, verify it exists
-    assert InputContext is not None, "InputContext must be importable from game_input_actions"
+    assert InputContext is not None, "InputContext must be importable from rsp.input.actions"
 
     # Verify the specific contexts used in game_loop exist
     assert hasattr(InputContext, "MAIN_MENU"), "InputContext.MAIN_MENU must exist"

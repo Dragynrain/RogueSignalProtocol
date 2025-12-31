@@ -18,8 +18,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_combat import ExploitSystem
-from game_entities import ExploitDefinition, Position
+from rsp.combat.combat import ExploitSystem
+from rsp.entities.base import ExploitDefinition, Position
 
 
 class TestExploitSystemInitialization:
@@ -435,7 +435,7 @@ class TestSpecificExploitMethods:
         mock_exploit = Mock()
         mock_exploit.effect_duration = 5
 
-        with patch("game_combat.GameData.EXPLOITS", {"traffic_masquerade": mock_exploit}):
+        with patch("rsp.combat.combat.GameData.EXPLOITS", {"traffic_masquerade": mock_exploit}):
             result = exploit_system._execute_traffic_masquerade()
 
         assert result is True

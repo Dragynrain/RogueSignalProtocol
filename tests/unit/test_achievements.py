@@ -8,13 +8,13 @@ from collections import Counter
 
 import pytest
 
-from game_achievements import (
+from rsp.systems.achievements import (
     ALL_ACHIEVEMENTS,
     TOTAL_EXPLOITS,
     AchievementChecker,
     AchievementManager,
 )
-from game_metrics import LifetimeMetrics, SessionMetrics
+from rsp.systems.metrics import LifetimeMetrics, SessionMetrics
 
 # Note: clean_achievement_state fixture is now available from conftest.py
 

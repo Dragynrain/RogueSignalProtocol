@@ -19,11 +19,11 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_menu_about import AboutMenu
-from game_menu_help_lore import HelpMenu, LoreMenu
-from game_menus import MainMenu, MenuBackground, SettingsMenu
-from game_save import SaveGameManager
+from rsp.core.config import GameSettings
+from rsp.ui.menu_about import AboutMenu
+from rsp.ui.menu_help_lore import HelpMenu, LoreMenu
+from rsp.ui.menus import MainMenu, MenuBackground, SettingsMenu
+from rsp.systems.save import SaveGameManager
 
 
 class TestMainMenu:

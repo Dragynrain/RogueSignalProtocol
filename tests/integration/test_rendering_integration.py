@@ -9,12 +9,12 @@ from unittest.mock import Mock
 
 import tcod
 
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import Position
-from game_rendering_core import GameRenderer
-from game_rendering_glyphs import GlyphsMapRenderer
-from game_rendering_graphics import GraphicsMapRenderer
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.rendering.core import GameRenderer
+from rsp.rendering.glyphs import GlyphsMapRenderer
+from rsp.rendering.graphics import GraphicsMapRenderer
 from tests.fixtures.simple_fixtures import create_test_map, enemy, player
 
 
@@ -193,7 +193,7 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
     def test_render_overlay_layer_executes_without_error(self):
         """Test that render_overlay_layer executes without error."""
         # Add some vision overlays to test
-        from game_entities import EnemyState
+        from rsp.entities.base import EnemyState
 
         test_enemy = enemy("scanner", 15, 15)
         test_enemy.state = EnemyState.HOSTILE

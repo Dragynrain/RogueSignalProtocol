@@ -9,7 +9,7 @@ was created in game_loop but never assigned back to game.input_handler.
 
 from unittest.mock import Mock
 
-from game_inventory import StoryFragment
+from rsp.combat.inventory import StoryFragment
 from tests.test_agent import GameTestAgent
 
 

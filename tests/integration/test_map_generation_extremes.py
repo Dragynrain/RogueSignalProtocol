@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import tcod.path
 
-from game_config import GameConfig
+from rsp.core.config import GameConfig
 from tests.test_agent import GameTestAgent
 
 

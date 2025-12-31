@@ -13,8 +13,8 @@ import random
 
 import pytest
 
-from game_config import GameConfig
-from game_session import GameSession
+from rsp.core.config import GameConfig
+from rsp.core.session import GameSession
 from tests.fixtures.quick_fixtures import quick_engine
 
 

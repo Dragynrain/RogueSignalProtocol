@@ -8,10 +8,10 @@ Rewritten for on-demand movement calculation system (no movement queue).
 import unittest
 from unittest.mock import Mock
 
-from game_characters import Enemy
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyState, Position
 
 
 class TestEnemyPathfindingFixes(unittest.TestCase):

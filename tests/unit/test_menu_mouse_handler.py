@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 import tcod.event
 
-from game_mouse_utils import MenuMouseHandler
+from rsp.utils.mouse import MenuMouseHandler
 
 
 class FakePixel:

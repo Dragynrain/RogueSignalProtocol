@@ -17,8 +17,8 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_input_actions import InputAction
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
 
 
 class TestMouseInputBasics:
@@ -34,7 +34,7 @@ class TestMouseInputBasics:
 
     @pytest.fixture
     def main_menu(self):
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         settings = GameSettings()
         menu = MainMenu()
@@ -42,7 +42,7 @@ class TestMouseInputBasics:
 
     @pytest.fixture
     def settings_menu(self):
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         settings = GameSettings()
         menu = SettingsMenu(settings=settings)
@@ -196,7 +196,7 @@ class TestMouseInputMixed:
 
     @pytest.fixture
     def main_menu(self):
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         settings = GameSettings()
         menu = MainMenu()
@@ -298,8 +298,8 @@ class TestMouseGameplay:
 
     def test_click_to_target(self, game_engine):
         """Mouse: Can enter targeting mode."""
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         engine = game_engine
 

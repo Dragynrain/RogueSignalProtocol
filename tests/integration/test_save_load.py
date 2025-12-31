@@ -20,10 +20,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_characters import Enemy
-from game_engine import GameEngine
-from game_entities import EnemyState, Position
-from game_save import SaveGameManager
+from rsp.entities.characters import Enemy
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyState, Position
+from rsp.systems.save import SaveGameManager
 from tests.fixtures.simple_fixtures import enemy_builder, minimal_mock_game
 
 
@@ -403,7 +403,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_basic_player_state(self, basic_game_engine):
         """Test that basic player state is preserved through save/load cycle."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             # Set dungeon seed and regenerate map for deterministic layout
@@ -440,7 +440,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_enemy_states(self, basic_game_engine):
         """Test that enemy positions, states, and AI data are preserved."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             game.game_state.dungeon_seed = 42
@@ -496,7 +496,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_temporary_effects_integration(self, basic_game_engine):
         """Test that player temporary effects are preserved."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             # Set various temporary effects
@@ -525,7 +525,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_complex_gameplay_scenario(self, basic_game_engine):
         """Integration test: Complex gameplay scenario with multiple systems active."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             # Set dungeon seed for deterministic map
@@ -605,7 +605,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_file_timestamp(self, basic_game_engine):
         """Test that save file includes valid timestamp."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             success = SaveGameManager.save_game(game)
@@ -619,7 +619,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_atomic_write_safety(self, basic_game_engine):
         """Test that save uses atomic write (temp file + rename) for safety."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             success = SaveGameManager.save_game(game)
@@ -638,7 +638,7 @@ class TestRealGameEngineIntegration:
         This test verifies behavioral fidelity, not just data preservation.
         An ALERT enemy should investigate the same location after loading.
         """
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             game = basic_game_engine
 
             game.game_state.dungeon_seed = 123

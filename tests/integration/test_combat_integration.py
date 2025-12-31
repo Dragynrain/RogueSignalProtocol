@@ -6,14 +6,14 @@ Tests the actual ExploitSystem class and combat mechanics integration.
 
 from unittest.mock import Mock, patch
 
-from game_characters import Player
-from game_combat import ExploitSystem
-from game_entities import ExploitDefinition, Position, TargetingMode
+from rsp.entities.characters import Player
+from rsp.combat.combat import ExploitSystem
+from rsp.entities.base import ExploitDefinition, Position, TargetingMode
 
 
 def test_exploit_system_initialization(basic_game_engine):
     """ExploitSystem initializes correctly with game instance."""
-    from game_combat import ExploitSystem
+    from rsp.combat.combat import ExploitSystem
 
     exploit_system = ExploitSystem(basic_game_engine)
 
@@ -42,7 +42,7 @@ class TestExploitSystem:
         basic_game_engine.player.heat = 50
         basic_game_engine.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
 
-        with patch("game_combat.GameData") as mock_game_data:
+        with patch("rsp.combat.combat.GameData") as mock_game_data:
             # Mock an exploit that requires targeting
             mock_exploit = Mock(spec=ExploitDefinition)
             mock_exploit.targeting = TargetingMode.SINGLE
@@ -67,7 +67,7 @@ class TestExploitSystem:
         basic_game_engine.player.inventory_manager.equipped_exploits = ["system_crash"]
 
         with (
-            patch("game_combat.GameData") as mock_game_data,
+            patch("rsp.combat.combat.GameData") as mock_game_data,
             patch.object(basic_game_engine.dialogue_state, "show") as mock_show,
         ):
             mock_exploit = Mock(spec=ExploitDefinition)
@@ -89,7 +89,7 @@ class TestExploitSystem:
 
     def test_execute_exploit_invalid(self, basic_game_engine):
         """Cannot execute unknown exploit."""
-        with patch("game_combat.GameData") as mock_game_data:
+        with patch("rsp.combat.combat.GameData") as mock_game_data:
             mock_game_data.EXPLOITS = {}  # No exploits available
 
             exploit_system = ExploitSystem(basic_game_engine)
@@ -176,7 +176,7 @@ class TestPlayerCombat:
 
     def test_player_damage_sets_took_any_damage_flag(self):
         """Player taking damage sets the took_any_damage session flag for Untouchable achievement."""
-        from game_metrics import init_session_metrics
+        from rsp.systems.metrics import init_session_metrics
 
         # Start a new session to track metrics
         session = init_session_metrics()
@@ -191,7 +191,7 @@ class TestPlayerCombat:
 
     def test_player_zero_damage_does_not_set_took_any_damage_flag(self):
         """Zero damage does not set the took_any_damage flag."""
-        from game_metrics import init_session_metrics
+        from rsp.systems.metrics import init_session_metrics
 
         # Start a new session
         session = init_session_metrics()

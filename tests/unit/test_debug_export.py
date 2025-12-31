@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from debug_export import DebugExporter, export_crash_report, export_debug_package
+from rsp.utils.debug_export import DebugExporter, export_crash_report, export_debug_package
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def temp_game_dirs():
     Note: File isolation is handled by global_file_isolation fixture in conftest.py.
     This fixture just creates sample files in the isolated directory.
     """
-    import game_file_paths
+    import rsp.core.file_paths as game_file_paths
 
     # Get the isolated data directory (already set by global fixture)
     data_dir = game_file_paths.get_data_directory()

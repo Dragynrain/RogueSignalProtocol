@@ -11,7 +11,7 @@ from unittest.mock import Mock
 import tcod.console
 import tcod.event
 
-from game_dialogue_system import (
+from rsp.ui.dialogue import (
     DialogueBox,
     DialogueInputHandler,
     DialogueState,
@@ -23,7 +23,7 @@ from game_dialogue_system import (
     create_overclock_warning_dialogue,
     create_victory_dialogue,
 )
-from game_entities import Colors
+from rsp.entities.base import Colors
 
 
 class TestDialogueBox:

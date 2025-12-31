@@ -10,8 +10,8 @@ from unittest.mock import Mock
 import pytest
 import tcod.event
 
-from game_achievement_popups import AchievementPopupManager
-from game_input import InputHandler
+from rsp.systems.achievement_popups import AchievementPopupManager
+from rsp.input.handler import InputHandler
 
 
 @pytest.fixture

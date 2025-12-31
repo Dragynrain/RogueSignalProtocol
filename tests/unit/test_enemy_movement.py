@@ -4,7 +4,7 @@ Tests for enemy movement queue system.
 Queue maintains fixed length of 3 for player predictability.
 """
 
-from game_entities import EnemyState, Position
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder, map_builder
 
 
@@ -217,7 +217,7 @@ class TestPathfindingHelper:
         """PathfindingHelper finds basic straight path."""
         from unittest.mock import Mock
 
-        from game_pathfinding import PathfindingHelper
+        from rsp.level.pathfinding import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -243,7 +243,7 @@ class TestPathfindingHelper:
         """PathfindingHelper routes around walls."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from rsp.entities.characters import PathfindingHelper
 
         # Create map with wall blocking direct path
         game_map = map_builder(width=30, height=30, walls=[(11, 10), (12, 10), (13, 10)])
@@ -268,7 +268,7 @@ class TestPathfindingHelper:
         """PathfindingHelper routes around other enemies."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from rsp.entities.characters import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy1 = enemy_builder("scanner", pos=(10, 10))
@@ -300,7 +300,7 @@ class TestPathfindingHelper:
         """PathfindingHelper returns None for unreachable targets."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from rsp.entities.characters import PathfindingHelper
 
         # Create map with walls completely surrounding the goal
         walls = []
@@ -328,7 +328,7 @@ class TestPathfindingHelper:
         """PathfindingHelper respects path length limits."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from rsp.entities.characters import PathfindingHelper
 
         game_map = map_builder(width=100, height=100)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -356,7 +356,7 @@ class TestPathfindingHelper:
         """PathfindingHelper handles adjacent positions correctly."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from rsp.entities.characters import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -456,7 +456,7 @@ class TestEnsureQueueFull:
         """Random movement enemies fill queue with random moves."""
         from unittest.mock import Mock
 
-        from game_entities import EnemyMovement
+        from rsp.entities.base import EnemyMovement
 
         enemy = enemy_builder("scanner", pos=(10, 10))
         game_map = map_builder(width=40, height=40)
@@ -480,7 +480,7 @@ class TestEnsureQueueFull:
         """Static enemies don't fill queue."""
         from unittest.mock import Mock
 
-        from game_entities import EnemyMovement
+        from rsp.entities.base import EnemyMovement
 
         enemy = enemy_builder("scanner", pos=(10, 10))
         game_map = map_builder(width=40, height=40)

@@ -13,7 +13,7 @@ Note: Extracted from test_input_critical_paths.py for maintainability.
 import pytest
 import tcod.event
 
-from game_input_actions import InputAction
+from rsp.input.actions import InputAction
 from tests.integration.input_test_utils import InputTestHelper
 
 

@@ -14,7 +14,7 @@ import pytest
 import tcod
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
+from rsp.input.actions import InputAction, InputContext
 
 # =============================================================================
 # Fixtures
@@ -24,7 +24,7 @@ from game_input_actions import InputAction, InputContext
 @pytest.fixture
 def settings():
     """Create a GameSettings instance for testing."""
-    from game_config import GameSettings
+    from rsp.core.config import GameSettings
 
     return GameSettings()
 
@@ -32,7 +32,7 @@ def settings():
 @pytest.fixture
 def input_mapper():
     """Create an InputMapper instance for testing."""
-    from game_input_mappings import InputMapper
+    from rsp.input.mappings import InputMapper
 
     return InputMapper()
 
@@ -53,7 +53,7 @@ class TestKeyDisplayNames:
 
     def test_special_keys_have_readable_names(self):
         """Special keys should have human-readable names."""
-        from game_input_mappings import key_sym_to_display_name
+        from rsp.input.mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.SPACE) == "Space"
         assert key_sym_to_display_name(tcod.event.KeySym.RETURN) == "Enter"
@@ -61,7 +61,7 @@ class TestKeyDisplayNames:
 
     def test_arrow_keys(self):
         """Arrow keys should have readable names (Unicode arrows)."""
-        from game_input_mappings import key_sym_to_display_name
+        from rsp.input.mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.UP) == "↑"
         assert key_sym_to_display_name(tcod.event.KeySym.DOWN) == "↓"
@@ -70,14 +70,14 @@ class TestKeyDisplayNames:
 
     def test_letter_keys(self):
         """Letter keys should return uppercase letters."""
-        from game_input_mappings import key_sym_to_display_name
+        from rsp.input.mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.W) == "W"
         assert key_sym_to_display_name(tcod.event.KeySym.A) == "A"
 
     def test_numpad_keys(self):
         """Numpad keys should have readable names."""
-        from game_input_mappings import key_sym_to_display_name
+        from rsp.input.mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.KP_8) == "Numpad 8"
         assert key_sym_to_display_name(tcod.event.KeySym.KP_ENTER) == "Numpad Enter"
@@ -88,7 +88,7 @@ class TestButtonDisplayNames:
 
     def test_face_buttons(self):
         """Face buttons should have readable names."""
-        from game_menu_controls import button_to_display_name
+        from rsp.ui.menu_controls import button_to_display_name
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -99,7 +99,7 @@ class TestButtonDisplayNames:
 
     def test_shoulder_buttons(self):
         """Shoulder buttons should have readable names."""
-        from game_menu_controls import button_to_display_name
+        from rsp.ui.menu_controls import button_to_display_name
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -108,7 +108,7 @@ class TestButtonDisplayNames:
 
     def test_dpad(self):
         """D-pad buttons should have readable names."""
-        from game_menu_controls import button_to_display_name
+        from rsp.ui.menu_controls import button_to_display_name
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -121,7 +121,7 @@ class TestAxisDisplayNames:
 
     def test_triggers(self):
         """Triggers should have readable names."""
-        from game_menu_controls import axis_to_display_name
+        from rsp.ui.menu_controls import axis_to_display_name
 
         CA = tcod.sdl.joystick.ControllerAxis
 
@@ -139,7 +139,7 @@ class TestControlsMenuHub:
 
     def test_initialization(self, settings):
         """ControlsMenuHub should initialize with correct options."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
 
@@ -151,14 +151,14 @@ class TestControlsMenuHub:
 
     def test_get_context(self, settings):
         """ControlsMenuHub should return CONTROLS_MENU context."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         assert hub.get_context() == InputContext.CONTROLS_MENU
 
     def test_navigation_up(self, settings):
         """Navigate up should wrap around."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 0
@@ -167,7 +167,7 @@ class TestControlsMenuHub:
 
     def test_navigation_down(self, settings):
         """Navigate down should wrap around."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 3
@@ -176,7 +176,7 @@ class TestControlsMenuHub:
 
     def test_confirm_keyboard_bindings(self, settings):
         """Selecting Keyboard Bindings returns correct action."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 0
@@ -185,7 +185,7 @@ class TestControlsMenuHub:
 
     def test_confirm_gamepad_bindings(self, settings):
         """Selecting Gamepad Bindings returns correct action."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 1
@@ -194,7 +194,7 @@ class TestControlsMenuHub:
 
     def test_confirm_gamepad_settings(self, settings):
         """Selecting Gamepad Settings returns correct action."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 2
@@ -203,7 +203,7 @@ class TestControlsMenuHub:
 
     def test_confirm_back(self, settings):
         """Selecting Back returns 'back'."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.selected_option = 3
@@ -212,7 +212,7 @@ class TestControlsMenuHub:
 
     def test_cancel_returns_back(self, settings):
         """Cancel action returns 'back'."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         result = hub.execute_action(InputAction.CANCEL)
@@ -220,14 +220,14 @@ class TestControlsMenuHub:
 
     def test_render_does_not_crash(self, settings, console):
         """Render should complete without errors."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
         hub.render(console)  # Should not raise
 
     def test_instructions_fit_within_box_bounds(self, settings):
         """Instructions text should fit within the menu box width."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         hub = ControlsMenuHub(settings, None)
 
@@ -269,7 +269,7 @@ class TestKeyboardBindingsMenu:
 
     def test_initialization(self, settings, input_mapper):
         """KeyboardBindingsMenu should initialize with action list."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
 
@@ -279,14 +279,14 @@ class TestKeyboardBindingsMenu:
 
     def test_get_context(self, settings, input_mapper):
         """KeyboardBindingsMenu should return CONTROLS_MENU context."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         assert menu.get_context() == InputContext.CONTROLS_MENU
 
     def test_navigation(self, settings, input_mapper):
         """Navigation should move through selectable items."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -295,7 +295,7 @@ class TestKeyboardBindingsMenu:
 
     def test_navigation_bounds(self, settings, input_mapper):
         """Navigation should not go below 0 or above max."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
 
@@ -311,7 +311,7 @@ class TestKeyboardBindingsMenu:
 
     def test_page_navigation(self, settings, input_mapper):
         """Page navigation should move multiple items."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -320,7 +320,7 @@ class TestKeyboardBindingsMenu:
 
     def test_enter_binding_mode(self, settings, input_mapper):
         """Confirm on an action should enter binding mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -331,7 +331,7 @@ class TestKeyboardBindingsMenu:
 
     def test_cancel_returns_back(self, settings, input_mapper):
         """Cancel action returns 'back'."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         result = menu.execute_action(InputAction.CANCEL)
@@ -339,14 +339,14 @@ class TestKeyboardBindingsMenu:
 
     def test_render_normal_mode(self, settings, input_mapper, console):
         """Render should complete in normal mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.render(console)
 
     def test_render_binding_mode(self, settings, input_mapper, console):
         """Render should complete in binding mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -355,7 +355,7 @@ class TestKeyboardBindingsMenu:
 
     def test_render_conflict_mode(self, settings, input_mapper, console):
         """Render should complete in conflict dialog mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.show_conflict_dialog = True
@@ -374,7 +374,7 @@ class TestGamepadSettingsMenu:
 
     def test_initialization(self, settings):
         """GamepadSettingsMenu should initialize with correct options."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
 
@@ -388,7 +388,7 @@ class TestGamepadSettingsMenu:
 
     def test_options_have_help_text(self, settings):
         """All options except Back should have help text."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
 
@@ -398,14 +398,14 @@ class TestGamepadSettingsMenu:
 
     def test_get_context(self, settings):
         """GamepadSettingsMenu should return CONTROLS_MENU context."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         assert menu.get_context() == InputContext.CONTROLS_MENU
 
     def test_toggle_option(self, settings):
         """Toggle option should change boolean value."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 0  # Gamepad Enabled
@@ -420,7 +420,7 @@ class TestGamepadSettingsMenu:
 
     def test_slider_option_increase(self, settings):
         """Slider option should increase value."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 1  # Stick Deadzone
@@ -431,7 +431,7 @@ class TestGamepadSettingsMenu:
 
     def test_slider_option_decrease(self, settings):
         """Slider option should decrease value."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 1  # Stick Deadzone
@@ -443,7 +443,7 @@ class TestGamepadSettingsMenu:
 
     def test_slider_bounds(self, settings):
         """Slider should not exceed min/max bounds."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.selected_option = 1  # Stick Deadzone
@@ -460,7 +460,7 @@ class TestGamepadSettingsMenu:
 
     def test_cancel_returns_back(self, settings):
         """Cancel action returns 'back'."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         result = menu.execute_action(InputAction.CANCEL)
@@ -468,7 +468,7 @@ class TestGamepadSettingsMenu:
 
     def test_render_does_not_crash(self, settings, console):
         """Render should complete without errors."""
-        from game_menu_controls import GamepadSettingsMenu
+        from rsp.ui.menu_controls import GamepadSettingsMenu
 
         menu = GamepadSettingsMenu(settings, None)
         menu.render(console)
@@ -484,7 +484,7 @@ class TestGamepadBindingsMenu:
 
     def test_initialization(self, settings, input_mapper):
         """GamepadBindingsMenu should initialize with action list."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
 
@@ -494,14 +494,14 @@ class TestGamepadBindingsMenu:
 
     def test_get_context(self, settings, input_mapper):
         """GamepadBindingsMenu should return CONTROLS_MENU context."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         assert menu.get_context() == InputContext.CONTROLS_MENU
 
     def test_navigation(self, settings, input_mapper):
         """Navigation should move through selectable items."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -510,7 +510,7 @@ class TestGamepadBindingsMenu:
 
     def test_enter_binding_mode(self, settings, input_mapper):
         """Confirm on an action should enter binding mode."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -521,7 +521,7 @@ class TestGamepadBindingsMenu:
 
     def test_cancel_returns_back(self, settings, input_mapper):
         """Cancel action returns 'back'."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         result = menu.execute_action(InputAction.CANCEL)
@@ -529,14 +529,14 @@ class TestGamepadBindingsMenu:
 
     def test_render_normal_mode(self, settings, input_mapper, console):
         """Render should complete in normal mode."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.render(console)
 
     def test_render_binding_mode(self, settings, input_mapper, console):
         """Render should complete in binding mode."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -545,7 +545,7 @@ class TestGamepadBindingsMenu:
 
     def test_get_bindings_for_action(self, settings, input_mapper):
         """Should return button names for an action."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         bindings = menu._get_bindings_for_action(InputAction.WAIT)
@@ -564,7 +564,7 @@ class TestKeyboardBindingModeInput:
 
     def test_esc_cancels_binding_mode(self, settings, input_mapper):
         """ESC key should cancel binding mode without changing bindings."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -584,7 +584,7 @@ class TestKeyboardBindingModeInput:
 
     def test_delete_clears_all_bindings(self, settings, input_mapper):
         """DELETE key should clear all custom bindings for the action."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -607,7 +607,7 @@ class TestKeyboardBindingModeInput:
 
     def test_reserved_key_rejected(self, settings, input_mapper):
         """Reserved keys (ESC, F12) should not be bindable."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -628,7 +628,7 @@ class TestKeyboardBindingModeInput:
 
     def test_valid_key_adds_binding(self, settings, input_mapper):
         """Valid key should add binding and exit binding mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -650,7 +650,7 @@ class TestKeyboardBindingModeInput:
 
     def test_conflicting_key_shows_dialog(self, settings, input_mapper):
         """Key already bound to another action should show conflict dialog."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -681,7 +681,7 @@ class TestKeyboardConflictDialog:
 
     def test_up_down_navigation(self, settings, input_mapper):
         """Up/down keys should navigate conflict dialog options."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.show_conflict_dialog = True
@@ -707,7 +707,7 @@ class TestKeyboardConflictDialog:
 
     def test_enter_on_yes_replaces_binding(self, settings, input_mapper):
         """Enter on Yes should replace the binding."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.show_conflict_dialog = True
@@ -730,7 +730,7 @@ class TestKeyboardConflictDialog:
 
     def test_enter_on_no_cancels(self, settings, input_mapper):
         """Enter on No should close dialog without changes."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.show_conflict_dialog = True
@@ -753,7 +753,7 @@ class TestKeyboardConflictDialog:
 
     def test_esc_cancels_dialog(self, settings, input_mapper):
         """ESC should close conflict dialog without changes."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.show_conflict_dialog = True
@@ -784,7 +784,7 @@ class TestGamepadTabSwitching:
 
     def test_initial_tab_is_gameplay(self, settings, input_mapper):
         """Menu should start on Gameplay tab."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         assert menu.current_tab == 0
@@ -792,7 +792,7 @@ class TestGamepadTabSwitching:
 
     def test_switch_tab_right(self, settings, input_mapper):
         """Switching right should go to Menus tab."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu._switch_tab(1)
@@ -802,7 +802,7 @@ class TestGamepadTabSwitching:
 
     def test_switch_tab_wraps(self, settings, input_mapper):
         """Tab switching should wrap around."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.current_tab = 1  # Menus
@@ -812,7 +812,7 @@ class TestGamepadTabSwitching:
 
     def test_switch_tab_rebuilds_action_list(self, settings, input_mapper):
         """Switching tabs should rebuild the action list."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         gameplay_items = len(menu.display_items)
@@ -825,7 +825,7 @@ class TestGamepadTabSwitching:
 
     def test_switch_tab_resets_selection(self, settings, input_mapper):
         """Switching tabs should reset scroll position."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 5  # Navigate down
@@ -835,7 +835,7 @@ class TestGamepadTabSwitching:
 
     def test_left_bracket_switches_tab(self, settings, input_mapper):
         """Left bracket key should switch tab left."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.current_tab = 1  # Start on Menus
@@ -851,7 +851,7 @@ class TestGamepadTabSwitching:
 
     def test_right_bracket_switches_tab(self, settings, input_mapper):
         """Right bracket key should switch tab right."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.current_tab = 0  # Start on Gameplay
@@ -876,7 +876,7 @@ class TestGamepadBindingModeInput:
 
     def test_esc_cancels_binding_mode(self, settings, input_mapper):
         """ESC key should cancel binding mode."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -895,7 +895,7 @@ class TestGamepadBindingModeInput:
 
     def test_delete_clears_bindings(self, settings, input_mapper):
         """DELETE key should clear gamepad bindings."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -923,7 +923,7 @@ class TestGamepadButtonActionsInKeyboardMenu:
 
     def test_x_button_clears_binding_in_binding_mode(self, settings, input_mapper):
         """X button should clear all bindings for action in binding mode."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         # Add a custom binding first
         input_mapper.add_keyboard_binding(InputAction.WAIT, tcod.event.KeySym.T)
@@ -940,7 +940,7 @@ class TestGamepadButtonActionsInKeyboardMenu:
 
     def test_y_button_resets_all_bindings(self, settings, input_mapper):
         """Y button should reset all keyboard bindings to defaults."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         # Add some custom bindings
         input_mapper.add_keyboard_binding(InputAction.TOGGLE_HELP, tcod.event.KeySym.T)
@@ -960,7 +960,7 @@ class TestGamepadButtonActionsInGamepadMenu:
 
     def test_x_button_clears_binding_in_binding_mode(self, settings, input_mapper):
         """X button should clear all bindings for action in binding mode."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -979,7 +979,7 @@ class TestGamepadButtonActionsInGamepadMenu:
 
     def test_y_button_resets_all_bindings(self, settings, input_mapper):
         """Y button should reset all gamepad bindings to defaults."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -1006,7 +1006,7 @@ class TestResetToDefaults:
 
     def test_keyboard_reset_clears_custom_bindings(self, settings, input_mapper):
         """Reset keyboard should clear all custom keyboard bindings."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         # Add some custom bindings
         input_mapper.add_keyboard_binding(InputAction.TOGGLE_HELP, tcod.event.KeySym.T)
@@ -1019,7 +1019,7 @@ class TestResetToDefaults:
 
     def test_gamepad_reset_clears_custom_bindings(self, settings, input_mapper):
         """Reset gamepad should clear all custom gamepad bindings."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -1034,7 +1034,7 @@ class TestResetToDefaults:
 
     def test_r_key_triggers_keyboard_reset(self, settings, input_mapper):
         """R key should trigger reset in keyboard bindings menu."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         # Add custom binding
         input_mapper.add_keyboard_binding(InputAction.TOGGLE_HELP, tcod.event.KeySym.T)
@@ -1053,7 +1053,7 @@ class TestResetToDefaults:
 
     def test_r_key_triggers_gamepad_reset(self, settings, input_mapper):
         """R key should trigger reset in gamepad bindings menu."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         CB = tcod.sdl.joystick.ControllerButton
 
@@ -1087,7 +1087,7 @@ class TestModifierKeyHandling:
 
     def test_shift_alone_does_not_bind(self, settings, input_mapper):
         """Pressing only Shift should NOT create a binding."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1110,7 +1110,7 @@ class TestModifierKeyHandling:
 
     def test_ctrl_alone_does_not_bind(self, settings, input_mapper):
         """Pressing only Ctrl should NOT create a binding."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1131,7 +1131,7 @@ class TestModifierKeyHandling:
 
     def test_alt_alone_does_not_bind(self, settings, input_mapper):
         """Pressing only Alt should NOT create a binding."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1152,7 +1152,7 @@ class TestModifierKeyHandling:
 
     def test_right_shift_alone_does_not_bind(self, settings, input_mapper):
         """Pressing only Right Shift should NOT create a binding."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1173,7 +1173,7 @@ class TestModifierKeyHandling:
 
     def test_shift_plus_key_creates_binding(self, settings, input_mapper):
         """Pressing Shift+/ should create a binding (for '?' key)."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1196,7 +1196,7 @@ class TestModifierKeyHandling:
 
     def test_normal_key_without_modifier_still_works(self, settings, input_mapper):
         """Normal key presses without modifiers should still work."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.binding_mode = True
@@ -1236,7 +1236,7 @@ class TestSettingsMenuSeparator:
 
     def test_separator_option_exists_before_export_debug_package(self, settings):
         """Settings menu should have a separator before Export Debug Package."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
 
@@ -1261,7 +1261,7 @@ class TestSettingsMenuSeparator:
 
     def test_separator_renders_as_blank_line_in_classic_mode(self, settings, console):
         """Separator should render as blank line in classic (glyph) mode."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings, None, None)
 
@@ -1280,7 +1280,7 @@ class TestMouseWheelNavigation:
 
     def test_keyboard_menu_wheel_up(self, settings, input_mapper):
         """Mouse wheel up should navigate up in keyboard bindings."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 5
@@ -1296,7 +1296,7 @@ class TestMouseWheelNavigation:
 
     def test_keyboard_menu_wheel_down(self, settings, input_mapper):
         """Mouse wheel down should navigate down in keyboard bindings."""
-        from game_menu_controls import KeyboardBindingsMenu
+        from rsp.ui.menu_controls import KeyboardBindingsMenu
 
         menu = KeyboardBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0
@@ -1312,7 +1312,7 @@ class TestMouseWheelNavigation:
 
     def test_gamepad_menu_wheel_navigation(self, settings, input_mapper):
         """Mouse wheel should work in gamepad bindings menu."""
-        from game_menu_controls import GamepadBindingsMenu
+        from rsp.ui.menu_controls import GamepadBindingsMenu
 
         menu = GamepadBindingsMenu(settings, input_mapper, None)
         menu.selected_index = 0

@@ -8,10 +8,10 @@ Tests menu navigation, rendering, scrolling, and interaction with achievement sy
 import pytest
 import tcod
 
-from game_achievements import ALL_ACHIEVEMENTS, AchievementManager
-from game_config import GameConfig
-from game_menu_achievements import AchievementsMenu
-from game_screen_utilities import ScreenRenderingUtils
+from rsp.systems.achievements import ALL_ACHIEVEMENTS, AchievementManager
+from rsp.core.config import GameConfig
+from rsp.ui.menu_achievements import AchievementsMenu
+from rsp.ui.screen_utils import ScreenRenderingUtils
 
 
 class TestAchievementsMenuBasic:

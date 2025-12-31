@@ -16,10 +16,10 @@ from unittest.mock import Mock
 import tcod.console
 import tcod.event
 
-from game_achievement_popups import AchievementPopup, AchievementPopupManager
-from game_achievements import Achievement
-from game_config import GameSettings
-from game_dialogue_system import (
+from rsp.systems.achievement_popups import AchievementPopup, AchievementPopupManager
+from rsp.systems.achievements import Achievement
+from rsp.core.config import GameSettings
+from rsp.ui.dialogue import (
     DialogueState,
     UnifiedRenderer,
     create_death_dialogue,
@@ -27,7 +27,7 @@ from game_dialogue_system import (
     create_inventory_attack_dialogue,
     create_overclock_warning_dialogue,
 )
-from game_entity_enums import EnemyState
+from rsp.entities.enums import EnemyState
 from tests.test_agent import GameTestAgent
 
 
@@ -483,7 +483,7 @@ class TestDialogueResolutionWrapping:
 
         long_message = "This is a very long dialogue message that should wrap " * 5
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         dialogue = DialogueBox(
             title="Long Message Test",
@@ -511,7 +511,7 @@ class TestDialogueResolutionWrapping:
 
         long_message = "Extended dialogue for high resolution display " * 10
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         dialogue = DialogueBox(
             title="High Res Test",

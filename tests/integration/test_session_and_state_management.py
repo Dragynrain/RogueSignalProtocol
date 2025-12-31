@@ -22,7 +22,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_entities import Position
+from rsp.entities.base import Position
 
 
 class TestGameSessionLifecycle:
@@ -132,8 +132,8 @@ class TestStateConsistency:
         initial_equipped_count = len(engine.player.inventory_manager.equipped_exploits)
 
         # Add an exploit
-        from game_data import GameData
-        from game_inventory import ExploitItem
+        from rsp.core.data import GameData
+        from rsp.combat.inventory import ExploitItem
 
         exploit_key = list(GameData.EXPLOITS.keys())[0]
         exploit_def = GameData.EXPLOITS[exploit_key]

@@ -56,7 +56,7 @@ class TestBlindedSeekEnemyMovement:
         Previously blinded SEEK enemies would stand still because
         _get_current_target returned None and they weren't RANDOM type.
         """
-        from game_characters import EnemyMovement, EnemyState
+        from rsp.entities.characters import EnemyMovement, EnemyState
 
         game = combat_game_engine
         enemy = game.enemies[0]
@@ -88,8 +88,8 @@ class TestSpecialNodeHelper:
 
     def test_get_special_node_type_cooling(self, basic_game_engine):
         """get_special_node_type returns 'cooling' for cooling nodes."""
-        from game_entities import Position
-        from game_map import RestoreNode
+        from rsp.entities.base import Position
+        from rsp.level.map import RestoreNode
 
         game_map = basic_game_engine.game_map
         pos = Position(5, 5)
@@ -101,8 +101,8 @@ class TestSpecialNodeHelper:
 
     def test_get_special_node_type_cpu(self, basic_game_engine):
         """get_special_node_type returns 'cpu' for CPU recovery nodes."""
-        from game_entities import Position
-        from game_map import RestoreNode
+        from rsp.entities.base import Position
+        from rsp.level.map import RestoreNode
 
         game_map = basic_game_engine.game_map
         pos = Position(6, 6)
@@ -113,8 +113,8 @@ class TestSpecialNodeHelper:
 
     def test_get_special_node_type_ghost(self, basic_game_engine):
         """get_special_node_type returns 'ghost' for ghost nodes."""
-        from game_entities import Position
-        from game_map import RestoreNode
+        from rsp.entities.base import Position
+        from rsp.level.map import RestoreNode
 
         game_map = basic_game_engine.game_map
         pos = Position(7, 7)
@@ -125,7 +125,7 @@ class TestSpecialNodeHelper:
 
     def test_get_special_node_type_none(self, basic_game_engine):
         """get_special_node_type returns None for non-special tiles."""
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         game_map = basic_game_engine.game_map
         pos = Position(8, 8)
@@ -134,8 +134,8 @@ class TestSpecialNodeHelper:
 
     def test_is_special_node_true(self, basic_game_engine):
         """is_special_node returns True for any special node."""
-        from game_entities import Position
-        from game_map import RestoreNode
+        from rsp.entities.base import Position
+        from rsp.level.map import RestoreNode
 
         game_map = basic_game_engine.game_map
 
@@ -145,7 +145,7 @@ class TestSpecialNodeHelper:
 
     def test_is_special_node_false(self, basic_game_engine):
         """is_special_node returns False for regular tiles."""
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         game_map = basic_game_engine.game_map
 

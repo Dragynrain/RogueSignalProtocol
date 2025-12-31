@@ -14,10 +14,10 @@ The goal is to catch issues like:
 
 import pytest
 
-from data_loading import DataLoader
-from game_characters import Enemy, Player
-from game_config import GameBalance, GameConfig, RoomGenerationConfig
-from game_inventory import CodeHack, ExploitItem
+from rsp.core.data_loading import DataLoader
+from rsp.entities.characters import Enemy, Player
+from rsp.core.config import GameBalance, GameConfig, RoomGenerationConfig
+from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestRealConfigIntegration:
@@ -45,7 +45,7 @@ class TestRealConfigIntegration:
 
     def test_all_enemy_types_can_be_created(self):
         """Verify all enemy types from game_content.json can be instantiated."""
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         game_data = DataLoader.load_game_data()
         enemy_types = game_data["enemy_types"]
@@ -186,7 +186,7 @@ class TestRealConfigIntegration:
 
     def test_all_exploits_can_be_created(self):
         """Verify all exploits from game_content.json can be instantiated."""
-        from game_entities import ExploitDefinition
+        from rsp.entities.base import ExploitDefinition
 
         game_data = DataLoader.load_game_data()
         exploits = game_data["exploits"]

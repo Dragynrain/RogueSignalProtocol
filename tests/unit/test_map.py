@@ -6,11 +6,11 @@ Tests the actual GameMap class and map query functionality.
 
 from unittest.mock import Mock, patch
 
-from game_entities import Position
-from game_inventory import CodeHack, ExploitItem
+from rsp.entities.base import Position
+from rsp.combat.inventory import CodeHack, ExploitItem
 
 # Import actual map classes
-from game_map import GameMap, RestoreNode
+from rsp.level.map import GameMap, RestoreNode
 
 
 class TestGameMapInitialization:

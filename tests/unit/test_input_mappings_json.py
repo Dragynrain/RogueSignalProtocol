@@ -18,7 +18,7 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction, InputContext
+from rsp.input.actions import InputAction, InputContext
 
 # =============================================================================
 # JSON File Existence and Structure Tests
@@ -241,7 +241,7 @@ class TestInputMapperLoadsFromJSON:
     @pytest.fixture
     def input_mapper(self):
         """Create an InputMapper instance."""
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         return InputMapper()
 
@@ -340,11 +340,11 @@ class TestInputMapperFailFast:
 
     def test_raises_when_json_missing(self, tmp_path, monkeypatch):
         """InputMapper should raise FileNotFoundError when JSON is missing."""
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         # Point to non-existent file
         monkeypatch.setattr(
-            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            "rsp.input.mappings.DEFAULT_BINDINGS_PATH",
             str(tmp_path / "nonexistent.json"),
         )
 
@@ -355,14 +355,14 @@ class TestInputMapperFailFast:
 
     def test_raises_when_json_malformed(self, tmp_path, monkeypatch):
         """InputMapper should raise JSONDecodeError when JSON is malformed."""
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         # Create malformed JSON file
         bad_json = tmp_path / "bad_bindings.json"
         bad_json.write_text("{ invalid json }", encoding="utf-8")
 
         monkeypatch.setattr(
-            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            "rsp.input.mappings.DEFAULT_BINDINGS_PATH",
             str(bad_json),
         )
 
@@ -371,11 +371,11 @@ class TestInputMapperFailFast:
 
     def test_raises_when_json_unreadable(self, tmp_path, monkeypatch):
         """InputMapper should raise OSError when JSON file cannot be read."""
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         # Point to the tmp_path directory (not a file)
         monkeypatch.setattr(
-            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            "rsp.input.mappings.DEFAULT_BINDINGS_PATH",
             str(tmp_path),  # This is a directory, not a file
         )
 
@@ -388,11 +388,11 @@ class TestInputMapperFailFast:
 
         This test ensures we don't regress back to the old fallback behavior.
         """
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         # Point to non-existent file
         monkeypatch.setattr(
-            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            "rsp.input.mappings.DEFAULT_BINDINGS_PATH",
             str(tmp_path / "missing.json"),
         )
 
@@ -405,7 +405,7 @@ class TestInputMapperFailFast:
 
     def test_valid_json_loads_successfully(self, tmp_path, monkeypatch):
         """InputMapper should load successfully with valid JSON."""
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         # Create minimal valid JSON
         valid_json = tmp_path / "valid_bindings.json"
@@ -418,7 +418,7 @@ class TestInputMapperFailFast:
         )
 
         monkeypatch.setattr(
-            "game_input_mappings.DEFAULT_BINDINGS_PATH",
+            "rsp.input.mappings.DEFAULT_BINDINGS_PATH",
             str(valid_json),
         )
 

@@ -18,8 +18,8 @@ import tcod
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
 from tests.integration.input_test_utils import InputTestHelper
 
 
@@ -52,8 +52,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_down_arrow(self, inventory_engine):
         """Keyboard: Down arrow moves selection down."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -67,8 +67,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_up_arrow(self, inventory_engine):
         """Keyboard: Up arrow moves selection up."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -81,8 +81,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_down(self, inventory_engine):
         """Keyboard: Page Down moves 5 items down."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -96,8 +96,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_up(self, inventory_engine):
         """Keyboard: Page Up moves 5 items up."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -112,8 +112,8 @@ class TestInventoryComprehensive:
 
     def test_dpad_down_navigation(self, inventory_engine):
         """D-pad: Down button navigates down."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -127,8 +127,8 @@ class TestInventoryComprehensive:
 
     def test_dpad_up_navigation(self, inventory_engine):
         """D-pad: Up button navigates up."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -141,8 +141,8 @@ class TestInventoryComprehensive:
 
     def test_left_stick_vertical(self, inventory_engine):
         """Left stick: Vertical axis navigates inventory."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -161,8 +161,8 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_top_from_bottom(self, inventory_engine):
         """Navigation: Wraps to top when going down from bottom."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -184,8 +184,8 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_bottom_from_top(self, inventory_engine):
         """Navigation: Wraps to bottom when going up from top."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -211,8 +211,8 @@ class TestInventoryComprehensive:
 
     def test_confirm_selects_item(self, inventory_engine):
         """Confirm: Selects item for use/equip."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -247,8 +247,8 @@ class TestInventoryComprehensive:
 
     def test_escape_closes(self, inventory_engine):
         """Escape: Closes inventory screen."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -260,8 +260,8 @@ class TestInventoryComprehensive:
 
     def test_i_key_toggles_closed(self, inventory_engine):
         """I key: Toggles inventory closed."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -273,8 +273,8 @@ class TestInventoryComprehensive:
 
     def test_face_button_b_closes(self, inventory_engine):
         """Face button B: Closes inventory."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -290,8 +290,8 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_navigation(self, inventory_engine):
         """Empty inventory: Navigation doesn't crash."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -308,8 +308,8 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_confirm(self, inventory_engine):
         """Empty inventory: Confirm doesn't crash."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -330,8 +330,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_down_navigation(self, inventory_engine):
         """Rapid down navigation handled correctly."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -351,8 +351,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_alternating_navigation(self, inventory_engine):
         """Rapid alternating up/down handled."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -367,8 +367,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_page_navigation(self, inventory_engine):
         """Rapid page up/down handled."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -403,8 +403,8 @@ class TestInventoryComprehensive:
 
     def test_single_item_navigation(self, inventory_engine):
         """Single item: Navigation stays on that item."""
-        from game_input import InputHandler
-        from game_input_actions import InputAction
+        from rsp.input.handler import InputHandler
+        from rsp.input.actions import InputAction
 
         engine = inventory_engine
 
@@ -442,49 +442,49 @@ class TestAchievementsMenuCriticalPath:
     @pytest.fixture
     def achievements_menu(self):
         """Create achievements menu instance."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         yield menu
 
     def test_keyboard_navigate_up(self, achievements_menu):
         """Keyboard: Up arrow scrolls up."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         achievements_menu.execute_action(InputAction.NAVIGATE_UP)
         assert achievements_menu.scroll_offset >= 0
 
     def test_keyboard_navigate_down(self, achievements_menu):
         """Keyboard: Down arrow scrolls down."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         achievements_menu.execute_action(InputAction.NAVIGATE_DOWN)
         assert achievements_menu.scroll_offset >= 0
 
     def test_keyboard_page_up(self, achievements_menu):
         """Keyboard: Page Up scrolls quickly."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         achievements_menu.execute_action(InputAction.NAVIGATE_PAGE_UP)
         assert achievements_menu.scroll_offset >= 0
 
     def test_keyboard_page_down(self, achievements_menu):
         """Keyboard: Page Down scrolls quickly."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         achievements_menu.execute_action(InputAction.NAVIGATE_PAGE_DOWN)
         assert achievements_menu.scroll_offset >= 0
 
     def test_keyboard_escape_exits(self, achievements_menu):
         """Keyboard: Escape exits achievements."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = achievements_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_navigation(self, achievements_menu):
         """D-pad: Navigate achievements."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         achievements_menu.execute_action(InputAction.NAVIGATE_UP)
         achievements_menu.execute_action(InputAction.NAVIGATE_DOWN)
@@ -492,14 +492,14 @@ class TestAchievementsMenuCriticalPath:
 
     def test_face_button_b_exits(self, achievements_menu):
         """Face button B: Exits menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = achievements_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_scroll_boundaries(self, achievements_menu):
         """Scrolling respects boundaries."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         initial_offset = achievements_menu.scroll_offset
 
@@ -525,7 +525,7 @@ class TestGraphicalHelpMenuCriticalPath:
     @pytest.fixture
     def help_menu(self):
         """Create graphical help menu instance with mocked dependencies."""
-        from game_menu_help_graphics import GraphicalHelpMenu
+        from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
         # Mock context and tile_manager (same pattern as test_gamepad_help_variants.py)
         mock_context = MagicMock()
@@ -542,7 +542,7 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_keyboard_navigate_pages(self, help_menu):
         """Keyboard: Arrow keys navigate pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         help_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -550,14 +550,14 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_navigation(self, help_menu):
         """D-pad: Navigate help pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         help_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -565,7 +565,7 @@ class TestGraphicalHelpMenuCriticalPath:
 
     def test_face_button_navigation(self, help_menu):
         """Face buttons: Navigate or exit."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.CONFIRM)
         result = help_menu.execute_action(InputAction.CANCEL)
@@ -592,14 +592,14 @@ class TestHelpMenuCriticalPath:
     @pytest.fixture
     def help_menu(self):
         """Create help menu instance (text mode)."""
-        from game_menu_help_lore import HelpMenu
+        from rsp.ui.menu_help_lore import HelpMenu
 
         menu = HelpMenu()
         yield menu
 
     def test_keyboard_navigate_right(self, help_menu):
         """Keyboard: Right arrow navigates to next page."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -607,7 +607,7 @@ class TestHelpMenuCriticalPath:
 
     def test_keyboard_navigate_left(self, help_menu):
         """Keyboard: Left arrow navigates to previous page."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         # First go right to ensure we're not on first page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -617,14 +617,14 @@ class TestHelpMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_left_right_navigate(self, help_menu):
         """D-pad: Left/right navigate pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -632,7 +632,7 @@ class TestHelpMenuCriticalPath:
 
     def test_left_stick_horizontal_navigate(self, help_menu):
         """Left stick: Horizontal movement navigates pages."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         help_menu.execute_action(InputAction.MOVE_EAST)
         help_menu.execute_action(InputAction.MOVE_WEST)
@@ -640,7 +640,7 @@ class TestHelpMenuCriticalPath:
 
     def test_face_button_b_exits(self, help_menu):
         """Face button B: Exits help menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
@@ -656,7 +656,7 @@ class TestLoreMenuCriticalPath:
     @pytest.fixture
     def lore_menu(self):
         """Create lore menu instance."""
-        from game_menu_help_lore import LoreMenu
+        from rsp.ui.menu_help_lore import LoreMenu
 
         menu = LoreMenu()
         # Load story fragments so we have data
@@ -666,7 +666,7 @@ class TestLoreMenuCriticalPath:
     def test_keyboard_navigate_fragments(self, lore_menu):
         """Keyboard: Up/down navigate fragment list."""
         # LoreMenu.execute_action() loads fragments internally
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -680,7 +680,7 @@ class TestLoreMenuCriticalPath:
 
     def test_keyboard_confirm_enters_reading(self, lore_menu):
         """Keyboard: Enter enters reading mode."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -694,7 +694,7 @@ class TestLoreMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, lore_menu):
         """Keyboard: Escape exits lore menu."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         lore_menu.lore_viewer_mode = "list"
         result = lore_menu.execute_action(InputAction.CANCEL)
@@ -702,7 +702,7 @@ class TestLoreMenuCriticalPath:
 
     def test_reading_mode_escape_returns_to_list(self, lore_menu):
         """Reading mode: Escape returns to fragment list."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -715,7 +715,7 @@ class TestLoreMenuCriticalPath:
 
     def test_dpad_navigation(self, lore_menu):
         """D-pad: Navigate fragment list."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
@@ -737,8 +737,8 @@ class TestGraphicsPreviewMenuCriticalPath:
     @pytest.fixture
     def graphics_menu(self):
         """Create graphics preview menu instance with mocked context."""
-        from game_graphics_tiles import TileManager
-        from game_menu_graphics_preview import GraphicsPreviewMenu
+        from rsp.rendering.tiles import TileManager
+        from rsp.ui.menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context (same pattern as test_graphics_preview_gamepad.py)
         context = Mock()
@@ -753,7 +753,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_navigate_entities(self, graphics_menu):
         """Keyboard: Navigate through entity types."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
@@ -761,7 +761,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_navigate_variants(self, graphics_menu):
         """Keyboard: Navigate variants (left/right)."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
         graphics_menu.execute_action(InputAction.NAVIGATE_RIGHT)
@@ -769,14 +769,14 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_keyboard_escape_exits(self, graphics_menu):
         """Keyboard: Escape exits preview."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
 
     def test_dpad_navigation(self, graphics_menu):
         """D-pad: Navigate entities and variants."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
@@ -786,7 +786,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 
     def test_face_buttons(self, graphics_menu):
         """Face buttons: Confirm and cancel."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         graphics_menu.execute_action(InputAction.CONFIRM)
         result = graphics_menu.execute_action(InputAction.CANCEL)
@@ -830,7 +830,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_keyboard_down_navigates_options(self, dialogue_engine):
         """Keyboard: Down arrow moves to next option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -844,7 +844,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_keyboard_up_navigates_options(self, dialogue_engine):
         """Keyboard: Up arrow moves to previous option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -857,7 +857,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_keyboard_enter_confirms(self, dialogue_engine):
         """Keyboard: Enter confirms selected option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -868,7 +868,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_keyboard_escape_closes(self, dialogue_engine):
         """Keyboard: Escape closes dialogue."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -903,7 +903,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_dpad_down_navigates(self, dialogue_engine):
         """D-pad: Down button navigates options."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -912,7 +912,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_dpad_up_navigates(self, dialogue_engine):
         """D-pad: Up button navigates options."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -925,7 +925,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_face_button_a_confirms(self, dialogue_engine):
         """Face button A: Confirms selected option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -935,7 +935,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_face_button_b_cancels(self, dialogue_engine):
         """Face button B: Closes dialogue."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -963,7 +963,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_option_wrapping_top_to_bottom(self, dialogue_engine):
         """Navigation: Wraps from top to bottom option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -978,7 +978,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_option_wrapping_bottom_to_top(self, dialogue_engine):
         """Navigation: Wraps from bottom to top option."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -997,7 +997,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_rapid_option_switching(self, dialogue_engine):
         """Rapid option changes handled correctly."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -1010,7 +1010,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_confirm_without_selection(self, dialogue_engine):
         """Confirm works even with default selection."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -1021,7 +1021,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
 
     def test_multiple_dialogue_sequences(self, dialogue_engine):
         """Multiple dialogues in sequence handled."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         engine = dialogue_engine
 
@@ -1043,7 +1043,7 @@ class DISABLED_DialogueSystemComprehensive:  # noqa: N801
             }
 
             # Navigation should do nothing
-            from game_input_actions import InputAction
+            from rsp.input.actions import InputAction
 
             engine.input_handler._execute_action(InputAction.NAVIGATE_DOWN)
 
@@ -1065,8 +1065,8 @@ class TestAutoRepeatComprehensive:
     @pytest.fixture
     def main_menu(self):
         """Create main menu instance for auto-repeat testing."""
-        from game_config import GameSettings
-        from game_menu_main import MainMenu
+        from rsp.core.config import GameSettings
+        from rsp.ui.menu_main import MainMenu
 
         settings = GameSettings()
         menu = MainMenu()
@@ -1078,7 +1078,7 @@ class TestAutoRepeatComprehensive:
 
     def test_dpad_initial_press_immediate_action(self, main_menu):
         """D-pad: Initial press triggers immediate action."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1092,7 +1092,7 @@ class TestAutoRepeatComprehensive:
 
     def test_dpad_down_initial_press(self, main_menu):
         """D-pad Down: First press moves selection."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1103,7 +1103,7 @@ class TestAutoRepeatComprehensive:
 
     def test_dpad_up_initial_press(self, main_menu):
         """D-pad Up: First press moves selection."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1122,7 +1122,7 @@ class TestAutoRepeatComprehensive:
 
     def test_left_stick_initial_movement(self, main_menu):
         """Left stick: Initial movement triggers action."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1133,7 +1133,7 @@ class TestAutoRepeatComprehensive:
 
     def test_left_stick_hold_continues_movement(self, main_menu):
         """Left stick: Holding stick continues movement."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1163,7 +1163,7 @@ class TestAutoRepeatComprehensive:
 
     def test_face_button_a_no_autorepeat(self, main_menu):
         """Face button A: Does NOT auto-repeat in menus."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1187,7 +1187,7 @@ class TestAutoRepeatComprehensive:
 
     def test_gameplay_movement_autorepeat(self):
         """Gameplay: Movement keys auto-repeat during hold."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
@@ -1203,7 +1203,7 @@ class TestAutoRepeatComprehensive:
 
     def test_gameplay_wait_no_autorepeat(self):
         """Gameplay: Wait action does NOT auto-repeat."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
@@ -1222,7 +1222,7 @@ class TestAutoRepeatComprehensive:
 
     def test_rapid_direction_changes_reset_timer(self, main_menu):
         """Rapid direction changes reset auto-repeat timer."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1236,7 +1236,7 @@ class TestAutoRepeatComprehensive:
 
     def test_same_direction_held_continues_repeat(self, main_menu):
         """Same direction held continues auto-repeat."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 
@@ -1248,7 +1248,7 @@ class TestAutoRepeatComprehensive:
 
     def test_release_then_immediate_repress(self, main_menu):
         """Release then immediate re-press treated as new initial press."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         menu = main_menu
 

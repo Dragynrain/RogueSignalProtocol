@@ -19,7 +19,7 @@ from unittest.mock import Mock
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputContext
+from rsp.input.actions import InputContext
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton

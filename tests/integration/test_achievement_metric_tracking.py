@@ -8,7 +8,7 @@ Tests verify that achievement-related metrics are properly tracked during gamepl
 - special_nodes_discovered (for explorer)
 """
 
-from game_metrics import get_current_session, init_session_metrics
+from rsp.systems.metrics import get_current_session, init_session_metrics
 from tests.test_agent import GameTestAgent
 
 
@@ -87,7 +87,7 @@ class TestCodeHackTracking:
         assert session.used_any_code_hacks is False
 
         # Give player a code hack
-        from game_inventory import CodeHack
+        from rsp.combat.inventory import CodeHack
 
         code = CodeHack(
             color_name="crimson",
@@ -113,7 +113,7 @@ class TestCodeHackTracking:
         assert len(session.unique_code_hacks_used_this_run) == 0
 
         # Give player a code hack
-        from game_inventory import CodeHack
+        from rsp.combat.inventory import CodeHack
 
         code = CodeHack(
             color_name="azure",
@@ -137,8 +137,8 @@ class TestCodeHackTracking:
         session = get_current_session()
         assert session is not None
 
-        from game_achievements import TOTAL_CODE_HACK_TYPES
-        from game_inventory import CodeHack
+        from rsp.systems.achievements import TOTAL_CODE_HACK_TYPES
+        from rsp.combat.inventory import CodeHack
 
         # All 6 code colors and their names
         code_data = [
@@ -236,7 +236,7 @@ class TestPureSkillAchievementFix:
         session.levels_completed = 3
 
         # Verify conditions for pure_skill from game_achievements
-        from game_achievements import ALL_ACHIEVEMENTS
+        from rsp.systems.achievements import ALL_ACHIEVEMENTS
 
         pure_skill = ALL_ACHIEVEMENTS.get("pure_skill")
         assert pure_skill is not None
@@ -275,7 +275,7 @@ class TestEnemyEncounterTracking:
 
     def test_killing_enemy_adds_to_unique_encountered(self):
         """Killing an enemy should add its type to unique_enemies_encountered."""
-        from game_metrics import track_enemy_kill
+        from rsp.systems.metrics import track_enemy_kill
 
         init_session_metrics()
 
@@ -299,7 +299,7 @@ class TestEnemyEncounterTracking:
 
     def test_killing_same_enemy_type_twice_doesnt_duplicate(self):
         """Killing the same enemy type twice shouldn't duplicate entries."""
-        from game_metrics import track_enemy_kill
+        from rsp.systems.metrics import track_enemy_kill
 
         init_session_metrics()
 
@@ -323,7 +323,7 @@ class TestEnemyEncounterTracking:
 
     def test_killing_different_enemy_types_adds_each(self):
         """Killing different enemy types should add each to the set."""
-        from game_metrics import track_enemy_kill
+        from rsp.systems.metrics import track_enemy_kill
 
         init_session_metrics()
 

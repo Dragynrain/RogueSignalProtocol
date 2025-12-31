@@ -16,9 +16,9 @@ Only external dependencies (sound, rendering) are mocked.
 
 import pytest
 
-from game_config import GameBalance
-from game_entities import EnemyState, Position
-from game_map import RestoreNode
+from rsp.core.config import GameBalance
+from rsp.entities.base import EnemyState, Position
+from rsp.level.map import RestoreNode
 from tests.fixtures.simple_fixtures import enemy_builder
 
 

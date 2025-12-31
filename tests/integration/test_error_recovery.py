@@ -17,10 +17,10 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_audio import NullSoundManager
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_input import InputHandler
+from rsp.systems.audio import NullSoundManager
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton

@@ -20,7 +20,7 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputContext
+from rsp.input.actions import InputContext
 
 # Settling period for analog stick (30ms in implementation, use 35ms for safety)
 SETTLING_PERIOD_SEC = 0.035
@@ -40,7 +40,7 @@ class TestButtonHeldDuringTransition:
         # Start dialogue
         import tcod.event
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
@@ -103,7 +103,7 @@ class TestStickHeldDuringPause:
 
     def test_stick_held_pause_unpause(self, game_with_gamepad):
         """Stick held when pausing game should not cause movement after unpause."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -221,7 +221,7 @@ class TestContextPriority:
         # Start dialogue
         import tcod.event
 
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(

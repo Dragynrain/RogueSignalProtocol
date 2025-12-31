@@ -21,7 +21,7 @@ These tests verify turn processing integrates correctly with:
 
 import pytest
 
-from game_entities import EnemyState, Position
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
 

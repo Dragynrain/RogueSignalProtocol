@@ -19,9 +19,9 @@ import tcod
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_loop import handle_error_screen, handle_game_input_events, log_exception
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.core.loop import handle_error_screen, handle_game_input_events, log_exception
 
 
 class TestGameInputEventHandling(unittest.TestCase):
@@ -402,7 +402,7 @@ class TestErrorHandling(unittest.TestCase):
                     # Should call logging.critical
                     self.assertTrue(mock_log_critical.called)
 
-    @patch("game_loop.render_char_safe")
+    @patch("rsp.core.loop.render_char_safe")
     def test_handle_error_screen_displays_message(self, mock_render):
         """Test handle_error_screen displays error correctly."""
         console = Mock()
@@ -426,7 +426,7 @@ class TestErrorHandling(unittest.TestCase):
             # Should return True (exit)
             self.assertTrue(result)
 
-    @patch("game_loop.render_char_safe")
+    @patch("rsp.core.loop.render_char_safe")
     def test_handle_error_screen_escape_exits(self, mock_render):
         """Test handle_error_screen accepts ESC to exit."""
         console = Mock()

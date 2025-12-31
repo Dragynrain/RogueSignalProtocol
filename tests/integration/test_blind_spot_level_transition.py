@@ -5,7 +5,7 @@ Verifies that _last_blind_spot_position is properly reset when transitioning
 between levels, preventing incorrect blind spot consumption on new levels.
 """
 
-from game_entities import Position
+from rsp.entities.base import Position
 from tests.test_agent import GameTestAgent
 
 

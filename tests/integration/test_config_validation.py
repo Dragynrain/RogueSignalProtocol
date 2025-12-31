@@ -528,7 +528,7 @@ class TestConfigRedundancy:
         - 'version' keys (allowed in metadata)
         - Nested structures (ai_behavior) intentionally duplicated
         """
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         # Collect all keys from all files with their source
         all_keys = {}  # {key: [file1, file2, ...]}
@@ -776,7 +776,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_game_config_loads_successfully(self):
         """Verify GameConfig can load from real JSON file."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         GameConfig._config_data = None
         GameConfig.load_from_json()
@@ -788,7 +788,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_game_balance_loads_successfully(self):
         """Verify GameBalance can load from real JSON file."""
-        from game_config import GameBalance, GameConfig
+        from rsp.core.config import GameBalance, GameConfig
 
         GameConfig._config_data = None
         GameConfig.load_from_json()
@@ -802,7 +802,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_room_generation_config_loads_successfully(self):
         """Verify RoomGenerationConfig can load from real JSON file."""
-        from game_config import GameConfig, RoomGenerationConfig
+        from rsp.core.config import GameConfig, RoomGenerationConfig
 
         GameConfig._config_data = None
         GameConfig.load_from_json()
@@ -814,7 +814,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_data_loader_loads_game_data_successfully(self):
         """Verify DataLoader can load game_content.json."""
-        from data_loading import DataLoader
+        from rsp.core.data import DataLoader
 
         DataLoader._game_data = None
 
@@ -826,7 +826,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_data_loader_loads_story_fragments_successfully(self):
         """Verify DataLoader can load narrative_content.json."""
-        from data_loading import DataLoader
+        from rsp.core.data import DataLoader
 
         DataLoader._story_fragments = None
 
@@ -837,9 +837,9 @@ class TestConfigRealObjectInstantiation:
 
     def test_player_creation_with_real_config(self):
         """Verify Player can be created with real config values."""
-        from game_config import GameConfig
-        from game_entities import Position
-        from game_player import Player
+        from rsp.core.config import GameConfig
+        from rsp.entities.base import Position
+        from rsp.entities.player import Player
 
         GameConfig._config_data = None
         GameConfig.load_from_json()
@@ -853,8 +853,8 @@ class TestConfigRealObjectInstantiation:
 
     def test_enemy_creation_with_real_config(self):
         """Verify Enemy can be created with real config data."""
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy = Enemy(Position(15, 15), "scanner")
 
@@ -865,9 +865,9 @@ class TestConfigRealObjectInstantiation:
 
     def test_code_hack_with_real_balance_values(self):
         """Verify CodeHack uses real balance values from JSON."""
-        from game_config import GameBalance, GameConfig
-        from game_inventory import CodeHack
-        from game_player import Player
+        from rsp.core.config import GameBalance, GameConfig
+        from rsp.combat.inventory import CodeHack
+        from rsp.entities.player import Player
 
         GameConfig._config_data = None
         GameConfig.load_from_json()

@@ -20,9 +20,9 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameConfig
-from game_input_actions import InputAction, InputContext
-from game_input_analog import AnalogStickHandler
+from rsp.core.config import GameConfig
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.analog import AnalogStickHandler
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton

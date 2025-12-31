@@ -16,11 +16,11 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from game_characters import Enemy
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import Position
-from game_map import GameMap
+from rsp.entities.characters import Enemy
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.level.map import GameMap
 
 
 class TestAutoWalkBasic(unittest.TestCase):

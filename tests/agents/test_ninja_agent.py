@@ -14,7 +14,7 @@ mechanics and whether a pure stealth playthrough is viable.
 
 import pytest
 
-from game_entities import EnemyState
+from rsp.entities.base import EnemyState
 from tests.test_agent import GameTestAgent
 
 

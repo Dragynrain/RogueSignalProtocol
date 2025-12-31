@@ -20,8 +20,8 @@ import tcod
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputContext
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputContext
 from tests.integration.input_test_utils import InputTestHelper
 
 
@@ -40,7 +40,7 @@ class TestSettingsMenuCriticalPath:
     @pytest.fixture
     def settings_menu(self):
         """Create settings menu for testing."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         settings = GameSettings()
         settings.master_volume = 0.0
@@ -263,7 +263,7 @@ class TestSettingsMenuInputComprehensive:
     @pytest.fixture
     def settings_menu(self):
         """Create settings menu instance."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         settings = GameSettings()
         menu = SettingsMenu(settings=settings, menu_background=None, sound_manager=None)

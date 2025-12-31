@@ -5,8 +5,8 @@ Verifies that enemy vision caching correctly uses vision_range property
 which includes ascension bonuses, not the base type_data.vision.
 """
 
-from game_ascension import AscensionModifiers
-from game_entities import Position
+from rsp.systems.ascension import AscensionModifiers
+from rsp.entities.base import Position
 
 
 class TestVisionBonusInCaching:

@@ -9,7 +9,7 @@ Tests debug export functionality in various game states and edge cases:
 
 import pytest
 
-from game_entities import EnemyState
+from rsp.entities.base import EnemyState
 from tests.test_agent import GameTestAgent
 
 

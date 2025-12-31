@@ -12,10 +12,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_characters import Enemy, Player
-from game_engine import GameEngine
-from game_entities import EnemyMovement, EnemyState, Position
-from game_map import GameMap
+from rsp.entities.characters import Enemy, Player
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyMovement, EnemyState, Position
+from rsp.level.map import GameMap
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ class TestVirusStaticMovement:
     def test_static_virus_never_moves_when_hostile(self, mock_game_map, mock_game_engine):
         """STATIC virus should remain stationary even when hostile and player is visible."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM,
@@ -72,7 +72,7 @@ class TestVirusStaticMovement:
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
             ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
@@ -97,7 +97,7 @@ class TestVirusStaticMovement:
     def test_static_virus_never_moves_when_unaware(self, mock_game_map, mock_game_engine):
         """STATIC virus should remain stationary when unaware."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM,
@@ -110,7 +110,7 @@ class TestVirusStaticMovement:
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
             ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
@@ -138,7 +138,7 @@ class TestVirusMovementTypeTransitions:
     ):
         """Virus with RANDOM base movement should return to RANDOM after losing player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM,
@@ -151,7 +151,7 @@ class TestVirusMovementTypeTransitions:
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
             ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.RANDOM
@@ -175,7 +175,7 @@ class TestVirusMovementTypeTransitions:
     ):
         """Virus with PATROL base movement should return to PATROL after losing player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM,
@@ -188,7 +188,7 @@ class TestVirusMovementTypeTransitions:
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
             ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.PATROL
@@ -212,7 +212,7 @@ class TestVirusMovementTypeTransitions:
     def test_virus_hostile_behavior_uses_seek(self, mock_game_map, mock_game_engine):
         """All mobile viruses should use SEEK movement when hostile."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM,

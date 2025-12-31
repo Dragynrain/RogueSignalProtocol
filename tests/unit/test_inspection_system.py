@@ -14,9 +14,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from game_entities import Colors, EnemyMovement, EnemyState, Position
-from game_inspection import EntityInspector
-from game_screen_utilities import ScreenRenderingUtils
+from rsp.entities.base import Colors, EnemyMovement, EnemyState, Position
+from rsp.utils.inspection import EntityInspector
+from rsp.ui.screen_utils import ScreenRenderingUtils
 
 
 class TestEntityInspectorPriority:
@@ -484,7 +484,7 @@ class TestItemInspection:
 
     def test_exploit_pickup_shows_stats(self):
         """Test that exploit pickups show their stats."""
-        from game_entities import ExploitDefinition
+        from rsp.entities.base import ExploitDefinition
 
         game = Mock()
         game.game_map = Mock()
@@ -514,7 +514,7 @@ class TestItemInspection:
             description="A test exploit",
         )
 
-        with patch("game_inspection.GameData") as mock_game_data:
+        with patch("rsp.utils.inspection.GameData") as mock_game_data:
             mock_game_data.EXPLOITS = {"test_exploit": mock_exploit}
 
             result = EntityInspector.get_entity_at_position(game, Position(10, 10))
@@ -725,7 +725,7 @@ class TestTerrainDescriptionLoading:
             }
         }
 
-        with patch("game_inspection.DataLoader.load_config", return_value=mock_config):
+        with patch("rsp.utils.inspection.DataLoader.load_config", return_value=mock_config):
             # Reset cache
             EntityInspector._terrain_descriptions = None
 
@@ -740,7 +740,7 @@ class TestTerrainDescriptionLoading:
         """Test that terrain descriptions are cached after first load."""
         mock_config = {"terrain_descriptions": {"test": {"name": "Test"}}}
 
-        with patch("game_inspection.DataLoader.load_config", return_value=mock_config) as mock_load:
+        with patch("rsp.utils.inspection.DataLoader.load_config", return_value=mock_config) as mock_load:
             # Reset cache
             EntityInspector._terrain_descriptions = None
 
@@ -757,8 +757,8 @@ class TestInfoPanelRendering:
 
     def test_long_exploit_descriptions_dont_trigger_truncation(self):
         """Verify that properly wrapped exploit descriptions don't get truncated with '...'."""
-        from game_data import GameData
-        from game_info_panel import InfoProvider
+        from rsp.core.data import GameData
+        from rsp.ui.info_panel import InfoProvider
 
         # Use actual exploit with long description from game data
         game = Mock()
@@ -790,7 +790,7 @@ class TestInfoPanelRendering:
 
     def test_long_entity_descriptions_dont_trigger_truncation(self):
         """Verify that entity descriptions with details don't get truncated."""
-        from game_info_panel import InfoProvider
+        from rsp.ui.info_panel import InfoProvider
 
         game = Mock()
 
@@ -837,7 +837,7 @@ class TestInfoPanelRendering:
 
     def test_code_hack_descriptions_dont_trigger_truncation(self):
         """Verify code hack effect descriptions wrap properly."""
-        from game_info_panel import InfoProvider
+        from rsp.ui.info_panel import InfoProvider
 
         game = Mock()
 
@@ -862,9 +862,9 @@ class TestInfoPanelColorCoding:
 
     def test_exploit_name_uses_category_color(self):
         """Verify exploit names are colored by category in info panel."""
-        from game_color_manager import ColorManager
-        from game_data import GameData
-        from game_info_panel import InfoProvider
+        from rsp.utils.colors import ColorManager
+        from rsp.core.data import GameData
+        from rsp.ui.info_panel import InfoProvider
 
         game = Mock()
         game.player = Mock()
@@ -894,9 +894,9 @@ class TestInfoPanelColorCoding:
 
     def test_code_hack_name_uses_actual_color(self):
         """Verify code hack names are colored by their actual color in inventory info panel."""
-        from game_entities import Colors
-        from game_info_panel import InfoProvider
-        from game_inventory import CodeHack
+        from rsp.entities.base import Colors
+        from rsp.ui.info_panel import InfoProvider
+        from rsp.combat.inventory import CodeHack
 
         game = Mock()
         game.code_hack_effects = {
@@ -932,7 +932,7 @@ class TestInfoPanelColorCoding:
 
     def test_inventory_keyboard_selection_triggers_info_panel(self):
         """Verify keyboard selection in inventory updates info panel without mouse."""
-        from game_info_panel import InfoProvider
+        from rsp.ui.info_panel import InfoProvider
 
         game = Mock()
         game.show_inventory = True
@@ -954,7 +954,7 @@ class TestInfoPanelColorCoding:
 
     def test_utility_exploit_color_is_cyan_not_yellow(self):
         """Verify utility exploits use cyan color (not yellow which conflicts with selection)."""
-        from game_color_manager import ColorManager
+        from rsp.utils.colors import ColorManager
 
         utility_color = ColorManager.get_exploit_color("utility")
 

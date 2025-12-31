@@ -18,8 +18,8 @@ import tcod
 import tcod.console
 import tcod.event
 
-from font_loader_freetype import load_truetype_font_custom
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.font_loader import load_truetype_font_custom
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 def render_box_outline(

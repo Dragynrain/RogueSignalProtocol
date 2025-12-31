@@ -17,9 +17,9 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_input import InputHandler
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
 
 
 class TestGameLoopInputPolling:
@@ -36,7 +36,7 @@ class TestGameLoopInputPolling:
 
         This is the MINIMUM test needed to catch the analog stick bug.
         """
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             engine = GameEngine(settings=settings, load_save=False)
 
@@ -95,7 +95,7 @@ class TestGameLoopInputPolling:
 
         This is the MOST COMMON scenario and must not crash.
         """
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             engine = GameEngine(settings=settings, load_save=False)
             input_handler = InputHandler(engine)
@@ -126,7 +126,7 @@ class TestGameLoopInputPolling:
 
         The bug occurred in BOTH gameplay and modal contexts, so test all of them.
         """
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             engine = GameEngine(settings=settings, load_save=False)
             input_handler = InputHandler(engine)
@@ -198,7 +198,7 @@ class TestGameLoopInputPolling:
         This is the MOST comprehensive test - simulates exactly what happens
         when you start a new game and the loop runs for one frame.
         """
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             engine = GameEngine(settings=settings, load_save=False)
 
@@ -264,8 +264,8 @@ class TestGameLoopSmokeWithRenderer:
 
         This catches bugs that only appear when BOTH systems run together.
         """
-        with patch("game_audio.SoundManager"):
-            from game_rendering_core import GameRenderer
+        with patch("rsp.systems.audio.SoundManager"):
+            from rsp.rendering.core import GameRenderer
 
             settings = GameSettings()
             settings.graphics_mode = "glyphs"

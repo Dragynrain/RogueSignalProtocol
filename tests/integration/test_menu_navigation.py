@@ -15,7 +15,7 @@ and that menus don't interfere with game state.
 import pytest
 import tcod.event
 
-from game_input import InputHandler
+from rsp.input.handler import InputHandler
 
 
 class TestBasicMenuNavigation:

@@ -6,9 +6,9 @@ Tests InputAction/InputContext enums, InputMapper, and AnalogStickHandler.
 
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
-from game_input_analog import AnalogStickHandler
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.analog import AnalogStickHandler
+from rsp.input.mappings import InputMapper
 
 
 class TestInputActions:
@@ -420,7 +420,7 @@ class TestAnalogStickHandler:
         """Test that time-based gating prevents multiple moves per frame."""
         import time
 
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         handler = AnalogStickHandler()
         handler.update_left_stick(x=32767, y=0)  # Deflect stick east
@@ -451,7 +451,7 @@ class TestAnalogStickHandler:
         """Test that time-based gating resets on release."""
         import time
 
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         handler = AnalogStickHandler()
 
@@ -575,7 +575,7 @@ class TestModifierKeySupport:
 
     def test_key_binding_display_name_with_modifier(self):
         """Test that KeyBinding display names show symbols for Shift combos."""
-        from game_input_mappings import KeyBinding, key_binding_to_display_name
+        from rsp.input.mappings import KeyBinding, key_binding_to_display_name
 
         # Without modifier
         binding_no_mod = KeyBinding(tcod.event.KeySym.SLASH, 0)
@@ -595,7 +595,7 @@ class TestModifierKeySupport:
 
     def test_key_binding_matches_normalized_modifiers(self):
         """Test that left/right modifier keys are treated equivalently."""
-        from game_input_mappings import KeyBinding
+        from rsp.input.mappings import KeyBinding
 
         binding = KeyBinding(tcod.event.KeySym.SLASH, tcod.event.Modifier.SHIFT)
 

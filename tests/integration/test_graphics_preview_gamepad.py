@@ -16,7 +16,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_config import GameSettings
+from rsp.core.config import GameSettings
 
 
 class TestGraphicsPreviewGamepadInput:
@@ -25,8 +25,8 @@ class TestGraphicsPreviewGamepadInput:
     @pytest.fixture
     def graphics_preview_menu(self):
         """Create graphics preview menu for testing."""
-        from game_graphics_tiles import TileManager
-        from game_menu_graphics_preview import GraphicsPreviewMenu
+        from rsp.rendering.tiles import TileManager
+        from rsp.ui.menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context
         context = Mock()

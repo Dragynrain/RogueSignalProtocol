@@ -38,7 +38,7 @@ class TestVirusDeathSaveDeletion:
         agent = GameTestAgent(seed=42)
 
         # Save the game first
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         SaveGameManager.save_game(agent.engine)
         assert SaveGameManager.save_exists(), "Save should exist before death"
@@ -69,7 +69,7 @@ class TestVirusDeathSaveDeletion:
         assert agent.engine.game_over is True
 
         # Try to auto-save (simulates window close event)
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         agent.engine.auto_save()
 
@@ -128,7 +128,7 @@ class TestVirusDeathSaveDeletion:
         agent = GameTestAgent(seed=42)
 
         # Save the game first
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         SaveGameManager.save_game(agent.engine)
         assert SaveGameManager.save_exists(), "Save should exist before death"

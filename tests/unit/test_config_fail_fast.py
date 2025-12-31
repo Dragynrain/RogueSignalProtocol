@@ -15,7 +15,7 @@ class TestAscensionConfigFailFast:
 
     def test_ascension_section_exists(self):
         """Verify ascension section exists in game_rules.json."""
-        from game_ascension import _load_ascension_config
+        from rsp.systems.ascension import _load_ascension_config
 
         config = _load_ascension_config()
         # Should not raise - section exists
@@ -24,7 +24,7 @@ class TestAscensionConfigFailFast:
 
     def test_calculate_modifiers_requires_modifiers_section(self):
         """Verify calculate_ascension_modifiers uses config correctly."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         # Should not raise for valid level
         mods = calculate_ascension_modifiers(1)
@@ -33,7 +33,7 @@ class TestAscensionConfigFailFast:
 
     def test_get_max_ascension_level_uses_config(self):
         """Verify max level comes from config, not hardcoded."""
-        from game_ascension import get_max_ascension_level
+        from rsp.systems.ascension import get_max_ascension_level
 
         max_level = get_max_ascension_level()
         assert isinstance(max_level, int)
@@ -45,7 +45,7 @@ class TestNetworkConfigFailFast:
 
     def test_network_configs_exist(self):
         """Verify network configs exist for all levels."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         configs = GameConfig.get_network_configs()
         # Should have configs for at least levels 1-3
@@ -55,7 +55,7 @@ class TestNetworkConfigFailFast:
 
     def test_network_config_has_name(self):
         """Verify each network config has required 'name' field."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         configs = GameConfig.get_network_configs()
         for level, config in configs.items():
@@ -67,7 +67,7 @@ class TestGatewayStrategyWeights:
 
     def test_gateway_strategy_weights_exist(self):
         """Verify gateway strategy weights exist in config."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         weights = GameConfig._get_required("room_generation.gateway_strategy_weights")
         assert "far_corner" in weights
@@ -77,7 +77,7 @@ class TestGatewayStrategyWeights:
 
     def test_gateway_weights_are_numeric(self):
         """Verify gateway weights are valid numbers."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         weights = GameConfig._get_required("room_generation.gateway_strategy_weights")
         for key, value in weights.items():
@@ -90,7 +90,7 @@ class TestPatrolValidationMargin:
 
     def test_patrol_validation_margin_exists(self):
         """Verify patrol validation margin exists in config."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         margin = GameConfig._get_required("balance.patrol_validation_margin")
         assert isinstance(margin, int)
@@ -102,7 +102,7 @@ class TestRequiredConfigSections:
 
     def test_balance_section_exists(self):
         """Verify balance section exists."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         # These should not raise
         GameConfig._get_required("balance.patrol_spacing_min")
@@ -111,14 +111,14 @@ class TestRequiredConfigSections:
 
     def test_room_generation_section_exists(self):
         """Verify room_generation section exists."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         GameConfig._get_required("room_generation.gateway_strategy_weights")
         GameConfig._get_required("room_generation.min_rooms_base")
 
     def test_gameplay_section_exists(self):
         """Verify gameplay section exists."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         GameConfig._get_required("gameplay.default_player_cpu")
         GameConfig._get_required("gameplay.default_player_ram")

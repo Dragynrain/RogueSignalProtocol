@@ -9,8 +9,8 @@ during combat (every exploit uses particles).
 
 import time
 
-from game_config import GameConfig
-from game_particle_system import Particle, ParticleSystem
+from rsp.core.config import GameConfig
+from rsp.rendering.particles import Particle, ParticleSystem
 
 
 class TestParticleDataclass:

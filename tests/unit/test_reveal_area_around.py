@@ -4,8 +4,8 @@ Tests for GameMap.reveal_area_around helper method.
 This helper consolidates the 3x3 reveal pattern used in threat_scan and network_scan.
 """
 
-from game_entities import Position
-from game_map import GameMap
+from rsp.entities.base import Position
+from rsp.level.map import GameMap
 
 
 class TestRevealAreaAround:

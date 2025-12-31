@@ -15,9 +15,9 @@ that the actual JSON configuration is valid and loadable.
 
 import pytest
 
-from game_config import GameBalance as GameConfigBalance
-from game_data import GameData, GameUpgrades
-from game_entities import EnemyMovement, TargetingMode
+from rsp.core.config import GameBalance as GameConfigBalance
+from rsp.core.data import GameData, GameUpgrades
+from rsp.entities.base import EnemyMovement, TargetingMode
 
 
 class TestGameDataEnemyTypes:

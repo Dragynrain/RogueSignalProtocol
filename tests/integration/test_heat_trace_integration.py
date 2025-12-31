@@ -17,8 +17,8 @@ These tests use REAL game objects with minimal mocking.
 
 import pytest
 
-from game_entities import Position
-from game_map import RestoreNode
+from rsp.entities.base import Position
+from rsp.level.map import RestoreNode
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 

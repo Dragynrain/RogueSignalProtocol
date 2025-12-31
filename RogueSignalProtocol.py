@@ -13,6 +13,14 @@ import sys
 
 import tcod
 
+# Add src directory to path for rsp package imports
+import sys as _sys
+from pathlib import Path as _Path
+_src_dir = _Path(__file__).parent / "src"
+_sys.path.insert(0, str(_src_dir))
+del _sys, _Path, _src_dir
+
+
 # CRITICAL: Set working directory to exe location when running as frozen executable
 # This ensures the game can find assets regardless of where it's launched from
 if getattr(sys, "frozen", False):
@@ -28,7 +36,7 @@ else:
 
 # CRITICAL: Initialize file paths BEFORE any logging or file operations
 # This determines whether to use portable mode (./saves, ./logs) or AppData mode
-from game_file_paths import (  # noqa: E402
+from rsp.core.file_paths import (  # noqa: E402
     get_mode_description,
     initialize_data_directories,
     show_fatal_error_and_exit,
@@ -50,7 +58,7 @@ print(f"Data storage mode: {get_mode_description()}")
 # Import refactored modules
 
 # Import modular components for game loop and rendering
-from game_loop import main  # noqa: E402
+from rsp.core.loop import main  # noqa: E402
 
 # Configure logging based on build type
 # Alpha/Beta builds: DEBUG logging with file output (for playtester bug reports)
@@ -59,7 +67,7 @@ from game_loop import main  # noqa: E402
 DEBUG_MODE = os.path.exists("debug_mode.flag")
 
 # Get log directory path (supports portable/AppData modes)
-from game_file_paths import get_data_directory  # noqa: E402
+from rsp.core.file_paths import get_data_directory  # noqa: E402
 
 log_dir = get_data_directory() / "logs"
 log_dir.mkdir(exist_ok=True)

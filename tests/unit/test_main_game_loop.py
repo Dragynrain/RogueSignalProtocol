@@ -18,7 +18,7 @@ class TestGameComponentIntegration(unittest.TestCase):
 
     def test_game_settings_integration(self):
         """Test that GameSettings can be imported and initialized."""
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         settings = GameSettings()
         self.assertIsInstance(settings, GameSettings)
@@ -30,7 +30,7 @@ class TestGameComponentIntegration(unittest.TestCase):
 
     def test_player_integration(self):
         """Test that Player class can be imported and created."""
-        from game_characters import Player
+        from rsp.entities.characters import Player
 
         # Create a player at a test position
         player = Player(x=5, y=5)
@@ -40,7 +40,7 @@ class TestGameComponentIntegration(unittest.TestCase):
 
     def test_enemy_manager_integration(self):
         """Test that EnemyManager can be imported."""
-        from game_enemies import EnemyManager
+        from rsp.entities.enemies import EnemyManager
 
         # Create mocks for required parameters
         game_map = Mock()
@@ -53,7 +53,7 @@ class TestGameComponentIntegration(unittest.TestCase):
 
     def test_sound_manager_integration(self):
         """Test that SoundManager can be imported and initialized."""
-        from game_audio import SoundManager
+        from rsp.systems.audio import SoundManager
 
         with patch("pygame.mixer.init") as mock_mixer_init:
             mock_mixer_init.return_value = True
@@ -66,7 +66,7 @@ class TestGameConstantsAndConfiguration(unittest.TestCase):
 
     def test_game_balance_constants(self):
         """Test that game balance constants are accessible."""
-        from game_config import GameBalance
+        from rsp.core.config import GameBalance
 
         # Test that critical constants exist and have reasonable values
         self.assertIsInstance(GameBalance.HEAT_REDUCTION_NORMAL, int)
@@ -76,7 +76,7 @@ class TestGameConstantsAndConfiguration(unittest.TestCase):
 
     def test_game_config_constants(self):
         """Test that game configuration constants are accessible."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         # Test that essential config exists
         self.assertTrue(hasattr(GameConfig, "SCREEN_WIDTH"))
@@ -88,7 +88,7 @@ class TestGameConstantsAndConfiguration(unittest.TestCase):
 
     def test_color_constants(self):
         """Test that color constants are available."""
-        from game_entities import Colors
+        from rsp.entities.base import Colors
 
         # Test that basic colors are defined
         self.assertTrue(hasattr(Colors, "WHITE"))
@@ -103,7 +103,7 @@ class TestMainGameDataStructures(unittest.TestCase):
 
     def test_position_class(self):
         """Test Position class functionality."""
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         pos = Position(10, 20)
         self.assertEqual(pos.x, 10)
@@ -114,7 +114,7 @@ class TestMainGameDataStructures(unittest.TestCase):
 
     def test_enemy_state_enum(self):
         """Test EnemyState enum."""
-        from game_entities import EnemyMovement, EnemyState
+        from rsp.entities.base import EnemyMovement, EnemyState
 
         # Test that expected states exist (EnemyState enum)
         self.assertTrue(hasattr(EnemyState, "UNAWARE"))
@@ -126,7 +126,7 @@ class TestMainGameDataStructures(unittest.TestCase):
 
     def test_exploit_definition_class(self):
         """Test ExploitDefinition class."""
-        from game_entities import ExploitDefinition
+        from rsp.entities.base import ExploitDefinition
 
         # Test creating an exploit definition with correct parameters
         exploit = ExploitDefinition(

@@ -11,8 +11,8 @@ import tempfile
 
 import pytest
 
-from data_loading import PersistentStorage
-from game_config import GameBalance, GameConfig, GameSettings
+from rsp.core.data_loading import PersistentStorage
+from rsp.core.config import GameBalance, GameConfig, GameSettings
 
 
 class TestGameSettings:

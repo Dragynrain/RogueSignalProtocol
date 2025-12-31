@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""
+Tile Dimension Calculator
+Pure functions for calculating tile/sprite dimensions based on window size and mode.
+"""
+
+import logging
+
+from rsp.core.config import GameConfig
+
+
+class TileDimensionCalculator:
+    """
+    Pure functions for tile dimension calculations.
+
+    Separates calculation logic from TileManager for better testability
+    and clearer separation of concerns.
+    """
+
+    @staticmethod
+    def calculate_from_window(
+        window_size: tuple[int, int], graphics_mode: str, ui_scale: str = "normal"
+    ) -> tuple[int, int]:
+        """
+        Calculate tile dimensions based on window size and graphics mode.
+
+        Args:
+            window_size: (width, height) in pixels
+            graphics_mode: "graphics" or "glyph"
+            ui_scale: "compact" or "normal" (used in graphics mode)
+
+        Returns:
+            Tuple of (tile_width, tile_height) in pixels
+        """
+        width, height = window_size
+
+        if graphics_mode == "graphics":
+            return TileDimensionCalculator._calc_graphics_mode(width, height, ui_scale)
+        else:
+            return TileDimensionCalculator._calc_glyph_mode(width, height)
+
+    @staticmethod
+    def _calc_graphics_mode(
+        window_width: int, window_height: int, ui_scale: str = "normal"
+    ) -> tuple[int, int]:
+        """
+        Calculate tile dimensions for graphics mode.
+
+        Graphics mode uses configurable tile sizes:
+        - Normal: 64x64 tiles (default, best for desktop monitors)
+        - Compact: 48x48 tiles (better for handhelds like Steam Deck)
+
+        Sprites are scaled from 512x512 to the target tile size.
+
+        Args:
+            window_width: Window width in pixels (unused, kept for API compatibility)
+            window_height: Window height in pixels (unused, kept for API compatibility)
+            ui_scale: "compact" or "normal"
+
+        Returns:
+            Tuple of (tile_width, tile_height) based on ui_scale
+        """
+        tile_size = GameConfig.get_tile_size_for_scale(ui_scale)
+        return (tile_size, tile_size)
+
+    @staticmethod
+    def _calc_glyph_mode(window_width: int, window_height: int) -> tuple[int, int]:
+        """
+        Calculate tile dimensions for glyph/ASCII mode.
+
+        In glyph mode, tiles match the console grid size.
+
+        Args:
+            window_width: Window width in pixels
+            window_height: Window height in pixels
+
+        Returns:
+            Tuple of (tile_width, tile_height) in pixels
+        """
+        console_width = GameConfig.SCREEN_WIDTH
+        console_height = GameConfig.SCREEN_HEIGHT
+
+        tile_width = window_width // console_width
+        tile_height = window_height // console_height
+
+        return TileDimensionCalculator.validate_and_clamp(tile_width, tile_height)
+
+    @staticmethod
+    def validate_and_clamp(width: int, height: int) -> tuple[int, int]:
+        """
+        Ensure tile dimensions meet minimum requirements for readability.
+
+        Args:
+            width: Proposed tile width
+            height: Proposed tile height
+
+        Returns:
+            Tuple of (width, height) clamped to minimums
+        """
+        min_w = GameConfig.MIN_TILE_WIDTH()
+        min_h = GameConfig.MIN_TILE_HEIGHT()
+
+        clamped_width = max(min_w, width)
+        clamped_height = max(min_h, height)
+
+        if clamped_width != width:
+            logging.warning(f"Tile width clamped to minimum: {clamped_width}px (was {width}px)")
+        if clamped_height != height:
+            logging.warning(f"Tile height clamped to minimum: {clamped_height}px (was {height}px)")
+
+        return (clamped_width, clamped_height)
+
+    @staticmethod
+    def get_fallback_dimensions() -> tuple[int, int]:
+        """
+        Get fallback tile dimensions when calculation fails.
+
+        Returns:
+            Tuple of (width, height) from config
+        """
+        return (GameConfig.FALLBACK_TILE_WIDTH(), GameConfig.FALLBACK_TILE_HEIGHT())

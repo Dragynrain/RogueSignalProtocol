@@ -10,9 +10,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from game_engine import GameEngine
-from game_entities import Position
-from game_narrative import NarrativeManager
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.utils.narrative import NarrativeManager
 
 
 class TestNarrativeTriggers:

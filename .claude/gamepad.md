@@ -19,8 +19,8 @@ In-game modals (help, achievements) need renderer to call navigation methods:
 ### 3. Auto-Repeat for Menus
 
 **Two code paths:**
-1. Event-driven (game_input.py) - Button presses create actions, NO auto-repeat
-2. Polling (game_loop.py) - Checks stick/D-pad state, HAS auto-repeat
+1. Event-driven (rsp.input.handler) - Button presses create actions, NO auto-repeat
+2. Polling (rsp.core.loop) - Checks stick/D-pad state, HAS auto-repeat
 
 **Timing constants (tested):**
 ```python
@@ -104,7 +104,7 @@ self.last_menu_move_time      # Menus
 
 ## CRITICAL BUG PATTERNS
 
-### Polling Conditional Logic (game_loop.py ~line 1435)
+### Polling Conditional Logic (rsp.core.loop)
 When adding new modal screens, must update BOTH branches:
 ```python
 # Branch 1: Gameplay movement - EXCLUDE all modals
@@ -123,12 +123,12 @@ elif game.show_inventory or game.show_help or ...:  # And here!
 ## ARCHITECTURE
 
 **Event Flow:**
-1. SDL events → TCOD event loop → game_loop.py → input_handler
+1. SDL events → TCOD event loop → rsp.core.loop → input_handler
 2. input_handler determines context → gamepad_handler converts to action
 3. _execute_action() routes to context handler → executes game logic
 
 **Polling Flow (auto-repeat):**
-1. game_loop.py checks stick/D-pad every frame
+1. rsp.core.loop checks stick/D-pad every frame
 2. analog_handler.get_left_stick_movement() checks timing
 3. Direct modal navigation (bypasses action system)
 
@@ -204,16 +204,16 @@ event = tcod.event.ControllerAxis(
 
 ## FILE LOCATIONS
 
-- Actions: `game_input_actions.py` (InputAction enum, InputContext enum)
-- Mappings: `game_input_mappings.py` (InputMapper, default key/button bindings)
-- Base handler: `game_input_base.py` (BaseInputHandler abstract class)
-- Gamepad handler: `game_input_gamepad.py` (GamepadInputHandler)
-- Analog processing: `game_input_analog.py` (AnalogStickHandler)
-- Coordinate conversion: `game_input_coordinates.py` (InputCoordinateConverter)
-- Main input handler: `game_input.py` (InputHandler, context routing)
-- Gameplay handling: `game_input_gameplay.py` (GameplayInputHandler)
-- Modal handling: `game_input_modals.py` (InventoryInputHandler, etc.)
-- Polling loop: `game_loop.py` (handle_menu_navigation)
+- Actions: `rsp.input.actions` (InputAction enum, InputContext enum)
+- Mappings: `rsp.input.mappings` (InputMapper, default key/button bindings)
+- Base handler: `rsp.input.base` (BaseInputHandler abstract class)
+- Gamepad handler: `rsp.input.gamepad` (GamepadInputHandler)
+- Analog processing: `rsp.input.analog` (AnalogStickHandler)
+- Coordinate conversion: `rsp.input.coordinates` (InputCoordinateConverter)
+- Main input handler: `rsp.input.handler` (InputHandler, context routing)
+- Gameplay handling: `rsp.input.gameplay` (GameplayInputHandler)
+- Modal handling: `rsp.input.modals` (InventoryInputHandler, etc.)
+- Polling loop: `rsp.core.loop` (handle_menu_navigation)
 
 ## TEST STRUCTURE
 

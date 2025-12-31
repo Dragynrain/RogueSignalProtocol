@@ -8,13 +8,13 @@ Tests verify that:
 - Achievement tracking for ascension achievements works correctly
 """
 
-from game_ascension import (
+from rsp.systems.ascension import (
     calculate_ascension_modifiers,
     get_max_ascension_level,
     is_ascension_unlocked,
     unlock_next_ascension,
 )
-from game_metrics import get_current_session, init_session_metrics
+from rsp.systems.metrics import get_current_session, init_session_metrics
 from tests.test_agent import GameTestAgent
 
 
@@ -137,7 +137,7 @@ class TestAscensionAchievements:
 
     def test_victory_at_a5_unlocks_sensor_sweep(self):
         """Winning at A5 should unlock sensor_sweep achievement."""
-        from game_achievements import AchievementChecker
+        from rsp.systems.achievements import AchievementChecker
 
         init_session_metrics()
         session = get_current_session()
@@ -150,7 +150,7 @@ class TestAscensionAchievements:
 
     def test_victory_at_a10_unlocks_firewall_breaker(self):
         """Winning at A10 should unlock firewall_breaker achievement."""
-        from game_achievements import AchievementChecker
+        from rsp.systems.achievements import AchievementChecker
 
         init_session_metrics()
         session = get_current_session()
@@ -163,7 +163,7 @@ class TestAscensionAchievements:
 
     def test_no_victory_no_ascension_achievements(self):
         """No ascension achievements if player didn't win."""
-        from game_achievements import AchievementChecker
+        from rsp.systems.achievements import AchievementChecker
 
         init_session_metrics()
         session = get_current_session()
@@ -179,7 +179,7 @@ class TestAscensionAchievements:
 
     def test_victory_at_a20_unlocks_ascension_master(self):
         """Winning at A20 should unlock ascension_master achievement."""
-        from game_achievements import AchievementChecker
+        from rsp.systems.achievements import AchievementChecker
 
         init_session_metrics()
         session = get_current_session()
@@ -192,7 +192,7 @@ class TestAscensionAchievements:
 
     def test_higher_ascension_unlocks_lower_achievements(self):
         """Winning at A20 should also unlock A5, A10, A15 achievements."""
-        from game_achievements import AchievementChecker
+        from rsp.systems.achievements import AchievementChecker
 
         init_session_metrics()
         session = get_current_session()

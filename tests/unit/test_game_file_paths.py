@@ -9,7 +9,7 @@ import pytest
 
 # Import the module under test (after ensuring it's in the path)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-import game_file_paths
+import rsp.core.file_paths as game_file_paths
 
 # Mark all tests in this file to skip global file isolation
 # (these tests specifically test the file path initialization logic)
@@ -323,9 +323,9 @@ class TestApplicationDirectory:
         # The function will use __file__ from game_file_paths module
         result = game_file_paths.get_application_directory()
 
-        # Should return parent of game_file_paths.py
+        # Should return parent of file_paths.py (now in src/rsp/core/)
         assert result.exists()
-        assert (result / "game_file_paths.py").exists()
+        assert (result / "file_paths.py").exists()
 
 
 class TestFatalErrorDisplay:

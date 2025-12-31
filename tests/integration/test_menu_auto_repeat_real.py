@@ -14,9 +14,9 @@ import tcod
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputContext
-from game_menu_main import MainMenu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputContext
+from rsp.ui.menu_main import MainMenu
 
 
 class TestMainMenuAutoRepeatReal:
@@ -127,7 +127,7 @@ class TestMainMenuAutoRepeatReal:
         if movement:
             dx, dy = movement
             if dy > 0:
-                from game_input_actions import InputAction
+                from rsp.input.actions import InputAction
 
                 menu.execute_action(InputAction.NAVIGATE_DOWN)
                 second_move = menu.selected_option
@@ -220,7 +220,7 @@ class TestGameLoopPollingIntegration:
         """
         import inspect
 
-        import game_loop
+        import rsp.core.loop as game_loop
 
         # Get source code of handle_menu_navigation
         source = inspect.getsource(game_loop.handle_menu_navigation)
@@ -246,7 +246,7 @@ class TestGameLoopPollingIntegration:
         """
         import inspect
 
-        import game_loop
+        import rsp.core.loop as game_loop
 
         source = inspect.getsource(game_loop.handle_menu_navigation)
 

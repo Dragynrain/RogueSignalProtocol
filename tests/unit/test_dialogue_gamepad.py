@@ -10,9 +10,9 @@ Verifies that:
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction, InputContext
-from game_input_device_tracker import InputDeviceType, set_last_device
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.device_tracker import InputDeviceType, set_last_device
+from rsp.input.mappings import InputMapper
 
 
 class TestDialogueOptionText:
@@ -20,7 +20,7 @@ class TestDialogueOptionText:
 
     def test_confirm_option_shows_y_for_keyboard(self):
         """Verify confirm option shows [Y] when using keyboard."""
-        from game_help_hints import get_dialogue_confirm_option
+        from rsp.ui.help_hints import get_dialogue_confirm_option
 
         set_last_device(InputDeviceType.KEYBOARD)
         result = get_dialogue_confirm_option("Yes")
@@ -29,7 +29,7 @@ class TestDialogueOptionText:
 
     def test_confirm_option_shows_a_for_gamepad(self):
         """Verify confirm option shows [A] when using gamepad."""
-        from game_help_hints import get_dialogue_confirm_option
+        from rsp.ui.help_hints import get_dialogue_confirm_option
 
         set_last_device(InputDeviceType.GAMEPAD)
         result = get_dialogue_confirm_option("Yes")
@@ -38,7 +38,7 @@ class TestDialogueOptionText:
 
     def test_cancel_option_shows_n_for_keyboard(self):
         """Verify cancel option shows [N] when using keyboard."""
-        from game_help_hints import get_dialogue_cancel_option
+        from rsp.ui.help_hints import get_dialogue_cancel_option
 
         set_last_device(InputDeviceType.KEYBOARD)
         result = get_dialogue_cancel_option("No")
@@ -47,7 +47,7 @@ class TestDialogueOptionText:
 
     def test_cancel_option_shows_b_for_gamepad(self):
         """Verify cancel option shows [B] when using gamepad."""
-        from game_help_hints import get_dialogue_cancel_option
+        from rsp.ui.help_hints import get_dialogue_cancel_option
 
         set_last_device(InputDeviceType.GAMEPAD)
         result = get_dialogue_cancel_option("No")
@@ -56,7 +56,7 @@ class TestDialogueOptionText:
 
     def test_skip_option_shows_d_for_keyboard(self):
         """Verify skip warning option shows [D] when using keyboard."""
-        from game_help_hints import get_dialogue_skip_option
+        from rsp.ui.help_hints import get_dialogue_skip_option
 
         set_last_device(InputDeviceType.KEYBOARD)
         result = get_dialogue_skip_option("Don't ask again")
@@ -65,7 +65,7 @@ class TestDialogueOptionText:
 
     def test_skip_option_shows_x_for_gamepad(self):
         """Verify skip warning option shows [X] when using gamepad."""
-        from game_help_hints import get_dialogue_skip_option
+        from rsp.ui.help_hints import get_dialogue_skip_option
 
         set_last_device(InputDeviceType.GAMEPAD)
         result = get_dialogue_skip_option("Don't ask again")
@@ -74,7 +74,7 @@ class TestDialogueOptionText:
 
     def test_dismiss_option_shows_keys_for_keyboard(self):
         """Verify dismiss option shows Space/Enter when using keyboard."""
-        from game_help_hints import get_dialogue_dismiss_option
+        from rsp.ui.help_hints import get_dialogue_dismiss_option
 
         set_last_device(InputDeviceType.KEYBOARD)
         result = get_dialogue_dismiss_option("Continue")
@@ -83,7 +83,7 @@ class TestDialogueOptionText:
 
     def test_dismiss_option_shows_a_for_gamepad(self):
         """Verify dismiss option shows [A] when using gamepad."""
-        from game_help_hints import get_dialogue_dismiss_option
+        from rsp.ui.help_hints import get_dialogue_dismiss_option
 
         set_last_device(InputDeviceType.GAMEPAD)
         result = get_dialogue_dismiss_option("Continue")
@@ -92,7 +92,7 @@ class TestDialogueOptionText:
 
     def test_remapped_confirm_shows_custom_button(self):
         """Verify remapped CONFIRM shows new button on gamepad."""
-        from game_help_hints import get_dialogue_confirm_option
+        from rsp.ui.help_hints import get_dialogue_confirm_option
 
         mapper = InputMapper()
         CB = tcod.sdl.joystick.ControllerButton
@@ -106,7 +106,7 @@ class TestDialogueOptionText:
 
     def test_remapped_cancel_shows_custom_button(self):
         """Verify remapped CANCEL shows new button on gamepad."""
-        from game_help_hints import get_dialogue_cancel_option
+        from rsp.ui.help_hints import get_dialogue_cancel_option
 
         mapper = InputMapper()
         CB = tcod.sdl.joystick.ControllerButton
@@ -124,7 +124,7 @@ class TestDialogueFactoryOptions:
 
     def test_gateway_dialogue_has_keyboard_options(self):
         """Verify gateway dialogue has [Y] and [N] when using keyboard."""
-        from game_dialogue_system import create_gateway_dialogue
+        from rsp.ui.dialogue import create_gateway_dialogue
 
         set_last_device(InputDeviceType.KEYBOARD)
         dialogue = create_gateway_dialogue(1)
@@ -135,7 +135,7 @@ class TestDialogueFactoryOptions:
 
     def test_gateway_dialogue_has_gamepad_options(self):
         """Verify gateway dialogue has [A] and [B] when using gamepad."""
-        from game_dialogue_system import create_gateway_dialogue
+        from rsp.ui.dialogue import create_gateway_dialogue
 
         set_last_device(InputDeviceType.GAMEPAD)
         dialogue = create_gateway_dialogue(1)
@@ -146,7 +146,7 @@ class TestDialogueFactoryOptions:
 
     def test_overclock_dialogue_has_skip_option_keyboard(self):
         """Verify overclock warning has [D] skip option when using keyboard."""
-        from game_dialogue_system import create_overclock_warning_dialogue
+        from rsp.ui.dialogue import create_overclock_warning_dialogue
 
         set_last_device(InputDeviceType.KEYBOARD)
         dialogue = create_overclock_warning_dialogue(
@@ -163,7 +163,7 @@ class TestDialogueFactoryOptions:
 
     def test_overclock_dialogue_has_skip_option_gamepad(self):
         """Verify overclock warning has [X] skip option when using gamepad."""
-        from game_dialogue_system import create_overclock_warning_dialogue
+        from rsp.ui.dialogue import create_overclock_warning_dialogue
 
         set_last_device(InputDeviceType.GAMEPAD)
         dialogue = create_overclock_warning_dialogue(
@@ -180,7 +180,7 @@ class TestDialogueFactoryOptions:
 
     def test_death_dialogue_has_dismiss_option_keyboard(self):
         """Verify death dialogue has Space/Enter dismiss for keyboard."""
-        from game_dialogue_system import create_death_dialogue
+        from rsp.ui.dialogue import create_death_dialogue
 
         set_last_device(InputDeviceType.KEYBOARD)
         dialogue = create_death_dialogue()
@@ -190,7 +190,7 @@ class TestDialogueFactoryOptions:
 
     def test_death_dialogue_has_dismiss_option_gamepad(self):
         """Verify death dialogue has [A] dismiss for gamepad."""
-        from game_dialogue_system import create_death_dialogue
+        from rsp.ui.dialogue import create_death_dialogue
 
         set_last_device(InputDeviceType.GAMEPAD)
         dialogue = create_death_dialogue()
@@ -200,7 +200,7 @@ class TestDialogueFactoryOptions:
 
     def test_friendly_fire_dialogue_has_confirm_cancel_keyboard(self):
         """Verify friendly fire warning has [Y] and [N] for keyboard."""
-        from game_dialogue_system import create_friendly_fire_warning_dialogue
+        from rsp.ui.dialogue import create_friendly_fire_warning_dialogue
 
         set_last_device(InputDeviceType.KEYBOARD)
         dialogue = create_friendly_fire_warning_dialogue(
@@ -216,7 +216,7 @@ class TestDialogueFactoryOptions:
 
     def test_friendly_fire_dialogue_has_confirm_cancel_gamepad(self):
         """Verify friendly fire warning has [A] and [B] for gamepad."""
-        from game_dialogue_system import create_friendly_fire_warning_dialogue
+        from rsp.ui.dialogue import create_friendly_fire_warning_dialogue
 
         set_last_device(InputDeviceType.GAMEPAD)
         dialogue = create_friendly_fire_warning_dialogue(
@@ -286,7 +286,7 @@ class TestDialogueSkipWarningAction:
 
     def test_action_has_display_name(self):
         """Verify action has a display name in ACTION_DISPLAY_NAMES."""
-        from game_menu_controls import ACTION_DISPLAY_NAMES
+        from rsp.ui.menu_controls import ACTION_DISPLAY_NAMES
 
         assert InputAction.DIALOGUE_SKIP_WARNING in ACTION_DISPLAY_NAMES
         assert ACTION_DISPLAY_NAMES[InputAction.DIALOGUE_SKIP_WARNING] == "Don't Warn Again"

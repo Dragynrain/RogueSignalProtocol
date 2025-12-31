@@ -11,11 +11,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_ascension import AscensionModifiers
-from game_characters import Enemy
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_entities import Position
+from rsp.systems.ascension import AscensionModifiers
+from rsp.entities.characters import Enemy
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
 
 # =============================================================================
 # Test Fixtures
@@ -352,9 +352,9 @@ class TestAscensionModifierGameplayEffects:
 
     def test_a4_damage_multiplier_increases_actual_damage(self, mock_sound_manager, game_settings):
         """A4+ enemies should deal 20% more damage in actual combat."""
-        from game_characters import Enemy
-        from game_entities import Position
-        from game_player import Player
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
+        from rsp.entities.player import Player
 
         # Create A4 engine to get modifiers
         engine = create_game_at_ascension(4, mock_sound_manager, game_settings)
@@ -423,10 +423,10 @@ class TestAscensionSaveLoadPreservesModifiers:
 
     def test_enemy_damage_multiplier_preserved_after_load(self, mock_sound_manager, game_settings):
         """Enemy damage_multiplier should work correctly after save/load."""
-        from game_characters import Enemy
-        from game_entities import Position
-        from game_save import SaveGameManager
-        from game_state_persistence import GameStatePersistence
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
+        from rsp.systems.save import SaveGameManager
+        from rsp.systems.persistence import GameStatePersistence
 
         # Create A4 engine
         engine = create_game_at_ascension(4, mock_sound_manager, game_settings)
@@ -457,8 +457,8 @@ class TestAscensionSaveLoadPreservesModifiers:
 
     def test_player_vision_override_preserved_after_load(self, mock_sound_manager, game_settings):
         """Player ascension_vision_override should work correctly after save/load."""
-        from game_save import SaveGameManager
-        from game_state_persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
+        from rsp.systems.persistence import GameStatePersistence
 
         # Create A10 engine
         engine = create_game_at_ascension(10, mock_sound_manager, game_settings)
@@ -592,7 +592,7 @@ class TestA13NodeCapacitySystem:
 
     def test_node_depletion_works(self, mock_sound_manager, game_settings):
         """Nodes with limited capacity should deplete when used."""
-        from game_map import RestoreNode
+        from rsp.level.map import RestoreNode
 
         engine = create_game_at_ascension(13, mock_sound_manager, game_settings)
 
@@ -638,7 +638,7 @@ class TestA15AlertRangeGameplay:
         At A15, alert_range_override is 10. An enemy at distance 8 from an
         alerting enemy should become hostile. At A14 (default 6), it would not.
         """
-        from game_characters import EnemyState
+        from rsp.entities.characters import EnemyState
 
         engine = create_game_at_ascension(15, mock_sound_manager, game_settings)
 
@@ -672,7 +672,7 @@ class TestA15AlertRangeGameplay:
 
         An enemy at distance 8 should NOT be alerted at A14.
         """
-        from game_characters import EnemyState
+        from rsp.entities.characters import EnemyState
 
         engine = create_game_at_ascension(14, mock_sound_manager, game_settings)
 
@@ -922,7 +922,7 @@ class TestAscensionUnlockOnVictory:
         engine = create_game_at_ascension(0, mock_sound_manager, game_settings)
 
         # Mock the save deletion to avoid file system issues
-        with patch("game_level_coordinator.SaveGameManager.delete_save"):
+        with patch("rsp.level.coordinator.SaveGameManager.delete_save"):
             # Simulate victory by advancing to level 4 (beyond final level)
             engine.level = 3
             engine.next_level()
@@ -940,7 +940,7 @@ class TestAscensionUnlockOnVictory:
 
         engine = create_game_at_ascension(2, mock_sound_manager, game_settings)
 
-        with patch("game_level_coordinator.SaveGameManager.delete_save"):
+        with patch("rsp.level.coordinator.SaveGameManager.delete_save"):
             engine.level = 3
             engine.next_level()
 
@@ -957,7 +957,7 @@ class TestAscensionUnlockOnVictory:
 
         engine = create_game_at_ascension(0, mock_sound_manager, game_settings)
 
-        with patch("game_level_coordinator.SaveGameManager.delete_save"):
+        with patch("rsp.level.coordinator.SaveGameManager.delete_save"):
             engine.level = 3
             engine.next_level()
 
@@ -974,7 +974,7 @@ class TestAscensionUnlockOnVictory:
 
         engine = create_game_at_ascension(0, mock_sound_manager, game_settings)
 
-        with patch("game_level_coordinator.SaveGameManager.delete_save"):
+        with patch("rsp.level.coordinator.SaveGameManager.delete_save"):
             engine.level = 3
             engine.next_level()
 
@@ -993,7 +993,7 @@ class TestAscensionUnlockOnVictory:
         # Should be None initially
         assert engine.game_state.newly_unlocked_ascension is None
 
-        with patch("game_level_coordinator.SaveGameManager.delete_save"):
+        with patch("rsp.level.coordinator.SaveGameManager.delete_save"):
             engine.level = 3
             engine.next_level()
 
@@ -1006,7 +1006,7 @@ class TestAscensionUnlockScreen:
 
     def test_unlock_screen_initializes_with_level(self):
         """AscensionUnlockScreen should initialize with the unlocked level."""
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=5)
 
@@ -1018,7 +1018,7 @@ class TestAscensionUnlockScreen:
         """AscensionUnlockScreen should render without errors."""
         import tcod
 
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=3)
         console = tcod.console.Console(80, 50)
@@ -1028,8 +1028,8 @@ class TestAscensionUnlockScreen:
 
     def test_unlock_screen_handles_confirm_input(self):
         """AscensionUnlockScreen should close on confirm action."""
-        from game_input_actions import InputAction
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.input.actions import InputAction
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1038,8 +1038,8 @@ class TestAscensionUnlockScreen:
 
     def test_unlock_screen_handles_cancel_input(self):
         """AscensionUnlockScreen should close on cancel action."""
-        from game_input_actions import InputAction
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.input.actions import InputAction
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1048,7 +1048,7 @@ class TestAscensionUnlockScreen:
 
     def test_first_unlock_has_explanation(self):
         """A1 unlock screen should include explanation of ascension system."""
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1059,7 +1059,7 @@ class TestAscensionUnlockScreen:
 
     def test_later_unlocks_no_explanation(self):
         """Later unlock screens should not include explanation."""
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         for level in [2, 5, 10, 20]:
             screen = AscensionUnlockScreen(unlocked_level=level)
@@ -1072,7 +1072,7 @@ class TestAscensionUnlockScreen:
         Graphics mode uses a 28-char wide box (26 char content area).
         Tests that narrative and explanation text use word wrapping.
         """
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         # Box content width is 26 chars in graphics mode (28 - 2 for borders)
         box_content_width = 26
@@ -1099,7 +1099,7 @@ class TestAscensionUnlockScreen:
 
         import tcod.event
 
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1117,7 +1117,7 @@ class TestAscensionUnlockScreen:
 
         import tcod.event
 
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1131,8 +1131,8 @@ class TestAscensionUnlockScreen:
 
     def test_unlock_screen_handles_wait_action(self):
         """WAIT action (SPACE key) should close unlock screen."""
-        from game_input_actions import InputAction
-        from game_menu_ascension import AscensionUnlockScreen
+        from rsp.input.actions import InputAction
+        from rsp.ui.menu_ascension import AscensionUnlockScreen
 
         screen = AscensionUnlockScreen(unlocked_level=1)
 
@@ -1145,7 +1145,7 @@ class TestAscensionMenuViewOnly:
 
     def test_ascension_menu_view_only_flag(self):
         """AscensionMenu should support view_only mode."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5, initial_level=3, view_only=True)
 
@@ -1156,7 +1156,7 @@ class TestAscensionMenuViewOnly:
         """AscensionMenu in view_only mode should render without errors."""
         import tcod
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5, initial_level=3, view_only=True)
         console = tcod.console.Console(80, 50)
@@ -1166,7 +1166,7 @@ class TestAscensionMenuViewOnly:
 
     def test_ascension_menu_selected_level_property(self):
         """AscensionMenu.selected_level should alias current_selection."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10, initial_level=5)
 
@@ -1178,8 +1178,8 @@ class TestAscensionMenuViewOnly:
 
     def test_ascension_menu_get_context_returns_valid(self):
         """AscensionMenu.get_context should return ASCENSION_MENU context."""
-        from game_input_actions import InputContext
-        from game_menu_ascension import AscensionMenu
+        from rsp.input.actions import InputContext
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5, initial_level=1)
         context = menu.get_context()
@@ -1192,22 +1192,22 @@ class TestToggleAscensionInput:
 
     def test_toggle_ascension_action_exists(self):
         """TOGGLE_ASCENSION should be a valid InputAction."""
-        from game_input_actions import InputAction
+        from rsp.input.actions import InputAction
 
         assert hasattr(InputAction, "TOGGLE_ASCENSION")
         assert InputAction.TOGGLE_ASCENSION is not None
 
     def test_ascension_menu_context_exists(self):
         """ASCENSION_MENU should be a valid InputContext."""
-        from game_input_actions import InputContext
+        from rsp.input.actions import InputContext
 
         assert hasattr(InputContext, "ASCENSION_MENU")
         assert InputContext.ASCENSION_MENU is not None
 
     def test_toggle_ascension_sets_show_ascension(self, mock_sound_manager, game_settings):
         """TOGGLE_ASCENSION action should set show_ascension flag."""
-        from game_input_actions import InputAction
-        from game_input_gameplay import GameplayInputHandler
+        from rsp.input.actions import InputAction
+        from rsp.input.gameplay import GameplayInputHandler
 
         engine = create_game_at_ascension(0, mock_sound_manager, game_settings)
         handler = GameplayInputHandler(engine, None)
@@ -1227,7 +1227,7 @@ class TestHelpContentAscension:
 
     def test_help_screens_includes_ascension(self):
         """Help screen controls should include N for Ascension Info."""
-        from game_help_content import HelpContent
+        from rsp.ui.help_content import HelpContent
 
         controls = HelpContent.get_controls()
 

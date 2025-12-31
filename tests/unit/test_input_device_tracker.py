@@ -11,19 +11,19 @@ class TestInputDeviceTracker:
 
     def setup_method(self):
         """Reset tracker state before each test."""
-        from game_input_device_tracker import reset_to_default
+        from rsp.input.device_tracker import reset_to_default
 
         reset_to_default()
 
     def teardown_method(self):
         """Reset tracker state after each test to prevent pollution."""
-        from game_input_device_tracker import reset_to_default
+        from rsp.input.device_tracker import reset_to_default
 
         reset_to_default()
 
     def test_defaults_to_keyboard(self):
         """Default device should be KEYBOARD (safest assumption)."""
-        from game_input_device_tracker import InputDeviceType, get_last_device, reset_to_default
+        from rsp.input.device_tracker import InputDeviceType, get_last_device, reset_to_default
 
         # Use public API to reset
         reset_to_default()
@@ -32,7 +32,7 @@ class TestInputDeviceTracker:
 
     def test_set_gamepad(self):
         """Setting device to GAMEPAD should persist."""
-        from game_input_device_tracker import InputDeviceType, get_last_device, set_last_device
+        from rsp.input.device_tracker import InputDeviceType, get_last_device, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
 
@@ -40,7 +40,7 @@ class TestInputDeviceTracker:
 
     def test_set_keyboard(self):
         """Setting device to KEYBOARD should persist."""
-        from game_input_device_tracker import InputDeviceType, get_last_device, set_last_device
+        from rsp.input.device_tracker import InputDeviceType, get_last_device, set_last_device
 
         # First set to gamepad
         set_last_device(InputDeviceType.GAMEPAD)
@@ -51,7 +51,7 @@ class TestInputDeviceTracker:
 
     def test_is_gamepad_active_true(self):
         """is_gamepad_active() returns True when GAMEPAD."""
-        from game_input_device_tracker import InputDeviceType, is_gamepad_active, set_last_device
+        from rsp.input.device_tracker import InputDeviceType, is_gamepad_active, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
 
@@ -59,7 +59,7 @@ class TestInputDeviceTracker:
 
     def test_is_gamepad_active_false(self):
         """is_gamepad_active() returns False when KEYBOARD."""
-        from game_input_device_tracker import InputDeviceType, is_gamepad_active, set_last_device
+        from rsp.input.device_tracker import InputDeviceType, is_gamepad_active, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
 
@@ -67,7 +67,7 @@ class TestInputDeviceTracker:
 
     def test_switching_between_devices(self):
         """Switching between devices updates state correctly."""
-        from game_input_device_tracker import InputDeviceType, get_last_device, set_last_device
+        from rsp.input.device_tracker import InputDeviceType, get_last_device, set_last_device
 
         # Start with keyboard
         set_last_device(InputDeviceType.KEYBOARD)
@@ -87,7 +87,7 @@ class TestInputDeviceTracker:
 
     def test_enum_values_distinct(self):
         """Enum values should be distinct."""
-        from game_input_device_tracker import InputDeviceType
+        from rsp.input.device_tracker import InputDeviceType
 
         assert InputDeviceType.KEYBOARD != InputDeviceType.GAMEPAD
         assert InputDeviceType.KEYBOARD.value != InputDeviceType.GAMEPAD.value
@@ -98,7 +98,7 @@ class TestInputDeviceTrackerReset:
 
     def test_reset_to_default(self):
         """reset_to_default() should set device back to KEYBOARD."""
-        from game_input_device_tracker import (
+        from rsp.input.device_tracker import (
             InputDeviceType,
             get_last_device,
             reset_to_default,

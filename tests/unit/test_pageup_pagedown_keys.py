@@ -16,8 +16,8 @@ Fast scrolling in menus is handled by:
 
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.mappings import InputMapper
 
 
 class TestPageUpDownKeyboardMappings:

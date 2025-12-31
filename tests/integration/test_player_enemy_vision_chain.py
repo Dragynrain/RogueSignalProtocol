@@ -5,7 +5,7 @@ Tests the complete trace level and alerting workflow using real game data.
 
 from unittest.mock import patch
 
-from game_entities import EnemyState, Position
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
 

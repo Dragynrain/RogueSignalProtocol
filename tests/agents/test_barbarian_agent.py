@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from game_entities import Position
+from rsp.entities.base import Position
 from tests.test_agent import GameTestAgent
 
 
@@ -115,7 +115,7 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             True if 2 or more mobile enemies have spotted the player
         """
-        from game_entities import EnemyMovement, EnemyState
+        from rsp.entities.base import EnemyMovement, EnemyState
 
         # Count ALERT + HOSTILE mobile enemies (not STATIC)
         alerted_mobile_count = sum(
@@ -269,7 +269,7 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             (x, y) tuple of best corridor position, or None if no corridors nearby
         """
-        from game_entities import EnemyMovement, EnemyState
+        from rsp.entities.base import EnemyMovement, EnemyState
 
         candidates = []
         px, py = self.player.x, self.player.y

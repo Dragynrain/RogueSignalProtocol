@@ -5,7 +5,7 @@ Integration tests for gateway reachability validation.
 Ensures that generated levels always have a path from spawn to gateway.
 """
 
-from game_entities import Position
+from rsp.entities.base import Position
 
 
 class TestGatewayReachability:

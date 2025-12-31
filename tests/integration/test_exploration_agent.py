@@ -14,8 +14,8 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from game_characters import PathfindingHelper
-from game_entities import Position
+from rsp.entities.characters import PathfindingHelper
+from rsp.entities.base import Position
 from tests.test_agent import GameTestAgent
 
 

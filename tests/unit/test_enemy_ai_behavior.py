@@ -10,9 +10,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from game_characters import Enemy
-from game_enemies import EnemyManager
-from game_entities import EnemyMovement, EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.entities.enemies import EnemyManager
+from rsp.entities.base import EnemyMovement, EnemyState, Position
 from tests.fixtures.simple_fixtures import player
 
 
@@ -80,7 +80,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
     def test_static_enemy_never_moves(self):
         """STATIC enemies should never move regardless of state."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"static_test": Mock(movement=EnemyMovement.STATIC, cpu=50, vision=5, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "static_test")
@@ -99,7 +99,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
     def test_random_movement_generates_queue(self):
         """RANDOM movement enemies can calculate moves."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "random_test": Mock(
                     movement=EnemyMovement.RANDOM, cpu=50, vision=5, damage=10, name="RandomTest"
@@ -107,7 +107,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "random_test")
@@ -123,7 +123,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
     def test_seek_movement_targets_visible_player(self):
         """SEEK enemies target player when HOSTILE and can see them."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "seek_test": Mock(
                     movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="SeekTest"
@@ -131,7 +131,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "seek_test")
@@ -147,7 +147,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
     def test_hostile_movement_remembers_last_position(self):
         """HOSTILE enemies remember and pursue last seen player position."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "hostile_test": Mock(
                     movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="HostileTest"
@@ -155,7 +155,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "hostile_test")
@@ -172,7 +172,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
     def test_patrol_movement_follows_route(self):
         """PATROL enemies follow their patrol route."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol_test": Mock(
                     movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest"
@@ -180,7 +180,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "patrol_test")
@@ -204,7 +204,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_can_see_player_basic_visibility(self):
         """Enemy can see player within vision range with clear line of sight."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -219,7 +219,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_cannot_see_player_beyond_vision_range(self):
         """Enemy cannot see player beyond their vision range."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=5, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -231,7 +231,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_cannot_see_invisible_player(self):
         """Enemy cannot see invisible player (traffic masquerade effect)."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -244,7 +244,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_admin_can_always_see_player(self):
         """Admin enemies can always see the player regardless of conditions."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"admin": Mock(movement=EnemyMovement.SEEK, cpu=100, vision=10, damage=20)},
         ):
             enemy = Enemy(Position(5, 5), "admin")
@@ -257,7 +257,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_player_in_shadow_stealth_mechanics(self):
         """Player in blind spots is only visible to adjacent enemies."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Position(5, 5)
@@ -273,7 +273,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
     def test_adjacent_enemy_sees_player_in_blind_spot(self):
         """Adjacent enemy can see player even in blind spots."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -292,7 +292,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
     def test_can_attack_adjacent_player(self):
         """Enemy can attack adjacent player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -304,7 +304,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
     def test_cannot_attack_distant_player(self):
         """Enemy cannot attack distant player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -316,7 +316,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
     def test_disabled_enemy_cannot_attack(self):
         """Disabled enemy cannot attack."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(5, 5), "test_enemy")
@@ -329,7 +329,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
     def test_cannot_attack_invisible_player_except_admin(self):
         """Regular enemies cannot attack invisible players, but admin can."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "test_enemy": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10),
                 "admin": Mock(movement=EnemyMovement.SEEK, cpu=100, vision=10, damage=20),
@@ -350,7 +350,7 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
     def test_virus_enemy_applies_virus_effect(self):
         """Virus enemy applies virus effect instead of damage."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)},
         ):
             enemy = Enemy(Position(5, 5), "virus")
@@ -364,7 +364,7 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
     def test_inhibitor_enemy_applies_slow_effect(self):
         """Inhibitor enemy applies movement slow effect."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"inhibitor": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)},
         ):
             enemy = Enemy(Position(5, 5), "inhibitor")
@@ -378,7 +378,7 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
     def test_inhibitor_slowdown_stacks_with_cap(self):
         """Inhibitor slowdown extends duration (stacks) but caps at 5 turns."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {"inhibitor": Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)},
         ):
             enemy = Enemy(Position(5, 5), "inhibitor")
@@ -465,7 +465,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
     def test_patrol_enemy_follows_route(self):
         """Patrol enemy follows their assigned route."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol": Mock(
                     movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest"
@@ -473,7 +473,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "patrol")
@@ -490,7 +490,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
     def test_patrol_enemy_becomes_hostile_interrupts_patrol(self):
         """Patrol enemy becoming HOSTILE interrupts patrol to seek player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol": Mock(
                     movement=EnemyMovement.PATROL, cpu=50, vision=10, damage=10, name="PatrolTest"
@@ -498,7 +498,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "patrol")
@@ -516,7 +516,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
     def test_patrol_enemy_returns_to_patrol_after_losing_player(self):
         """Patrol enemy returns to patrol route after losing sight of player."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol": Mock(
                     movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest"
@@ -524,7 +524,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
             },
         ):
             with patch(
-                "game_characters.PathfindingHelper._create_cost_map",
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
                 mock_create_pathfinding_cost_map,
             ):
                 enemy = Enemy(Position(5, 5), "patrol")
@@ -551,7 +551,7 @@ class TestMakeHostileMethod:
     def test_make_hostile_basic_transition(self):
         """make_hostile sets state to HOSTILE and records player position."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
@@ -569,7 +569,7 @@ class TestMakeHostileMethod:
     def test_make_hostile_stores_patrol_index(self):
         """make_hostile stores original patrol index for PATROL enemies."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol": Mock(
                     movement=EnemyMovement.PATROL, cpu=40, vision=6, damage=8, name="PatrolUnit"
@@ -588,7 +588,7 @@ class TestMakeHostileMethod:
     def test_make_hostile_clears_move_queue(self):
         """make_hostile clears movement queue on state change."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
@@ -605,7 +605,7 @@ class TestMakeHostileMethod:
     def test_make_hostile_no_double_queue_clear(self):
         """make_hostile does not clear queue if already hostile."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
@@ -625,7 +625,7 @@ class TestMakeHostileMethod:
     def test_make_hostile_non_patrol_ignores_patrol_index(self):
         """make_hostile does not modify patrol index for non-PATROL enemies."""
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "virus": Mock(
                     movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
@@ -651,7 +651,7 @@ class TestPatrolRestorationIntegration:
         patrol_index and _restore_patrol() restoring it when the enemy becomes UNAWARE.
         """
         with patch(
-            "game_data.GameData.ENEMY_TYPES",
+            "rsp.core.data.GameData.ENEMY_TYPES",
             {
                 "patrol": Mock(
                     movement=EnemyMovement.PATROL, cpu=40, vision=6, damage=8, name="PatrolUnit"
@@ -680,7 +680,7 @@ class TestPatrolRestorationIntegration:
             enemy.patrol_index = 0  # Simulating some state change during chase
 
             # Import the restore function to test it directly
-            from game_turn_manager import GameTurnManager
+            from rsp.combat.turn_manager import GameTurnManager
 
             # Create a minimal mock engine for the turn manager
             mock_engine = Mock()
@@ -801,7 +801,7 @@ class TestEnemyFleeBehavior(TestEnemyAIBehavior):
         This test exposes a bug where _should_flee accessed self.type_data.max_cpu
         but EnemyTypeDefinition only has 'cpu' field. The correct attribute is self.max_cpu.
         """
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         # Create real mobile enemy (not STATIC - static enemies can't flee)
         # Patrol has PATROL movement and 40 CPU

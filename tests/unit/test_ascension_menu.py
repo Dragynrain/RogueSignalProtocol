@@ -12,14 +12,14 @@ class TestAscensionMenuUnlockState:
 
     def test_level_zero_always_selectable(self):
         """A0 (base game) should always be selectable."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=0)
         assert menu.is_level_selectable(0)
 
     def test_unlocked_levels_selectable(self):
         """Levels up to highest_unlocked should be selectable."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         assert menu.is_level_selectable(0)
@@ -28,7 +28,7 @@ class TestAscensionMenuUnlockState:
 
     def test_locked_levels_not_selectable(self):
         """Levels above highest_unlocked should not be selectable."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         assert not menu.is_level_selectable(6)
@@ -37,7 +37,7 @@ class TestAscensionMenuUnlockState:
 
     def test_all_levels_selectable_at_max(self):
         """All levels should be selectable when A20 unlocked."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         for level in range(21):
@@ -49,7 +49,7 @@ class TestAscensionMenuModifierDisplay:
 
     def test_a0_shows_no_modifiers(self):
         """A0 should show no modifiers (base game)."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(0)
@@ -57,7 +57,7 @@ class TestAscensionMenuModifierDisplay:
 
     def test_a1_shows_scanner_vision(self):
         """A1 should show scanner vision bonus."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(1)
@@ -65,7 +65,7 @@ class TestAscensionMenuModifierDisplay:
 
     def test_a5_shows_cumulative_modifiers(self):
         """A5 should show all A1-A5 modifiers cumulatively."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(5)
@@ -78,7 +78,7 @@ class TestAscensionMenuModifierDisplay:
 
     def test_locked_level_shows_placeholder(self):
         """Locked levels should show '???' for modifiers."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         modifiers = menu.get_modifiers_for_level(6)
@@ -86,7 +86,7 @@ class TestAscensionMenuModifierDisplay:
 
     def test_locked_level_at_boundary(self):
         """Level exactly one above unlocked should show ???."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(11)
@@ -98,7 +98,7 @@ class TestAscensionMenuNavigation:
 
     def test_navigate_up_wraps_from_top(self):
         """Navigating up from top should wrap to bottom."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         menu.current_selection = 0
@@ -107,7 +107,7 @@ class TestAscensionMenuNavigation:
 
     def test_navigate_down_wraps_from_bottom(self):
         """Navigating down from bottom should wrap to top."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         menu.current_selection = 20
@@ -116,7 +116,7 @@ class TestAscensionMenuNavigation:
 
     def test_navigate_down_increments(self):
         """Navigating down should increment selection."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         menu.current_selection = 5
@@ -125,7 +125,7 @@ class TestAscensionMenuNavigation:
 
     def test_navigate_up_decrements(self):
         """Navigating up should decrement selection."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         menu.current_selection = 5
@@ -140,13 +140,13 @@ class TestAscensionMenuSelection:
         """Confirming selection on unlocked level should save to settings."""
         from unittest.mock import MagicMock, patch
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         menu.current_selection = 7
 
         # Mock the settings
-        with patch("game_menu_ascension.GameSettings") as mock_settings_class:
+        with patch("rsp.ui.menu_ascension.GameSettings") as mock_settings_class:
             mock_instance = MagicMock()
             mock_settings_class.get_instance.return_value = mock_instance
 
@@ -157,7 +157,7 @@ class TestAscensionMenuSelection:
 
     def test_confirm_locked_level_rejected(self):
         """Confirming selection on locked level should be rejected."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         menu.current_selection = 10  # Locked
@@ -168,7 +168,7 @@ class TestAscensionMenuSelection:
 
     def test_get_current_level_selected(self):
         """Should be able to get the currently selected level."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=10)
         menu.current_selection = 7
@@ -182,9 +182,9 @@ class TestAscensionMenuInitialization:
         """Menu should initialize with selection at current ascension level."""
         from unittest.mock import MagicMock, patch
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
-        with patch("game_menu_ascension.GameSettings") as mock_settings_class:
+        with patch("rsp.ui.menu_ascension.GameSettings") as mock_settings_class:
             mock_instance = MagicMock()
             mock_instance.get_ascension_level.return_value = 5
             mock_settings_class.get_instance.return_value = mock_instance
@@ -195,14 +195,14 @@ class TestAscensionMenuInitialization:
 
     def test_total_levels_is_21(self):
         """Menu should have 21 levels (0-20)."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=20)
         assert menu.total_levels == 21
 
     def test_highest_unlocked_stored(self):
         """Menu should store highest unlocked level."""
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=15)
         assert menu.highest_unlocked == 15
@@ -215,7 +215,7 @@ class TestGameSettingsAscensionAccessors:
         """get_ascension_level should return 0 by default."""
         from unittest.mock import patch
 
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         with patch.object(GameSettings, "load_settings"):
             settings = GameSettings()
@@ -226,7 +226,7 @@ class TestGameSettingsAscensionAccessors:
         """set_ascension_level should update the level."""
         from unittest.mock import patch
 
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         with patch.object(GameSettings, "load_settings"):
             with patch.object(GameSettings, "save_settings"):
@@ -238,7 +238,7 @@ class TestGameSettingsAscensionAccessors:
         """get_highest_ascension_unlocked should return 0 by default."""
         from unittest.mock import patch
 
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         with patch.object(GameSettings, "load_settings"):
             settings = GameSettings()
@@ -248,7 +248,7 @@ class TestGameSettingsAscensionAccessors:
         """unlock_ascension should update highest_unlocked if higher."""
         from unittest.mock import patch
 
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         with patch.object(GameSettings, "load_settings"):
             with patch.object(GameSettings, "save_settings"):
@@ -261,7 +261,7 @@ class TestGameSettingsAscensionAccessors:
         """unlock_ascension should not update if level is not higher."""
         from unittest.mock import patch
 
-        from game_config import GameSettings
+        from rsp.core.config import GameSettings
 
         with patch.object(GameSettings, "load_settings"):
             with patch.object(GameSettings, "save_settings"):
@@ -279,7 +279,7 @@ class TestStatusBarAscensionIndicator:
         """Status bar should show 'A#' when ascension > 0."""
         from unittest.mock import MagicMock
 
-        from game_status_bar_renderer import StatusBarRenderer
+        from rsp.ui.status_bar import StatusBarRenderer
 
         # Create mock game with ascension level
         mock_game = MagicMock()
@@ -304,7 +304,7 @@ class TestStatusBarAscensionIndicator:
         """Status bar should NOT show ascension at A0."""
         from unittest.mock import MagicMock
 
-        from game_status_bar_renderer import StatusBarRenderer
+        from rsp.ui.status_bar import StatusBarRenderer
 
         mock_game = MagicMock()
         mock_game.ascension_level = 0
@@ -331,9 +331,9 @@ class TestMainMenuAscensionDisplay:
         """Main menu should show 'Ascension' option when A1+ unlocked."""
         from unittest.mock import MagicMock, patch
 
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
-        with patch("game_menu_main.GameSettings") as mock_settings_class:
+        with patch("rsp.ui.menu_main.GameSettings") as mock_settings_class:
             mock_instance = MagicMock()
             mock_instance.get_highest_ascension_unlocked.return_value = 1
             mock_instance.graphics_mode = "glyph"
@@ -349,9 +349,9 @@ class TestMainMenuAscensionDisplay:
         """Main menu should NOT show 'Ascension' option at A0."""
         from unittest.mock import MagicMock, patch
 
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
-        with patch("game_menu_main.GameSettings") as mock_settings_class:
+        with patch("rsp.ui.menu_main.GameSettings") as mock_settings_class:
             mock_instance = MagicMock()
             mock_instance.get_highest_ascension_unlocked.return_value = 0
             mock_instance.graphics_mode = "glyph"
@@ -372,7 +372,7 @@ class TestAscensionMenuMouseHandling:
         from types import SimpleNamespace
         from unittest.mock import patch
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         # Simulate glyph mode (no background)
@@ -391,7 +391,7 @@ class TestAscensionMenuMouseHandling:
         """Left clicking a locked level should update selection but not confirm."""
         from types import SimpleNamespace
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5)
         menu._background = None
@@ -412,7 +412,7 @@ class TestAscensionMenuMouseHandling:
         from types import SimpleNamespace
         from unittest.mock import patch
 
-        from game_menu_ascension import AscensionMenu
+        from rsp.ui.menu_ascension import AscensionMenu
 
         menu = AscensionMenu(highest_unlocked=5, view_only=True)
         menu._background = None

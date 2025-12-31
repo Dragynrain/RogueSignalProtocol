@@ -17,11 +17,11 @@ import tcod.event
 import tcod.sdl.joystick
 import tcod.tileset
 
-from game_audio import NullSoundManager
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_input import InputHandler
-from game_input_actions import InputAction, InputContext
+from rsp.systems.audio import NullSoundManager
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
+from rsp.input.actions import InputAction, InputContext
 
 # Controller button/axis shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -139,7 +139,7 @@ class TestGamepadMovement:
 
         # Test northeast (UP + RIGHT would require simultaneous button press)
         # Instead test that the mapper knows about diagonal actions
-        from game_input_mappings import InputMapper
+        from rsp.input.mappings import InputMapper
 
         mapper = InputMapper()
 

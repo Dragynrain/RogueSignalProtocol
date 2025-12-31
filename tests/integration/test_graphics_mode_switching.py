@@ -18,7 +18,7 @@ Tests cover:
 - Rendering pipeline integrity
 """
 
-from game_config import GameSettings
+from rsp.core.config import GameSettings
 from tests.test_agent import GameTestAgent
 
 

@@ -7,9 +7,9 @@ For complex scenarios, use standard_patterns.py instead.
 
 from unittest.mock import Mock
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_entities import EnemyState, Position
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.real_game_data import create_real_enemy
 
 

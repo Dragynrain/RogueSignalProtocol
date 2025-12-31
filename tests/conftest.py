@@ -60,11 +60,13 @@ from unittest.mock import patch
 
 import pytest
 
-# Add the project root to Python path so we can import game modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root and src directory to Python path for rsp package imports
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _project_root)
+sys.path.insert(0, os.path.join(_project_root, 'src'))
 
-from game_config import GameSettings
-from game_entities import Position
+from rsp.core.config import GameSettings
+from rsp.entities.base import Position
 from tests.fixtures.simple_fixtures import create_test_map, enemy, player
 from tests.fixtures.standard_patterns import (
     create_basic_game_environment,
@@ -220,7 +222,7 @@ def global_file_isolation(request, isolated_data_dir, monkeypatch):
     if "skip_file_isolation" in request.keywords:
         return
 
-    import game_file_paths
+    import rsp.core.file_paths as game_file_paths
 
     # Patch the main entry point for all file paths
     monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: isolated_data_dir)
@@ -241,7 +243,7 @@ def initialize_file_paths():
     Scope: session (initialized once per worker in parallel mode)
     Note: Individual tests use tmp_path/monkeypatch for isolation
     """
-    import game_file_paths
+    import rsp.core.file_paths as game_file_paths
 
     # Initialize paths for test environment (will use portable mode in cwd)
     # Each worker process gets its own initialization
@@ -266,7 +268,7 @@ def load_game_config_once():
     Scope: session (loads once for entire pytest run)
     Safety: GameConfig and GameBalance are read-only during tests
     """
-    from game_config import GameBalance, GameConfig
+    from rsp.core.config import GameBalance, GameConfig
 
     # Load config once for all tests
     GameConfig.load_from_json()
@@ -295,7 +297,7 @@ def isolate_config_state():
     yield
 
     # After each test, reset GameConfig to clean state
-    from game_config import GameBalance, GameConfig
+    from rsp.core.config import GameBalance, GameConfig
 
     # Clear only GameConfig cache (not DataLoader - it's independent)
     GameConfig._config_data = None
@@ -342,7 +344,7 @@ def isolate_random_state():
 
     # Reset TCOD RNG with same test-specific seed
     try:
-        from game_level_structure import seed_rng
+        from rsp.level.structure import seed_rng
 
         seed_rng(test_hash)
     except ImportError:
@@ -479,7 +481,7 @@ def clean_achievement_state():
     Use this fixture when testing achievements to ensure test isolation.
     Clears both unlocked achievements and pending popups.
     """
-    from game_achievements import AchievementManager
+    from rsp.systems.achievements import AchievementManager
 
     # Clear state before test
     AchievementManager.reset()
@@ -509,7 +511,7 @@ def real_game_data():
     """Fixture that ensures game data is loaded (for testing data-dependent logic)."""
     # GameData loads automatically on import, but this fixture
     # makes the dependency explicit for tests
-    from game_data import GameData, GameUpgrades
+    from rsp.core.data import GameData, GameUpgrades
 
     GameUpgrades._ensure_loaded()
     return GameData
@@ -572,9 +574,9 @@ def game_with_gamepad():
     """
     from unittest.mock import Mock
 
-    from game_audio import NullSoundManager
-    from game_engine import GameEngine
-    from game_input import InputHandler
+    from rsp.systems.audio import NullSoundManager
+    from rsp.core.engine import GameEngine
+    from rsp.input.handler import InputHandler
 
     settings = GameSettings()
     settings.graphics_mode = "text"
@@ -735,7 +737,7 @@ def agent_with_guaranteed_gateway():
     Returns:
         GameTestAgent with gateway present (agent.game_map.gateway is not None)
     """
-    from game_entities import Position
+    from rsp.entities.base import Position
     from tests.test_agent import GameTestAgent
 
     agent = GameTestAgent(seed=42)
@@ -765,7 +767,7 @@ def agent_with_valid_movement_position():
         Tuple of (agent, original_position) where original_position is guaranteed
         to have at least one valid adjacent move.
     """
-    from game_entities import Position
+    from rsp.entities.base import Position
     from tests.test_agent import GameTestAgent
 
     agent = GameTestAgent(seed=42)

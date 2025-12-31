@@ -9,9 +9,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Import actual classes
-from game_characters import Enemy
-from game_enemies import EnemyManager
-from game_entities import EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.entities.enemies import EnemyManager
+from rsp.entities.base import EnemyState, Position
 from tests.fixtures.real_game_data import create_test_map_with_real_tiles
 from tests.fixtures.simple_fixtures import create_test_map, enemy_builder, player
 
@@ -358,7 +358,7 @@ class TestEnemyAIBehavior:
         """Enemy AI states can be changed appropriately."""
         pos = Position(10, 10)
 
-        with patch("game_data.GameData") as mock_game_data:
+        with patch("rsp.core.data.GameData") as mock_game_data:
             mock_enemy_type = Mock()
             mock_enemy_type.cpu = 50
             mock_game_data.ENEMY_TYPES = {"scanner": mock_enemy_type}
@@ -380,7 +380,7 @@ class TestEnemyAIBehavior:
         """Enemy movement cooldown system works."""
         pos = Position(5, 5)
 
-        with patch("game_data.GameData") as mock_game_data:
+        with patch("rsp.core.data.GameData") as mock_game_data:
             mock_enemy_type = Mock()
             mock_enemy_type.cpu = 50
             mock_game_data.ENEMY_TYPES = {"virus": mock_enemy_type}

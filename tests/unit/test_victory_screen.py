@@ -12,8 +12,8 @@ import tcod
 import tcod.console
 import tcod.event
 
-from game_menu_background import MenuBackground
-from game_victory_screen import VictoryScreen
+from rsp.ui.menu_background import MenuBackground
+from rsp.ui.victory import VictoryScreen
 
 
 class TestVictoryScreenInitialization:

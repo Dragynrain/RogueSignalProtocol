@@ -12,8 +12,8 @@ Tests the key rebinding and gamepad remapping functionality including:
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.mappings import InputMapper
 
 # Shortcuts for readability
 KS = tcod.event.KeySym

@@ -19,7 +19,7 @@ Uses mock_time fixture from conftest.py for reliable time control.
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameConfig
+from rsp.core.config import GameConfig
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton

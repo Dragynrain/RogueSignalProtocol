@@ -17,8 +17,8 @@ import time
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameConfig
-from game_input_actions import InputAction, InputContext
+from rsp.core.config import GameConfig
+from rsp.input.actions import InputAction, InputContext
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -261,7 +261,7 @@ class TestContextSwitchWithActiveInputs:
         analog.update_left_stick(x=0, y=-32000)  # Up
 
         # Dialogue appears
-        from game_dialogue_system import DialogueBox
+        from rsp.ui.dialogue import DialogueBox
 
         dialogue = DialogueBox(
             title="Test",

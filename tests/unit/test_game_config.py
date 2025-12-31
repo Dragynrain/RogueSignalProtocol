@@ -22,7 +22,7 @@ from unittest.mock import patch
 
 import pytest
 
-from game_config import GameConfig, GameSettings
+from rsp.core.config import GameConfig, GameSettings
 
 
 class TestGameSettingsInitialization:

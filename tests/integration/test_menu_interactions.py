@@ -13,8 +13,8 @@ from unittest.mock import Mock, patch
 
 import tcod
 
-from game_config import GameConfig, GameSettings
-from game_menus import MainMenu, SettingsMenu
+from rsp.core.config import GameConfig, GameSettings
+from rsp.ui.menus import MainMenu, SettingsMenu
 
 
 class TestMenuMouseInteractions:
@@ -22,7 +22,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_volume_click_increases(self):
         """Clicking right side of volume slider increases volume."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             settings.set_volume_percent("master", 50)
 
@@ -66,7 +66,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_volume_click_decreases(self):
         """Clicking left side of volume slider decreases volume."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             settings.set_volume_percent("master", 50)
 
@@ -120,7 +120,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_volume_respects_bounds(self):
         """Volume slider clicks respect 0-100% bounds."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
 
             # Test lower bound
@@ -179,7 +179,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_toggle_click(self):
         """Clicking toggle options changes their value."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             initial_mode = settings.graphics_mode
 
@@ -221,7 +221,7 @@ class TestMenuMouseInteractions:
 
     def test_main_menu_mouse_hover_changes_selection(self):
         """Moving mouse over menu options changes selection."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             menu = MainMenu()
 
             initial_selection = menu.selected_option
@@ -239,7 +239,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_back_button_click(self):
         """Clicking Back button returns 'back' action."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 
@@ -280,7 +280,7 @@ class TestMenuMouseInteractions:
 
     def test_menu_renders_without_crash(self):
         """Menus render without crashing."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             console = tcod.console.Console(width=80, height=50)
 
             # Test main menu
@@ -294,7 +294,7 @@ class TestMenuMouseInteractions:
 
     def test_volume_slider_visual_indicators(self):
         """Volume sliders show directional indicators."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             console = tcod.console.Console(width=80, height=50)
             settings = GameSettings()
             menu = SettingsMenu(settings)
@@ -308,7 +308,7 @@ class TestMenuKeyboardInteractions:
 
     def test_settings_menu_arrow_keys_adjust_volume(self):
         """Left/Right arrow keys adjust volume."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             settings.set_volume_percent("master", 50)
 
@@ -334,7 +334,7 @@ class TestMenuKeyboardInteractions:
 
     def test_settings_menu_enter_toggles_option(self):
         """Pressing Enter on toggle options changes them."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             initial_mode = settings.graphics_mode
 
@@ -362,7 +362,7 @@ class TestMenuEdgeCases:
 
     def test_menu_handles_invalid_mouse_coordinates(self):
         """Menu doesn't crash with out-of-bounds mouse coordinates."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 
@@ -381,7 +381,7 @@ class TestMenuEdgeCases:
 
     def test_menu_handles_missing_event_attributes(self):
         """Menu handles events with missing attributes gracefully."""
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 

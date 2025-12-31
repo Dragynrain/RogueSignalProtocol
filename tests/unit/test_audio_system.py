@@ -20,8 +20,8 @@ from unittest.mock import Mock, patch
 import pygame
 
 # Import game modules
-from game_audio import SoundManager
-from game_config import GameSettings
+from rsp.systems.audio import SoundManager
+from rsp.core.config import GameSettings
 
 
 class TestSoundManagerAvailability(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestSoundManagerAvailability(unittest.TestCase):
 
     def test_sound_manager_when_pygame_unavailable(self):
         """Test SoundManager gracefully disables when pygame is not available."""
-        with patch("game_audio.AUDIO_AVAILABLE", False):
+        with patch("rsp.systems.audio.AUDIO_AVAILABLE", False):
             settings = GameSettings()
             sound_manager = SoundManager(settings)
 
@@ -38,7 +38,7 @@ class TestSoundManagerAvailability(unittest.TestCase):
 
     def test_sound_manager_when_pygame_init_fails(self):
         """Test SoundManager handles pygame initialization exceptions."""
-        with patch("game_audio.AUDIO_AVAILABLE", True):
+        with patch("rsp.systems.audio.AUDIO_AVAILABLE", True):
             with patch("pygame.mixer.init", side_effect=pygame.error("Init failed")):
                 settings = GameSettings()
                 sound_manager = SoundManager(settings)
@@ -48,7 +48,7 @@ class TestSoundManagerAvailability(unittest.TestCase):
 
     def test_sound_manager_creates_default_settings(self):
         """Test SoundManager creates default settings if none provided."""
-        with patch("game_audio.AUDIO_AVAILABLE", False):
+        with patch("rsp.systems.audio.AUDIO_AVAILABLE", False):
             sound_manager = SoundManager()
 
             self.assertIsNotNone(sound_manager.settings)
@@ -62,7 +62,7 @@ class TestSoundLoading(unittest.TestCase):
         self.settings = GameSettings()
         self.sound_manager = SoundManager(self.settings)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.Sound")
     @patch("os.path.exists")
     def test_load_sound_success(self, mock_exists, mock_sound):
@@ -77,7 +77,7 @@ class TestSoundLoading(unittest.TestCase):
         self.assertIn("test_sound", self.sound_manager.sounds)
         self.assertEqual(self.sound_manager.sounds["test_sound"], mock_sound_obj)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("os.path.exists")
     def test_load_sound_missing_file_logs_warning(self, mock_exists):
         """Test loading missing file logs warning and doesn't crash."""
@@ -96,7 +96,7 @@ class TestSoundLoading(unittest.TestCase):
 
         self.assertNotIn("disabled_sound", self.sound_manager.sounds)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     def test_preload_sounds_loads_all_game_sounds(self):
         """Test preload_sounds loads all required game sounds."""
         self.sound_manager.enabled = True
@@ -136,7 +136,7 @@ class TestSoundPlayback(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.sound_manager.play_sound("missing_sound")
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.find_channel")
     def test_play_sound_calculates_volume_correctly(self, mock_find_channel):
         """Test sound playback calculates final volume from settings and modifier."""
@@ -189,7 +189,7 @@ class TestMusicPlayback(unittest.TestCase):
         self.assertIsNone(self.sound_manager.current_music)
         self.assertFalse(self.sound_manager.music_playing)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("os.path.exists")
     def test_play_music_missing_file_logs_warning(self, mock_exists):
         """Test music playback with missing file logs warning."""
@@ -201,7 +201,7 @@ class TestMusicPlayback(unittest.TestCase):
         self.assertIsNone(self.sound_manager.current_music)
         self.assertFalse(self.sound_manager.music_playing)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.load")
     @patch("pygame.mixer.music.play")
     @patch("pygame.mixer.music.set_volume")
@@ -218,7 +218,7 @@ class TestMusicPlayback(unittest.TestCase):
         self.assertEqual(self.sound_manager.current_music, "test.ogg")
         self.assertTrue(self.sound_manager.music_playing)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.load")
     @patch("pygame.mixer.music.set_volume")
     @patch("os.path.exists")
@@ -234,7 +234,7 @@ class TestMusicPlayback(unittest.TestCase):
 
         mock_set_volume.assert_called_with(1.0)  # Capped at 1.0
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.load")
     def test_play_music_exception_resets_state(self, mock_load):
         """Test music playback exception handling resets state."""
@@ -257,7 +257,7 @@ class TestMusicControls(unittest.TestCase):
         self.settings = GameSettings()
         self.sound_manager = SoundManager(self.settings)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.stop")
     def test_stop_music_resets_state(self, mock_stop):
         """Test stopping music resets manager state."""
@@ -270,7 +270,7 @@ class TestMusicControls(unittest.TestCase):
         self.assertFalse(self.sound_manager.music_playing)
         self.assertIsNone(self.sound_manager.current_music)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.get_busy")
     def test_is_music_playing_returns_pygame_state(self, mock_get_busy):
         """Test is_music_playing returns pygame's actual state."""
@@ -297,7 +297,7 @@ class TestSoundSystemUpdate(unittest.TestCase):
         self.settings = GameSettings()
         self.sound_manager = SoundManager(self.settings)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.get_busy")
     def test_update_detects_music_stopped(self, mock_get_busy):
         """Test update detects when music has stopped playing."""
@@ -312,7 +312,7 @@ class TestSoundSystemUpdate(unittest.TestCase):
         self.assertFalse(self.sound_manager.music_playing)
         self.assertIsNone(self.sound_manager.current_music)
 
-    @patch("game_audio.AUDIO_AVAILABLE", True)
+    @patch("rsp.systems.audio.AUDIO_AVAILABLE", True)
     @patch("pygame.mixer.music.stop")
     @patch("pygame.mixer.stop")
     @patch("pygame.mixer.quit")

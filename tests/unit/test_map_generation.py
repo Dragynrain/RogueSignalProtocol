@@ -9,10 +9,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_config import GameConfig, RoomGenerationConfig
-from game_entities import Position
-from game_level import LevelGenerator
-from game_map import GameMap, RestoreNode
+from rsp.core.config import GameConfig, RoomGenerationConfig
+from rsp.entities.base import Position
+from rsp.level.generator import LevelGenerator
+from rsp.level.map import GameMap, RestoreNode
 
 
 class TestMapGeneration:
@@ -423,7 +423,7 @@ class TestMapIntegration(TestMapGeneration):
         assert len(bsp_generator.corridor_tiles) > 0
 
         # Verify BSP room generator was used
-        from game_level_structure import BSPRoomGenerator
+        from rsp.level.structure import BSPRoomGenerator
 
         assert isinstance(bsp_generator.room_generator, BSPRoomGenerator)
 

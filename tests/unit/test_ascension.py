@@ -10,7 +10,7 @@ Tests cover:
 
 import pytest
 
-from game_metrics import (
+from rsp.systems.metrics import (
     SessionMetrics,
     finalize_session,
     init_session_metrics,
@@ -310,14 +310,14 @@ class TestAscensionModifiersDataclass:
     """Test AscensionModifiers dataclass structure."""
 
     def test_ascension_modifiers_import(self):
-        """AscensionModifiers should be importable from game_ascension."""
-        from game_ascension import AscensionModifiers
+        """AscensionModifiers should be importable from rsp.systems.ascension."""
+        from rsp.systems.ascension import AscensionModifiers
 
         assert AscensionModifiers is not None
 
     def test_ascension_modifiers_defaults(self):
         """AscensionModifiers should have all modifier fields with zero/neutral defaults."""
-        from game_ascension import AscensionModifiers
+        from rsp.systems.ascension import AscensionModifiers
 
         mods = AscensionModifiers()
 
@@ -365,7 +365,7 @@ class TestCalculateAscensionModifiers:
 
     def test_ascension_zero_no_modifiers(self):
         """A0 should return modifiers with all default/neutral values."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(0)
 
@@ -376,14 +376,14 @@ class TestCalculateAscensionModifiers:
 
     def test_ascension_one_scanner_vision(self):
         """A1 should have scanner_vision_bonus of 1."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(1)
         assert mods.scanner_vision_bonus == 1
 
     def test_ascension_modifiers_cumulative(self):
         """A5 should include all modifiers from A1-A5."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(5)
 
@@ -400,7 +400,7 @@ class TestCalculateAscensionModifiers:
 
     def test_ascension_ten_includes_all_prior(self):
         """A10 should include modifiers from A1-A10."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(10)
 
@@ -418,7 +418,7 @@ class TestCalculateAscensionModifiers:
 
     def test_ascension_max_level(self):
         """A20 should include all modifiers."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(20)
 
@@ -435,7 +435,7 @@ class TestGameEngineAscensionIntegration:
         """GameEngine should have ascension_level attribute."""
         from unittest.mock import Mock
 
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True)
         assert hasattr(engine, "ascension_level")
@@ -445,7 +445,7 @@ class TestGameEngineAscensionIntegration:
         """GameEngine should accept ascension_level parameter."""
         from unittest.mock import Mock
 
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=5)
         assert engine.ascension_level == 5
@@ -454,8 +454,8 @@ class TestGameEngineAscensionIntegration:
         """GameEngine should calculate and store AscensionModifiers."""
         from unittest.mock import Mock
 
-        from game_ascension import AscensionModifiers
-        from game_engine import GameEngine
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=5)
         assert hasattr(engine, "ascension_modifiers")
@@ -468,7 +468,7 @@ class TestGameEngineAscensionIntegration:
         """GameEngine at A0 should have neutral modifiers."""
         from unittest.mock import Mock
 
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=0)
         assert engine.ascension_modifiers.scanner_vision_bonus == 0
@@ -479,7 +479,7 @@ class TestGameEngineAscensionIntegration:
         """GameEngine.get_input_mapper() returns input mapper from input_handler."""
         from unittest.mock import Mock
 
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=0)
         input_mapper = engine.get_input_mapper()
@@ -490,7 +490,7 @@ class TestGameEngineAscensionIntegration:
         """GameEngine.get_input_mapper() returns None when no input_handler exists."""
         from unittest.mock import Mock
 
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=0)
         original_handler = engine.input_handler
@@ -504,17 +504,17 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_apply_ascension_modifiers_exists(self):
         """Enemy should have apply_ascension_modifiers method."""
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy = Enemy(Position(5, 5), "scanner")
         assert hasattr(enemy, "apply_ascension_modifiers")
 
     def test_enemy_hp_bonus_applied(self):
         """A2 enemy_hp_bonus should increase enemy CPU."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy = Enemy(Position(5, 5), "scanner")
         original_cpu = enemy.cpu
@@ -527,9 +527,9 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_damage_multiplier_applied(self):
         """A4 enemy_damage_multiplier should be stored for damage calc."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         enemy = Enemy(Position(5, 5), "scanner")
 
@@ -541,10 +541,10 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_damage_multiplier_actually_increases_damage(self):
         """A4 enemy_damage_multiplier should actually increase damage dealt."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
-        from game_player import Player
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
+        from rsp.entities.player import Player
 
         # Create enemy and player
         enemy = Enemy(Position(5, 5), "bot")  # bot does damage
@@ -576,9 +576,9 @@ class TestEnemyAscensionModifiers:
 
     def test_scanner_vision_bonus_applied(self):
         """A1 scanner_vision_bonus should only affect scanners."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         scanner = Enemy(Position(5, 5), "scanner")
         patrol = Enemy(Position(10, 10), "patrol")
@@ -597,9 +597,9 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_vision_bonus_applied_to_all(self):
         """A5 enemy_vision_bonus should affect all enemies."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         scanner = Enemy(Position(5, 5), "scanner")
         patrol = Enemy(Position(10, 10), "patrol")
@@ -616,9 +616,9 @@ class TestEnemyAscensionModifiers:
 
     def test_scanner_gets_both_bonuses(self):
         """Scanner at A5 gets both scanner_vision_bonus and enemy_vision_bonus."""
-        from game_ascension import AscensionModifiers
-        from game_characters import Enemy
-        from game_entities import Position
+        from rsp.systems.ascension import AscensionModifiers
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import Position
 
         scanner = Enemy(Position(5, 5), "scanner")
         original_vision = scanner.type_data.vision
@@ -635,34 +635,34 @@ class TestAscensionUnlockProgression:
 
     def test_is_ascension_unlocked_zero_always(self):
         """A0 should always be unlocked."""
-        from game_ascension import is_ascension_unlocked
+        from rsp.systems.ascension import is_ascension_unlocked
 
         assert is_ascension_unlocked(0, highest_unlocked=0) is True
 
     def test_is_ascension_unlocked_within_range(self):
         """Levels <= highest_unlocked should be unlocked."""
-        from game_ascension import is_ascension_unlocked
+        from rsp.systems.ascension import is_ascension_unlocked
 
         assert is_ascension_unlocked(3, highest_unlocked=5) is True
         assert is_ascension_unlocked(5, highest_unlocked=5) is True
 
     def test_is_ascension_unlocked_beyond_range(self):
         """Levels > highest_unlocked should NOT be unlocked."""
-        from game_ascension import is_ascension_unlocked
+        from rsp.systems.ascension import is_ascension_unlocked
 
         assert is_ascension_unlocked(6, highest_unlocked=5) is False
         assert is_ascension_unlocked(10, highest_unlocked=5) is False
 
     def test_unlock_next_ascension(self):
         """Victory at AN unlocks AN+1."""
-        from game_ascension import unlock_next_ascension
+        from rsp.systems.ascension import unlock_next_ascension
 
         highest = unlock_next_ascension(current_level=5, highest_unlocked=5)
         assert highest == 6
 
     def test_unlock_no_skip(self):
         """Winning lower level doesn't change highest."""
-        from game_ascension import unlock_next_ascension
+        from rsp.systems.ascension import unlock_next_ascension
 
         # Winning A3 when A5 is already unlocked
         highest = unlock_next_ascension(current_level=3, highest_unlocked=5)
@@ -670,7 +670,7 @@ class TestAscensionUnlockProgression:
 
     def test_unlock_max_cap(self):
         """Cannot unlock beyond max level (20)."""
-        from game_ascension import unlock_next_ascension
+        from rsp.systems.ascension import unlock_next_ascension
 
         highest = unlock_next_ascension(current_level=20, highest_unlocked=20)
         assert highest == 20  # Stays at max
@@ -681,7 +681,7 @@ class TestLevelGenerationModifiers:
 
     def test_apply_enemy_count_bonus(self):
         """A9 enemy_count_bonus should increase enemy count."""
-        from game_ascension import AscensionModifiers
+        from rsp.systems.ascension import AscensionModifiers
 
         base_count = 19
         mods = AscensionModifiers(enemy_count_bonus=5)
@@ -691,7 +691,7 @@ class TestLevelGenerationModifiers:
 
     def test_apply_code_reduction(self):
         """A11 code_reduction_per_floor should reduce codes with minimum."""
-        from game_ascension import AscensionModifiers
+        from rsp.systems.ascension import AscensionModifiers
 
         mods = AscensionModifiers(code_reduction_per_floor=2, code_minimum=3)
 
@@ -707,7 +707,7 @@ class TestLevelGenerationModifiers:
 
     def test_node_capacity_at_a13(self):
         """A13 node_capacity_ranges should provide floor-based ranges."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(13)
 
@@ -723,7 +723,7 @@ class TestLevelGenerationModifiers:
 
     def test_node_capacity_below_a13_is_none(self):
         """Below A13, node_capacity_ranges should be None (unlimited)."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(12)
         assert mods.node_capacity_ranges is None
@@ -737,70 +737,70 @@ class TestTurnProcessingModifiers:
 
     def test_heat_reduction_override_at_a8(self):
         """A8 heat_reduction_override should reduce cooling rate from 2 to 1."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(8)
         assert mods.heat_reduction_override == 1
 
     def test_heat_reduction_default_below_a8(self):
         """Below A8, heat_reduction_override should be None (use default 2)."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(7)
         assert mods.heat_reduction_override is None
 
     def test_melee_heat_bonus_at_a17(self):
         """A17 melee_heat_bonus should add +5 heat per melee attack."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(17)
         assert mods.melee_heat_bonus == 5
 
     def test_melee_heat_bonus_zero_below_a17(self):
         """Below A17, melee_heat_bonus should be 0."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(16)
         assert mods.melee_heat_bonus == 0
 
     def test_trace_gain_multiplier_at_a3(self):
         """A3 trace_gain_multiplier should double background trace gain."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(3)
         assert mods.trace_gain_multiplier == 2.0
 
     def test_trace_gain_multiplier_default_below_a3(self):
         """Below A3, trace_gain_multiplier should be 1.0 (no change)."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(2)
         assert mods.trace_gain_multiplier == 1.0
 
     def test_hostile_trace_bonus_at_a7(self):
         """A7 hostile_trace_bonus should add +0.2 per turn when spotted."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(7)
         assert mods.hostile_trace_bonus == 0.2
 
     def test_hostile_trace_bonus_zero_below_a7(self):
         """Below A7, hostile_trace_bonus should be 0."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(6)
         assert mods.hostile_trace_bonus == 0.0
 
     def test_alert_range_override_at_a15(self):
         """A15 alert_range_override should increase alert range to 10."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(15)
         assert mods.alert_range_override == 10
 
     def test_alert_range_override_none_below_a15(self):
         """Below A15, alert_range_override should be None (use default 6)."""
-        from game_ascension import calculate_ascension_modifiers
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         mods = calculate_ascension_modifiers(14)
         assert mods.alert_range_override is None

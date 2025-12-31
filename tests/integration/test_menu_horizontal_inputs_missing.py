@@ -25,11 +25,11 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
-from game_menu_help_lore import HelpMenu
-from game_menu_settings import SettingsMenu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.mappings import InputMapper
+from rsp.ui.menu_help_lore import HelpMenu
+from rsp.ui.menu_settings import SettingsMenu
 
 
 class TestSettingsMenuHorizontalInputs:

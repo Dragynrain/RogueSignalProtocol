@@ -10,10 +10,10 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
-from game_input_base import BaseInputHandler
-from game_input_gamepad import GamepadInputHandler
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.base import BaseInputHandler
+from rsp.input.gamepad import GamepadInputHandler
+from rsp.input.mappings import InputMapper
 
 # ============================================================================
 # Test Fixtures

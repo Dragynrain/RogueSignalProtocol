@@ -9,10 +9,10 @@ Allows programmatic control of game state and actions without rendering.
 import random
 from typing import Any
 
-from game_characters import Enemy
-from game_config import GameConfig
-from game_engine import GameEngine
-from game_entities import Position
+from rsp.entities.characters import Enemy
+from rsp.core.config import GameConfig
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
 
 
 class GameTestAgent:
@@ -112,7 +112,7 @@ class GameTestAgent:
         Returns:
             True if move was successful (including bump attacks), False if blocked by wall
         """
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         old_pos = (self.player.x, self.player.y)
 

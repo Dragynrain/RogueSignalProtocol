@@ -9,7 +9,7 @@ depletes as the player uses them. This tests:
 - Capacity only consumed when providing actual benefit
 """
 
-from game_map import RestoreNode
+from rsp.level.map import RestoreNode
 
 
 class TestRestoreNodeDataclass:

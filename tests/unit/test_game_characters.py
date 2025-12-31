@@ -18,10 +18,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from game_characters import Enemy
-from game_entities import Position
-from game_pathfinding import PathfindingHelper
-from game_player import Player
+from rsp.entities.characters import Enemy
+from rsp.entities.base import Position
+from rsp.level.pathfinding import PathfindingHelper
+from rsp.entities.player import Player
 
 
 class TestPlayerInitialization:
@@ -88,7 +88,7 @@ class TestPlayerMovement:
         wall_found = False
         for y in range(basic_map.height):
             for x in range(basic_map.width):
-                from game_entities import Position
+                from rsp.entities.base import Position
 
                 if basic_map.is_wall(Position(x, y)):
                     # Found a wall, try to move player adjacent to it
@@ -247,7 +247,7 @@ class TestPlayerUpgrades:
 
         # Should be capped at max_ram_capacity (32 by default)
         # Check in config to get exact value
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         max_ram = GameConfig._get_required("gameplay.max_ram_capacity")
 
@@ -261,7 +261,7 @@ class TestPlayerUpgrades:
         for _ in range(20):
             player.apply_permanent_upgrade("overclock_kit")
 
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         max_cpu = GameConfig._get_required("gameplay.max_cpu_capacity")
 
@@ -350,7 +350,7 @@ class TestPlayerVision:
         vision_range = player.get_vision_range()
 
         # Should be the config value (typically 8)
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         expected = GameConfig._get_required("gameplay.player_base_vision_range")
 

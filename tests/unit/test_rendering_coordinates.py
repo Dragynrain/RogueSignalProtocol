@@ -19,7 +19,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from game_coordinate_helpers import CoordinateHelpers
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class TestCenterBoxCalculations:

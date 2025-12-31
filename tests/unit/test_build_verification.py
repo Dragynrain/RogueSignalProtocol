@@ -226,8 +226,8 @@ class TestNoRelativeDataPaths:
 
     def test_data_loading_uses_get_data_directory(self):
         """Verify PersistentStorage uses get_data_directory for saves path."""
-        from data_loading import PersistentStorage
-        import game_file_paths
+        from rsp.core.data_loading import PersistentStorage
+        import rsp.core.file_paths as game_file_paths
 
         # Create instance without explicit path
         storage = PersistentStorage()
@@ -246,7 +246,7 @@ class TestCrossplatformImports:
 
     def test_game_platform_module_imports(self):
         """Verify game_platform module imports successfully."""
-        import game_platform
+        import rsp.core.platform as game_platform
 
         # Verify key functions exist
         assert hasattr(game_platform, "is_windows")
@@ -256,7 +256,7 @@ class TestCrossplatformImports:
 
     def test_game_file_paths_module_imports(self):
         """Verify game_file_paths module imports successfully on all platforms."""
-        import game_file_paths
+        import rsp.core.file_paths as game_file_paths
 
         # Verify key functions exist
         assert hasattr(game_file_paths, "get_data_directory")
@@ -265,17 +265,17 @@ class TestCrossplatformImports:
     def test_game_loop_module_imports(self):
         """Verify game_loop module imports without Windows-specific crashes."""
         # This would fail on Linux if DPI awareness code wasn't properly guarded
-        import game_loop
+        import rsp.core.loop as game_loop
 
         assert game_loop is not None
 
     def test_all_core_modules_import(self):
         """Verify all core game modules can be imported."""
         # These imports would fail if there are platform-specific issues
-        import game_combat
-        import game_config
-        import game_enemies
-        import game_engine
-        import game_entities
+        import rsp.combat.combat as game_combat
+        import rsp.core.config as game_config
+        import rsp.entities.enemies as game_enemies
+        import rsp.core.engine as game_engine
+        import rsp.entities.base as game_entities
 
         assert all([game_engine, game_entities, game_combat, game_enemies, game_config])

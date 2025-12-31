@@ -12,10 +12,10 @@ from unittest.mock import Mock
 
 import tcod.event
 
-from game_engine import GameEngine
-from game_input import InputHandler
-from game_input_actions import InputAction, InputContext
-from game_menu_achievements import AchievementsMenu
+from rsp.core.engine import GameEngine
+from rsp.input.handler import InputHandler
+from rsp.input.actions import InputAction, InputContext
+from rsp.ui.menu_achievements import AchievementsMenu
 
 
 class TestAchievementsScreenNavigation:

@@ -10,11 +10,11 @@ from unittest.mock import MagicMock, Mock, patch
 
 import tcod
 
-from game_config import GameSettings
-from game_menu_about import AboutMenu
-from game_menu_achievements import AchievementsMenu
-from game_menu_help_lore import HelpMenu, LoreMenu
-from game_menus import MainMenu, SettingsMenu
+from rsp.core.config import GameSettings
+from rsp.ui.menu_about import AboutMenu
+from rsp.ui.menu_achievements import AchievementsMenu
+from rsp.ui.menu_help_lore import HelpMenu, LoreMenu
+from rsp.ui.menus import MainMenu, SettingsMenu
 
 
 class TestAllMenusSmoke:
@@ -22,7 +22,7 @@ class TestAllMenusSmoke:
 
     def test_main_menu_instantiation(self):
         """MainMenu can be instantiated without errors."""
-        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+        with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             assert menu is not None
             assert hasattr(menu, "options")
@@ -66,8 +66,8 @@ class TestAllMenusSmoke:
 
     def test_graphics_preview_menu_instantiation(self):
         """GraphicsPreviewMenu can be instantiated with mocked context."""
-        from game_graphics_tiles import TileManager
-        from game_menu_graphics_preview import GraphicsPreviewMenu
+        from rsp.rendering.tiles import TileManager
+        from rsp.ui.menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context in glyph mode (no SDL required)
         context = Mock()
@@ -83,7 +83,7 @@ class TestAllMenusSmoke:
 
     def test_graphical_help_menu_instantiation(self):
         """GraphicalHelpMenu can be instantiated with mocked dependencies."""
-        from game_menu_help_graphics import GraphicalHelpMenu
+        from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
         # Mock context and tile_manager
         mock_context = MagicMock()
@@ -122,7 +122,7 @@ class TestAllMenusSmoke:
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+                with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
@@ -154,7 +154,7 @@ class TestAllMenusSmoke:
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+                with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
@@ -169,7 +169,7 @@ class TestAllMenusSmoke:
 
     def test_main_menu_has_expected_options(self):
         """MainMenu has expected options."""
-        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+        with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
 
             # Should have at least these core options
@@ -204,6 +204,6 @@ class TestAllMenusSmoke:
         test_console = tcod.console.Console(width=80, height=50)
 
         # Test a simple menu - smoke test, no exception means success
-        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
+        with patch("rsp.ui.menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             menu.render(test_console)

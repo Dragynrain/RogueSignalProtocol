@@ -14,10 +14,10 @@ Use these to quickly set up common test scenarios like:
 
 from unittest.mock import Mock
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_entities import EnemyState, Position
-from game_map import RestoreNode
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyState, Position
+from rsp.level.map import RestoreNode
 from tests.fixtures.real_game_data import create_real_enemy
 
 

@@ -7,11 +7,11 @@ Tests how these systems work together in real gameplay scenarios.
 import unittest
 from unittest.mock import Mock, patch
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_entities import Position
-from game_map import RestoreNode
-from game_story import StoryFragmentManager
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.level.map import RestoreNode
+from rsp.utils.story import StoryFragmentManager
 
 
 class TestAudioStoryIntegration(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestAudioStoryIntegration(unittest.TestCase):
         self.engine.story_fragment_manager.discovered_fragments = []
 
         # Place a story fragment
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         fragment = StoryFragment(0)
         self.engine.game_map.story_fragments[(20, 20)] = fragment
@@ -56,15 +56,15 @@ class TestAudioStoryIntegration(unittest.TestCase):
     def test_enemy_trace_level_audio_with_story_context(self):
         """Test that enemy trace level audio works correctly when story fragments are present."""
         # Set up enemy and story fragment
-        from game_characters import Enemy
-        from game_entities import EnemyState
+        from rsp.entities.characters import Enemy
+        from rsp.entities.base import EnemyState
 
         enemy = Enemy(Position(15, 15), "virus")
         enemy.state = EnemyState.UNAWARE
         self.engine.enemies = [enemy]
 
         # Place story fragment nearby
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         fragment = StoryFragment(0)
         self.engine.game_map.story_fragments[(18, 18)] = fragment
@@ -90,7 +90,7 @@ class TestAudioStoryIntegration(unittest.TestCase):
         self.game_settings.sound_enabled = False
 
         # Place and discover story fragment
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         fragment = StoryFragment(0)
         self.engine.game_map.story_fragments[(25, 25)] = fragment
@@ -166,7 +166,7 @@ class TestLevelAudioIntegration(unittest.TestCase):
 
         with (
             patch.object(self.engine.sound_manager, "play_music") as mock_play_music,
-            patch("game_save.SaveGameManager.delete_save"),
+            patch("rsp.systems.save.SaveGameManager.delete_save"),
         ):
 
             # Trigger victory

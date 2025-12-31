@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from game_metrics import (
+from rsp.systems.metrics import (
     LifetimeMetrics,
     SessionMetrics,
     _get_metrics_dir,
@@ -247,7 +247,7 @@ def test_save_session_to_sqlite(clean_metrics):
 
 def test_lifetime_metrics(clean_metrics, tmp_path, monkeypatch):
     """Test lifetime metrics aggregation (isolated)."""
-    import game_metrics
+    import rsp.systems.metrics as game_metrics
 
     # Use isolated progress file for this test to avoid parallel conflicts
     test_progress_file = tmp_path / "test_progress.json"
@@ -291,7 +291,7 @@ def test_lifetime_metrics(clean_metrics, tmp_path, monkeypatch):
 
 def test_lifetime_metrics_fastest_victory(clean_metrics, tmp_path, monkeypatch):
     """Test fastest victory tracking (isolated)."""
-    import game_metrics
+    import rsp.systems.metrics as game_metrics
 
     # Use isolated progress file for this test to avoid parallel conflicts
     test_progress_file = tmp_path / "test_progress.json"
@@ -330,7 +330,7 @@ def test_lifetime_metrics_fastest_victory(clean_metrics, tmp_path, monkeypatch):
 
 def test_track_enemy_kill_basic(clean_metrics):
     """Test track_enemy_kill tracks basic kill metrics."""
-    from game_metrics import init_session_metrics, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -353,7 +353,7 @@ def test_track_enemy_kill_basic(clean_metrics):
 
 def test_track_enemy_kill_stealth(clean_metrics):
     """Test track_enemy_kill tracks stealth kills."""
-    from game_metrics import init_session_metrics, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -375,7 +375,7 @@ def test_track_enemy_kill_stealth(clean_metrics):
 
 def test_track_enemy_kill_admin(clean_metrics):
     """Test track_enemy_kill tracks admin kills."""
-    from game_metrics import init_session_metrics, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -395,7 +395,7 @@ def test_track_enemy_kill_admin(clean_metrics):
 
 def test_track_enemy_kill_blind_spot(clean_metrics):
     """Test track_enemy_kill tracks blind spot ambushes."""
-    from game_metrics import init_session_metrics, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -414,7 +414,7 @@ def test_track_enemy_kill_blind_spot(clean_metrics):
 
 def test_track_enemy_kill_full_clear(clean_metrics):
     """Test track_enemy_kill tracks full floor clears."""
-    from game_metrics import init_session_metrics, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -433,7 +433,7 @@ def test_track_enemy_kill_full_clear(clean_metrics):
 
 def test_track_enemy_kill_multiple_same_turn(clean_metrics):
     """Test track_enemy_kill only increments turns_with_kills once per turn."""
-    from game_metrics import init_session_metrics, reset_turn_kill_flag, track_enemy_kill
+    from rsp.systems.metrics import init_session_metrics, reset_turn_kill_flag, track_enemy_kill
 
     session = init_session_metrics()
 
@@ -473,7 +473,7 @@ def test_track_enemy_kill_multiple_same_turn(clean_metrics):
 
 def test_ascension_victory_tracking(clean_metrics, tmp_path, monkeypatch):
     """Test that ascension_victories is incremented on victory."""
-    import game_metrics
+    import rsp.systems.metrics as game_metrics
 
     # Use isolated progress file for this test
     test_progress_file = tmp_path / "test_progress.json"
@@ -517,7 +517,7 @@ def test_ascension_victory_tracking(clean_metrics, tmp_path, monkeypatch):
 
 def test_ascension_defeat_not_tracked(clean_metrics, tmp_path, monkeypatch):
     """Test that ascension_victories is NOT incremented on defeat."""
-    import game_metrics
+    import rsp.systems.metrics as game_metrics
 
     test_progress_file = tmp_path / "test_progress.json"
     monkeypatch.setattr(game_metrics, "_get_progress_file_path", lambda: test_progress_file)
@@ -539,7 +539,7 @@ def test_ascension_defeat_not_tracked(clean_metrics, tmp_path, monkeypatch):
 
 def test_highest_trace_reached_tracking(clean_metrics):
     """Test that highest_trace_reached is tracked correctly."""
-    from game_metrics import init_session_metrics, track_highest_trace
+    from rsp.systems.metrics import init_session_metrics, track_highest_trace
 
     session = init_session_metrics()
     assert session.highest_trace_reached == 0.0

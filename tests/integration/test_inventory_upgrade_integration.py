@@ -7,9 +7,9 @@ Tests how inventory management integrates with upgrade progression and gameplay.
 import unittest
 from unittest.mock import Mock
 
-from game_config import GameSettings
-from game_engine import GameEngine
-from game_inventory import CodeHack, ExploitItem
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
+from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestInventoryUpgradeIntegration(unittest.TestCase):
@@ -72,7 +72,7 @@ class TestInventoryUpgradeIntegration(unittest.TestCase):
     def test_exploit_inventory_combat_integration(self):
         """Test that exploits in inventory properly integrate with combat system."""
         # Add exploit to inventory
-        from game_data import GameData
+        from rsp.core.data import GameData
 
         exploit_keys = list(GameData.EXPLOITS.keys())
         if exploit_keys:
@@ -165,7 +165,7 @@ class TestInventoryUpgradeIntegration(unittest.TestCase):
             initial_discovered = discovered
 
         # Place and discover story fragment
-        from game_inventory import StoryFragment
+        from rsp.combat.inventory import StoryFragment
 
         fragment = StoryFragment(0)
         self.engine.game_map.story_fragments[(25, 25)] = fragment

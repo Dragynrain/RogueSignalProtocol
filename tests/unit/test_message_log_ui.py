@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from data_loading import DataLoader
-from game_state import MessageLog
-from game_ui import WindowManager, render_char_safe
+from rsp.core.data_loading import DataLoader
+from rsp.core.state import MessageLog
+from rsp.ui.common import WindowManager, render_char_safe
 
 
 class TestMessageLog:

@@ -14,9 +14,9 @@ Tests the complete level progression workflow including:
 import copy
 from unittest.mock import Mock
 
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import EnemyState, Position
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import EnemyState, Position
 
 
 class TestLevelProgressionCritical:

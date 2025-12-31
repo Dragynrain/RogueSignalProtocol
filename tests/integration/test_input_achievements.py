@@ -15,7 +15,7 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction
+from rsp.input.actions import InputAction
 
 
 class TestAchievementsScrolling:
@@ -24,7 +24,7 @@ class TestAchievementsScrolling:
     @pytest.fixture
     def achievements_menu(self):
         """Create achievements menu instance."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         yield menu
@@ -80,7 +80,7 @@ class TestAchievementsInputTypes:
     @pytest.fixture
     def achievements_menu(self):
         """Create achievements menu instance."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         yield menu
@@ -158,7 +158,7 @@ class TestAchievementsBoundaries:
     @pytest.fixture
     def achievements_menu(self):
         """Create achievements menu instance."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
         yield menu

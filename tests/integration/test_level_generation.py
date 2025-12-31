@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from game_config import GameConfig
+from rsp.core.config import GameConfig
 from tests.test_agent import GameTestAgent
 
 
@@ -216,7 +216,7 @@ class TestLevelGeneration:
         agent = GameTestAgent(seed=42)
 
         # Load expected quantities from config
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         network_configs = GameConfig.get_network_configs()
         expected = network_configs[1]
@@ -259,7 +259,7 @@ class TestLevelGeneration:
 
     def test_spawn_quantities_consistent_across_seeds(self):
         """Same level should spawn same quantities regardless of seed."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         network_configs = GameConfig.get_network_configs()
         expected = network_configs[1]
@@ -301,7 +301,7 @@ class TestLevelGeneration:
 
     def test_all_levels_match_config(self):
         """Test that all 3 levels spawn correct quantities."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         network_configs = GameConfig.get_network_configs()
 

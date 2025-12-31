@@ -13,9 +13,9 @@ import pytest
 import tcod
 import tcod.event
 
-from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.mappings import InputMapper
 
 
 class TestDynamicHelpIntegration:
@@ -42,7 +42,7 @@ class TestDynamicHelpIntegration:
 
     def test_main_menu_help_changes_with_confirm_remap(self, settings, console):
         """Verify main menu help text changes when CONFIRM is remapped."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu(settings)
 
@@ -67,7 +67,7 @@ class TestDynamicHelpIntegration:
 
     def test_main_menu_help_changes_with_button_swap(self, settings, console):
         """Verify main menu help changes when A/B buttons are swapped."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         menu = MainMenu(settings)
 
@@ -89,7 +89,7 @@ class TestDynamicHelpIntegration:
 
     def test_settings_menu_help_changes_with_cancel_remap(self, settings, console):
         """Verify settings menu help changes when CANCEL is remapped."""
-        from game_menu_settings import SettingsMenu
+        from rsp.ui.menu_settings import SettingsMenu
 
         menu = SettingsMenu(settings)
 
@@ -112,7 +112,7 @@ class TestDynamicHelpIntegration:
 
     def test_achievements_help_changes_with_cancel_remap(self, settings, console):
         """Verify achievements screen help changes when CANCEL is remapped."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
 
@@ -131,7 +131,7 @@ class TestDynamicHelpIntegration:
 
     def test_controls_hub_help_uses_dynamic_bindings(self, settings):
         """Verify controls hub uses dynamic help, not hardcoded."""
-        from game_menu_controls import ControlsMenuHub
+        from rsp.ui.menu_controls import ControlsMenuHub
 
         menu = ControlsMenuHub(settings)
 
@@ -154,7 +154,7 @@ class TestDynamicHelpIntegration:
 
     def test_help_screen_help_changes_with_cancel_remap(self, settings):
         """Verify help screen footer changes when CANCEL is remapped."""
-        from game_menu_help_lore import HelpMenu
+        from rsp.ui.menu_help_lore import HelpMenu
 
         # HelpMenu doesn't take settings argument
         menu = HelpMenu()
@@ -174,7 +174,7 @@ class TestDynamicHelpIntegration:
 
     def test_lore_viewer_help_changes_with_confirm_remap(self, settings):
         """Verify lore viewer help changes when CONFIRM is remapped."""
-        from game_menu_help_lore import LoreMenu
+        from rsp.ui.menu_help_lore import LoreMenu
 
         # LoreMenu doesn't take settings argument
         menu = LoreMenu()
@@ -194,7 +194,7 @@ class TestDynamicHelpIntegration:
 
     def test_about_menu_help_changes_with_button_remap(self, settings):
         """Verify about menu help changes when buttons are remapped."""
-        from game_menu_about import AboutMenu
+        from rsp.ui.menu_about import AboutMenu
 
         menu = AboutMenu(settings)
 
@@ -282,7 +282,7 @@ class TestHelpHintFunctions:
 
     def test_get_main_menu_help_uses_mapper_bindings(self):
         """Verify get_main_menu_help uses provided mapper's bindings."""
-        from game_help_hints import get_main_menu_help
+        from rsp.ui.help_hints import get_main_menu_help
 
         mapper = InputMapper()
 
@@ -301,7 +301,7 @@ class TestHelpHintFunctions:
 
     def test_get_settings_menu_help_uses_mapper_bindings(self):
         """Verify get_settings_menu_help uses provided mapper's bindings."""
-        from game_help_hints import get_settings_menu_help
+        from rsp.ui.help_hints import get_settings_menu_help
 
         mapper = InputMapper()
 
@@ -317,7 +317,7 @@ class TestHelpHintFunctions:
 
     def test_get_achievements_help_uses_mapper_bindings(self):
         """Verify get_achievements_help uses provided mapper's bindings."""
-        from game_help_hints import get_achievements_help
+        from rsp.ui.help_hints import get_achievements_help
 
         mapper = InputMapper()
 
@@ -333,7 +333,7 @@ class TestHelpHintFunctions:
 
     def test_get_inventory_help_uses_default_mapper(self):
         """Verify get_inventory_help works without explicit mapper."""
-        from game_help_hints import get_inventory_help
+        from rsp.ui.help_hints import get_inventory_help
 
         # Should work without passing mapper
         help_text = get_inventory_help()
@@ -367,7 +367,7 @@ class TestRenderedHelpText:
 
     def test_main_menu_renders_remapped_confirm_key(self, console):
         """Verify main menu actually renders the remapped CONFIRM key."""
-        from game_menu_main import MainMenu
+        from rsp.ui.menu_main import MainMenu
 
         # MainMenu takes background, not settings - pass None
         menu = MainMenu()
@@ -389,9 +389,9 @@ class TestRenderedHelpText:
 
     def test_settings_menu_renders_remapped_cancel_button(self, console):
         """Verify settings menu renders remapped CANCEL button."""
-        from game_config import GameSettings
-        from game_input_device_tracker import InputDeviceType, set_last_device
-        from game_menu_settings import SettingsMenu
+        from rsp.core.config import GameSettings
+        from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.menu_settings import SettingsMenu
 
         settings = GameSettings()
         menu = SettingsMenu(settings)
@@ -412,7 +412,7 @@ class TestRenderedHelpText:
 
     def test_achievements_menu_renders_dynamic_help(self, console):
         """Verify achievements menu renders dynamic help text."""
-        from game_menu_achievements import AchievementsMenu
+        from rsp.ui.menu_achievements import AchievementsMenu
 
         menu = AchievementsMenu()
 
@@ -425,8 +425,8 @@ class TestRenderedHelpText:
 
     def test_about_menu_renders_remapped_buttons(self, console):
         """Verify about menu renders remapped buttons."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
-        from game_menu_about import AboutMenu
+        from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.menu_about import AboutMenu
 
         # AboutMenu takes background, not settings - pass None
         menu = AboutMenu()
@@ -450,7 +450,7 @@ class TestHelpTextOverflow:
 
     def test_long_key_name_doesnt_crash(self):
         """Verify long key names (like 'Backspace') don't crash."""
-        from game_help_hints import get_settings_menu_help
+        from rsp.ui.help_hints import get_settings_menu_help
 
         mapper = InputMapper()
 
@@ -466,7 +466,7 @@ class TestHelpTextOverflow:
 
     def test_compact_help_has_reasonable_length(self):
         """Verify compact help text stays within reasonable bounds."""
-        from game_help_hints import get_main_menu_help
+        from rsp.ui.help_hints import get_main_menu_help
 
         mapper = InputMapper()
         help_text = get_main_menu_help(True, mapper)  # Compact mode
@@ -494,8 +494,8 @@ class TestEdgeCases:
 
     def test_none_mapper_uses_default(self):
         """Verify passing None mapper uses default singleton."""
-        from game_help_hints import get_main_menu_help
-        from game_input_device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_main_menu_help
+        from rsp.input.device_tracker import InputDeviceType, set_last_device
 
         # Reset device tracker to keyboard (other tests may have set it to gamepad)
         set_last_device(InputDeviceType.KEYBOARD)

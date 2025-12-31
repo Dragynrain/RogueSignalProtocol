@@ -24,9 +24,9 @@ import tcod.console
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from game_menu_help_lore import HelpMenu, create_help_menu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction, InputContext
+from rsp.ui.menu_help_lore import HelpMenu, create_help_menu
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -53,7 +53,7 @@ def graphical_help_menu():
     mock_tile_manager.tile_width = 64
     mock_tile_manager.tile_height = 64
 
-    from game_menu_help_graphics import GraphicalHelpMenu
+    from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
     return GraphicalHelpMenu(mock_context, mock_tile_manager)
 
@@ -287,7 +287,7 @@ class TestHelpMenuFactory:
         mock_context = MagicMock()
         mock_tile_manager = MagicMock()
 
-        from game_menu_help_graphics import GraphicalHelpMenu
+        from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
         menu = create_help_menu(settings, context=mock_context, tile_manager=mock_tile_manager)
 

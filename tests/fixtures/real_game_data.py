@@ -3,9 +3,9 @@ Real game data fixtures for testing actual game behavior.
 Use real GameData instead of mocks wherever possible.
 """
 
-from game_characters import Enemy
-from game_entities import Position
-from game_map import GameMap
+from rsp.entities.characters import Enemy
+from rsp.entities.base import Position
+from rsp.level.map import GameMap
 
 
 def create_real_enemy(enemy_type: str = "scanner", position: Position = None) -> Enemy:

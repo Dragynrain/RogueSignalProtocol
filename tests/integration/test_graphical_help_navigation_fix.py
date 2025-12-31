@@ -27,9 +27,9 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_config import GameSettings
-from game_input_actions import InputAction
-from game_menu_help_graphics import GraphicalHelpMenu
+from rsp.core.config import GameSettings
+from rsp.input.actions import InputAction
+from rsp.ui.menu_help_graphics import GraphicalHelpMenu
 
 
 class TestGraphicalHelpHorizontalOnly:

@@ -7,8 +7,8 @@ through the centralized death_handler.check_death() path.
 
 import pytest
 
-from game_entities import EnemyState, Position
-from game_metrics import init_session_metrics
+from rsp.entities.base import EnemyState, Position
+from rsp.systems.metrics import init_session_metrics
 from tests.test_agent import GameTestAgent
 
 
@@ -53,7 +53,7 @@ class TestCombatDeathFlow:
 
     def test_enemy_attack_death_deletes_save(self, tmp_path, monkeypatch):
         """Enemy attack death should delete save file via death_handler.check_death()."""
-        from game_save import SaveGameManager
+        from rsp.systems.save import SaveGameManager
 
         # Patch save path
         test_save = tmp_path / "test_save.json"
@@ -187,8 +187,8 @@ class TestDeathPreventsDuplicateProcessing:
 
     def test_death_only_saves_metrics_once(self, monkeypatch):
         """Session metrics should only be finalized once on death."""
-        import game_metrics
-        from game_metrics import finalize_session as orig_finalize
+        import rsp.systems.metrics as game_metrics
+        from rsp.systems.metrics import finalize_session as orig_finalize
 
         call_count = {"count": 0}
 

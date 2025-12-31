@@ -10,9 +10,9 @@ These tests verify fixes for:
 
 import pytest
 
-from game_config import GameSettings
-from game_entities import Position
-from game_map import RestoreNode
+from rsp.core.config import GameSettings
+from rsp.entities.base import Position
+from rsp.level.map import RestoreNode
 
 
 class TestCPUOverflowPrevention:
@@ -237,7 +237,7 @@ class TestEnemyStateTransitions:
     def test_make_hostile_clears_move_queue(self, basic_game_engine):
         """Verify make_hostile clears movement queue on state change."""
         engine = basic_game_engine
-        from game_entities import EnemyState, Position
+        from rsp.entities.base import EnemyState, Position
 
         # Get an enemy and give it a movement queue
         enemy = engine.enemies[0]
@@ -253,7 +253,7 @@ class TestEnemyStateTransitions:
     def test_make_hostile_idempotent(self, basic_game_engine):
         """Verify calling make_hostile twice doesn't clear queue the second time."""
         engine = basic_game_engine
-        from game_entities import EnemyState, Position
+        from rsp.entities.base import EnemyState, Position
 
         enemy = engine.enemies[0]
         enemy.state = EnemyState.HOSTILE
@@ -267,7 +267,7 @@ class TestEnemyStateTransitions:
     def test_patrol_enemy_preserves_patrol_index(self, basic_game_engine):
         """Verify patrol enemies save patrol index before becoming hostile."""
         engine = basic_game_engine
-        from game_entities import EnemyMovement, EnemyState, Position
+        from rsp.entities.base import EnemyMovement, EnemyState, Position
 
         # Find or set up a patrol enemy
         enemy = engine.enemies[0]
@@ -330,7 +330,7 @@ class TestSpeedAndSlowdownMechanics:
     def test_slowdown_stacks_with_cap(self, basic_game_engine):
         """Verify slowdown effect stacks but has a cap."""
         engine = basic_game_engine
-        from game_config import GameBalance
+        from rsp.core.config import GameBalance
 
         # Set initial slowdown
         engine.player.temporary_effects["movement_slowed_turns"] = 3
@@ -356,7 +356,7 @@ class TestEnemyEliminationHelper:
     def test_elimination_grants_cpu_reward(self, basic_game_engine):
         """Verify enemy elimination grants CPU reward."""
         engine = basic_game_engine
-        from game_config import GameBalance
+        from rsp.core.config import GameBalance
 
         initial_cpu = engine.player.cpu
         enemy = engine.enemies[0]
@@ -406,8 +406,8 @@ class TestLogicBombOverheatWarning:
         warning's damage total.
         """
         engine = basic_game_engine
-        from game_combat import ExploitSystem
-        from game_data import GameData
+        from rsp.combat.combat import ExploitSystem
+        from rsp.core.data import GameData
 
         combat = ExploitSystem(engine)
 
@@ -439,8 +439,8 @@ class TestLogicBombOverheatWarning:
     def test_no_overheat_shows_base_damage_only(self, basic_game_engine):
         """Verify friendly fire warning shows only base damage when no overheat."""
         engine = basic_game_engine
-        from game_combat import ExploitSystem
-        from game_data import GameData
+        from rsp.combat.combat import ExploitSystem
+        from rsp.core.data import GameData
 
         combat = ExploitSystem(engine)
 
@@ -468,7 +468,7 @@ class TestMemoryLeakStateTransition:
         This is intentional - the exploit is meant to "wipe" enemy memory.
         """
         engine = basic_game_engine
-        from game_entities import EnemyState
+        from rsp.entities.base import EnemyState
 
         # Set up a hostile enemy
         enemy = engine.enemies[0]
@@ -491,7 +491,7 @@ class TestMemoryLeakStateTransition:
     def test_blinded_enemy_continues_moving(self, basic_game_engine):
         """Verify blinded enemies keep moving (can't see but can walk)."""
         engine = basic_game_engine
-        from game_entities import EnemyState
+        from rsp.entities.base import EnemyState
 
         enemy = engine.enemies[0]
         initial_pos = Position(enemy.x, enemy.y)
@@ -542,7 +542,7 @@ class TestDenialOfServiceStacking:
     def test_stunned_enemy_cannot_attack(self, basic_game_engine):
         """Verify stunned enemies cannot attack the player."""
         engine = basic_game_engine
-        from game_entities import EnemyState
+        from rsp.entities.base import EnemyState
 
         enemy = engine.enemies[0]
         enemy.state = EnemyState.HOSTILE
@@ -575,7 +575,7 @@ class TestInhibitorSpeedInteraction:
     def test_inhibitor_reduces_speed_boost_turns(self, basic_game_engine):
         """Verify inhibitor attack reduces speed boost duration."""
         engine = basic_game_engine
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         # Give player speed boost
         engine.player.temporary_effects["speed_boost_turns"] = 5
@@ -601,7 +601,7 @@ class TestInhibitorSpeedInteraction:
     def test_inhibitor_on_slowed_player_stacks_slowdown(self, basic_game_engine):
         """Verify inhibitor attack stacks slowdown on already-slowed player."""
         engine = basic_game_engine
-        from game_config import GameBalance, GameConfig
+        from rsp.core.config import GameBalance, GameConfig
 
         # Player already slowed
         engine.player.temporary_effects["speed_boost_turns"] = 0

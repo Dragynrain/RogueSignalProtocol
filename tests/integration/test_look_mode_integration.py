@@ -7,11 +7,11 @@ Tests the complete look mode workflow without heavy mocking.
 import pytest
 import tcod.event
 
-from game_data import GameData
-from game_engine import GameEngine
-from game_entities import Position
-from game_inspection import EntityInspector
-from game_inventory import CodeHack, ExploitItem
+from rsp.core.data import GameData
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.utils.inspection import EntityInspector
+from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestLookModeIntegration:
@@ -167,7 +167,7 @@ class TestLookModeIntegration:
     def test_cursor_bounds_checking(self):
         """Test that cursor stays within map bounds."""
         game = GameEngine(load_save=False)
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         # Enter look mode at edge of map
         game.look_mode = True
@@ -404,7 +404,7 @@ class TestLookModeWorkflow:
         game = GameEngine(load_save=False)
 
         # Activate a dialogue
-        from game_dialogue_system import create_death_dialogue
+        from rsp.ui.dialogue import create_death_dialogue
 
         game.dialogue_state.show(create_death_dialogue())
 
@@ -420,8 +420,8 @@ class TestLookModeWorkflow:
 
     def test_look_mode_camera_scrolling(self):
         """Test that camera follows cursor in look mode for map exploration."""
-        from game_config import GameConfig
-        from game_rendering_glyphs import GlyphsMapRenderer
+        from rsp.core.config import GameConfig
+        from rsp.rendering.glyphs import GlyphsMapRenderer
 
         game = GameEngine(load_save=False)
         renderer = GlyphsMapRenderer(settings=game.settings)

@@ -63,7 +63,7 @@ class TestGameplayScenarios:
         # Spawn an unaware enemy
         enemy = agent.spawn_enemy("bot", agent.player.x + 1, agent.player.y)
 
-        from game_entities import EnemyState
+        from rsp.entities.base import EnemyState
 
         # Should start unaware
         assert (

@@ -18,12 +18,12 @@ import pytest
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import Position
-from game_level import LevelGenerator
-from game_level_structure import BSPRoomGenerator, RoomGenerator
-from game_map import GameMap
+from rsp.core.config import GameConfig, GameSettings
+from rsp.core.engine import GameEngine
+from rsp.entities.base import Position
+from rsp.level.generator import LevelGenerator
+from rsp.level.structure import BSPRoomGenerator, RoomGenerator
+from rsp.level.map import GameMap
 
 
 class TestNewGameSmokeTests:
@@ -146,7 +146,7 @@ class TestNewGameSmokeTests:
         This validates RNG seeding works correctly for both traditional
         and BSP generation.
         """
-        from game_state import GameStateManager
+        from rsp.core.state import GameStateManager
 
         # Create two games with same seed
         state_manager1 = GameStateManager()
@@ -274,10 +274,10 @@ class TestActualNewGameRenderingSmoke:
 
         import tcod
 
-        from game_input import InputHandler
-        from game_menus import MainMenu
+        from rsp.input.handler import InputHandler
+        from rsp.ui.menus import MainMenu
 
-        with patch("game_audio.SoundManager"):
+        with patch("rsp.systems.audio.SoundManager"):
             settings = GameSettings()
 
             # Create main menu
@@ -285,7 +285,7 @@ class TestActualNewGameRenderingSmoke:
             menu.selected_option = 0  # "New Game" is first option
 
             # Simulate pressing Enter to start new game
-            with patch("game_save.SaveGameManager.save_exists", return_value=False):
+            with patch("rsp.systems.save.SaveGameManager.save_exists", return_value=False):
                 key_event = tcod.event.KeyDown(
                     scancode=tcod.event.Scancode.RETURN,
                     sym=tcod.event.KeySym.RETURN,
@@ -346,8 +346,8 @@ class TestActualNewGameRenderingSmoke:
         """
         from unittest.mock import Mock, patch
 
-        with patch("game_audio.SoundManager"):
-            from game_input import InputHandler
+        with patch("rsp.systems.audio.SoundManager"):
+            from rsp.input.handler import InputHandler
 
             settings = GameSettings()
             engine = GameEngine(settings=settings, load_save=False)
@@ -419,7 +419,7 @@ class TestFullRenderingPipeline:
         """
         import tcod
 
-        from game_rendering_core import GameRenderer
+        from rsp.rendering.core import GameRenderer
 
         # Create real game with glyphs mode
         settings = GameSettings()
@@ -459,7 +459,7 @@ class TestFullRenderingPipeline:
         """
         import tcod
 
-        from game_rendering_core import GameRenderer
+        from rsp.rendering.core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"
@@ -496,7 +496,7 @@ class TestFullRenderingPipeline:
         """Test rendering with UI screens open (inventory, help, etc.)."""
         import tcod
 
-        from game_rendering_core import GameRenderer
+        from rsp.rendering.core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"
@@ -527,7 +527,7 @@ class TestFullRenderingPipeline:
         """Test rendering with enemies in view to catch entity rendering bugs."""
         import tcod
 
-        from game_rendering_core import GameRenderer
+        from rsp.rendering.core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"
@@ -556,8 +556,8 @@ class TestFullRenderingPipeline:
         """Test rendering with achievement popup active."""
         import tcod
 
-        from game_achievements import AchievementManager
-        from game_rendering_core import GameRenderer
+        from rsp.systems.achievements import AchievementManager
+        from rsp.rendering.core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"
@@ -584,7 +584,7 @@ class TestFullRenderingPipeline:
         """
         import tcod
 
-        from game_rendering_core import GameRenderer
+        from rsp.rendering.core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "graphics"  # Graphics mode

@@ -9,7 +9,7 @@ These tests cover critical bugs that were found during code review:
 """
 
 
-from game_position import Position
+from rsp.entities.position import Position
 
 
 class TestPositionEquality:
@@ -72,8 +72,8 @@ class TestEnemyIsDisabledProperty:
 
     def test_enemy_not_disabled_by_default(self):
         """New enemies should not be disabled."""
-        from game_characters import Enemy
-        from game_position import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.position import Position
 
         enemy = Enemy(Position(10, 10), "patrol")
         assert not enemy.is_disabled
@@ -81,8 +81,8 @@ class TestEnemyIsDisabledProperty:
 
     def test_enemy_is_disabled_when_turns_positive(self):
         """Enemy with positive disabled_turns should be disabled."""
-        from game_characters import Enemy
-        from game_position import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.position import Position
 
         enemy = Enemy(Position(10, 10), "patrol")
         enemy.disabled_turns = 3
@@ -90,8 +90,8 @@ class TestEnemyIsDisabledProperty:
 
     def test_enemy_not_disabled_when_turns_zero(self):
         """Enemy with zero disabled_turns should not be disabled."""
-        from game_characters import Enemy
-        from game_position import Position
+        from rsp.entities.characters import Enemy
+        from rsp.entities.position import Position
 
         enemy = Enemy(Position(10, 10), "patrol")
         enemy.disabled_turns = 0
@@ -103,7 +103,7 @@ class TestGameStateIsThreatScanActive:
 
     def test_threat_scan_inactive_by_default(self):
         """New game state should not have threat scan active."""
-        from game_state import GameStateManager
+        from rsp.core.state import GameStateManager
 
         state = GameStateManager()
         assert not state.is_threat_scan_active
@@ -111,7 +111,7 @@ class TestGameStateIsThreatScanActive:
 
     def test_threat_scan_active_when_turns_positive(self):
         """Threat scan should be active when turns are positive."""
-        from game_state import GameStateManager
+        from rsp.core.state import GameStateManager
 
         state = GameStateManager()
         state.threat_scan_turns = 5
@@ -119,7 +119,7 @@ class TestGameStateIsThreatScanActive:
 
     def test_threat_scan_inactive_when_turns_zero(self):
         """Threat scan should be inactive when turns are zero."""
-        from game_state import GameStateManager
+        from rsp.core.state import GameStateManager
 
         state = GameStateManager()
         state.threat_scan_turns = 0
@@ -135,7 +135,7 @@ class TestGhostPositionCleanup:
         This tests the fix for the bug where we used distance_to() == 0
         instead of position equality in _cleanup_ghost_positions().
         """
-        from game_position import Position
+        from rsp.entities.position import Position
 
         # Simulate the ghost cleanup check
         ghost_pos = Position(15, 20)

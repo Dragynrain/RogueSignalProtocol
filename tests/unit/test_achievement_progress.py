@@ -7,7 +7,7 @@ progress towards achievements for display in the achievements UI.
 
 import pytest
 
-from game_achievements import (
+from rsp.systems.achievements import (
     BLIND_SPOT_AMBUSHES_THRESHOLD,
     CROWD_CONTROL_AOE_THRESHOLD,
     EFFICIENT_KILLER_TURNS_THRESHOLD,
@@ -24,7 +24,7 @@ from game_achievements import (
     VETERAN_GAMES_THRESHOLD,
     AchievementManager,
 )
-from game_metrics import LifetimeMetrics, SessionMetrics
+from rsp.systems.metrics import LifetimeMetrics, SessionMetrics
 
 
 @pytest.fixture

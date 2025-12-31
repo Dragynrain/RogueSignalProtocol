@@ -9,9 +9,9 @@ import random
 
 import pytest
 
-from game_config import GameConfig
-from game_level import LevelGenerator
-from game_map import GameMap, RestoreNode
+from rsp.core.config import GameConfig
+from rsp.level.generator import LevelGenerator
+from rsp.level.map import GameMap, RestoreNode
 
 
 class TestVariableCorridorWidths:

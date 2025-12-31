@@ -12,10 +12,10 @@ Tests the full integration flow:
 import time
 from unittest.mock import Mock
 
-from game_input_actions import InputAction, InputContext
-from game_input_analog import AnalogStickHandler
-from game_input_gamepad import GamepadInputHandler
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.analog import AnalogStickHandler
+from rsp.input.gamepad import GamepadInputHandler
+from rsp.input.mappings import InputMapper
 
 
 class TestContextDetection:
@@ -35,7 +35,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -55,7 +55,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -78,7 +78,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -101,7 +101,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -124,7 +124,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -154,7 +154,7 @@ class TestContextDetection:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -188,7 +188,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -219,7 +219,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -250,7 +250,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager = Mock()
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
-        from game_input import InputHandler
+        from rsp.input.handler import InputHandler
 
         handler = InputHandler(game, renderer=None)
 
@@ -387,7 +387,7 @@ class TestExploitCyclingIntegration:
 
     def test_exploit_cycle_next_wraps_around(self):
         """Test that cycling next wraps from last to first exploit."""
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         # Create mock game with 3 equipped exploits
         game = Mock(spec=GameEngine)
@@ -417,7 +417,7 @@ class TestExploitCyclingIntegration:
 
     def test_exploit_cycle_prev_wraps_around(self):
         """Test that cycling prev wraps from first to last exploit."""
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         # Create mock game with 3 equipped exploits
         game = Mock(spec=GameEngine)
@@ -447,7 +447,7 @@ class TestExploitCyclingIntegration:
 
     def test_exploit_cycling_with_empty_inventory(self):
         """Test that cycling handles empty exploit inventory gracefully."""
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         # Create mock game with no equipped exploits
         game = Mock(spec=GameEngine)
@@ -477,7 +477,7 @@ class TestVisualFeedback:
 
     def test_selected_exploit_index_tracked(self):
         """Test that GameEngine tracks selected_exploit_index."""
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         # Create mock game
         game = Mock(spec=GameEngine)
@@ -494,7 +494,7 @@ class TestVisualFeedback:
 
         # We can't easily test the rendering itself, but we can verify the attribute
         # is accessible from a mock game engine
-        from game_engine import GameEngine
+        from rsp.core.engine import GameEngine
 
         game = Mock(spec=GameEngine)
         game.selected_exploit_index = 2  # Third exploit selected

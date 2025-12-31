@@ -12,8 +12,8 @@ This test suite should ALWAYS pass and catch configuration mistakes early.
 import pytest
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.mappings import InputMapper
 
 
 class TestMenuGamepadInputCompleteness:
@@ -243,7 +243,7 @@ class TestAnalogStickMenuSupport:
         """
         import inspect
 
-        from game_input_gamepad import GamepadInputHandler
+        from rsp.input.gamepad import GamepadInputHandler
 
         # Read the source code to verify the contexts
         source = inspect.getsource(GamepadInputHandler.handle_axis_event)

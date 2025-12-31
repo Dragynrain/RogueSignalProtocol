@@ -14,9 +14,9 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_audio import NullSoundManager
-from game_config import GameSettings
-from game_engine import GameEngine
+from rsp.systems.audio import NullSoundManager
+from rsp.core.config import GameSettings
+from rsp.core.engine import GameEngine
 
 CA = tcod.sdl.joystick.ControllerAxis
 
@@ -119,7 +119,7 @@ class TestSwapSticksLookModeCursor:
 
         # Enter look mode first
         game.look_mode = True
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         game.look_cursor_position = Position(game.player.position.x, game.player.position.y)
         initial_cursor_y = game.look_cursor_position.y
@@ -162,7 +162,7 @@ class TestSwapSticksLookModeCursor:
 
         # Enter look mode
         game.look_mode = True
-        from game_entities import Position
+        from rsp.entities.base import Position
 
         game.look_cursor_position = Position(game.player.position.x, game.player.position.y)
         initial_cursor_y = game.look_cursor_position.y

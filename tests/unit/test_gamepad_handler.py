@@ -11,10 +11,10 @@ from unittest.mock import Mock, PropertyMock
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_actions import InputAction, InputContext
-from game_input_analog import AnalogStickHandler
-from game_input_gamepad import GamepadInputHandler
-from game_input_mappings import InputMapper
+from rsp.input.actions import InputAction, InputContext
+from rsp.input.analog import AnalogStickHandler
+from rsp.input.gamepad import GamepadInputHandler
+from rsp.input.mappings import InputMapper
 
 # Shorthand for controller enums
 CB = tcod.sdl.joystick.ControllerButton
@@ -396,7 +396,7 @@ class TestGamepadMovementIntegration:
 
     def test_left_stick_respects_time_gating(self):
         """Test that analog stick movement respects time-based gating."""
-        from game_config import GameConfig
+        from rsp.core.config import GameConfig
 
         mapper = InputMapper()
         mock_game = Mock()

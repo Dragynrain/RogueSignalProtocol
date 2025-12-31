@@ -14,8 +14,8 @@ returns early, but then line 149 always returns False (blocking exploit).
 import pytest
 import tcod.event
 
-from game_config import GameSettings
-from game_dialogue_system import DialogueState, create_overclock_warning_dialogue
+from rsp.core.config import GameSettings
+from rsp.ui.dialogue import DialogueState, create_overclock_warning_dialogue
 from tests.test_agent import GameTestAgent
 
 
