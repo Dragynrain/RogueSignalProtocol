@@ -18,8 +18,8 @@ from unittest.mock import patch
 
 import pytest
 
-from rsp.systems.audio import AUDIO_AVAILABLE, SoundManager
 from rsp.core.config import GameSettings
+from rsp.systems.audio import AUDIO_AVAILABLE, SoundManager
 from tests.test_agent import GameTestAgent
 
 

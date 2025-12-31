@@ -226,8 +226,8 @@ class TestNoRelativeDataPaths:
 
     def test_data_loading_uses_get_data_directory(self):
         """Verify PersistentStorage uses get_data_directory for saves path."""
-        from rsp.core.data_loading import PersistentStorage
         import rsp.core.file_paths as game_file_paths
+        from rsp.core.data_loading import PersistentStorage
 
         # Create instance without explicit path
         storage = PersistentStorage()
@@ -274,8 +274,8 @@ class TestCrossplatformImports:
         # These imports would fail if there are platform-specific issues
         import rsp.combat.combat as game_combat
         import rsp.core.config as game_config
-        import rsp.entities.enemies as game_enemies
         import rsp.core.engine as game_engine
         import rsp.entities.base as game_entities
+        import rsp.entities.enemies as game_enemies
 
         assert all([game_engine, game_entities, game_combat, game_enemies, game_config])

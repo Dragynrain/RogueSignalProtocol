@@ -7,14 +7,14 @@ Shows progress tracking and handles hidden achievements.
 
 import tcod
 
-from rsp.systems.achievements import AchievementManager
 from rsp.core.config import GameConfig
 from rsp.entities.base import Colors
+from rsp.systems.achievements import AchievementManager
+from rsp.systems.metrics import get_current_session, load_lifetime_metrics
+from rsp.ui.common import render_char_safe
 from rsp.ui.help_hints import get_achievements_help
 from rsp.ui.menu_base import BaseMenu
-from rsp.systems.metrics import get_current_session, load_lifetime_metrics
 from rsp.ui.screen_utils import ScreenRenderingUtils, ScrollableListManager
-from rsp.ui.common import render_char_safe
 
 
 class AchievementsMenu(BaseMenu):

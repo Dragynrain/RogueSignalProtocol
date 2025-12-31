@@ -15,11 +15,11 @@ import logging
 
 import tcod.event
 
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Position
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.base import BaseInputHandler
 from rsp.input.coordinates import InputCoordinateConverter
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class GameplayInputHandler(BaseInputHandler):
@@ -92,8 +92,8 @@ class GameplayInputHandler(BaseInputHandler):
 
     def trigger_debug_export(self):
         """Trigger debug package export with confirmation dialog."""
-        from rsp.ui.dialogue import DialogueBox
         from rsp.entities.base import Colors
+        from rsp.ui.dialogue import DialogueBox
 
         message = (
             "This will create a debug package containing:\n"

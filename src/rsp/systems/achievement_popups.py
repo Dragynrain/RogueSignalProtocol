@@ -13,12 +13,12 @@ from dataclasses import dataclass
 import tcod.console
 import tcod.constants
 
-from rsp.systems.achievements import ALL_ACHIEVEMENTS, Achievement, AchievementManager
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Colors, ensure_color_tuple
-from rsp.ui.help_hints import get_achievement_dismiss_hint
+from rsp.rendering.coordinates import CoordinateHelpers
+from rsp.systems.achievements import ALL_ACHIEVEMENTS, Achievement, AchievementManager
 from rsp.ui.common import render_char_safe
+from rsp.ui.help_hints import get_achievement_dismiss_hint
 
 logger = logging.getLogger(__name__)
 

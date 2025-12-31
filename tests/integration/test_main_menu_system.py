@@ -16,10 +16,10 @@ import tcod.event
 import tcod.sdl.joystick
 import tcod.tileset
 
-from rsp.systems.audio import NullSoundManager
 from rsp.core.config import GameSettings
-from rsp.input.actions import InputContext
 from rsp.core.loop import initialize_game_systems
+from rsp.input.actions import InputContext
+from rsp.systems.audio import NullSoundManager
 from rsp.ui.menus import MenuBackground
 
 

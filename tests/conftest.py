@@ -65,10 +65,10 @@ _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _project_root)
 sys.path.insert(0, os.path.join(_project_root, 'src'))
 
-from rsp.core.config import GameSettings
-from rsp.entities.base import Position
-from tests.fixtures.simple_fixtures import create_test_map, enemy, player
-from tests.fixtures.standard_patterns import (
+from rsp.core.config import GameSettings  # noqa: E402
+from rsp.entities.base import Position  # noqa: E402
+from tests.fixtures.simple_fixtures import create_test_map, enemy, player  # noqa: E402
+from tests.fixtures.standard_patterns import (  # noqa: E402
     create_basic_game_environment,
     create_combat_scenario,
     create_multi_enemy_scenario,
@@ -574,9 +574,9 @@ def game_with_gamepad():
     """
     from unittest.mock import Mock
 
-    from rsp.systems.audio import NullSoundManager
     from rsp.core.engine import GameEngine
     from rsp.input.handler import InputHandler
+    from rsp.systems.audio import NullSoundManager
 
     settings = GameSettings()
     settings.graphics_mode = "text"

@@ -13,9 +13,9 @@ Coverage:
 - Edge cases (AOE multi-kills, stealth streaks, etc.)
 """
 
-from rsp.systems.achievements import AchievementChecker, AchievementManager
 from rsp.combat.combat import ExploitSystem
 from rsp.entities.base import EnemyState, Position
+from rsp.systems.achievements import AchievementChecker, AchievementManager
 from rsp.systems.metrics import get_current_session, init_session_metrics
 from tests.fixtures.simple_fixtures import enemy_builder
 from tests.test_agent import GameTestAgent

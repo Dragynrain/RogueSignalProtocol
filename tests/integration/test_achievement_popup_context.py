@@ -12,8 +12,8 @@ Achievement popups are highest priority interrupts!
 from unittest.mock import Mock
 
 from rsp.core.engine import GameEngine
-from rsp.input.handler import InputHandler
 from rsp.input.actions import InputAction, InputContext
+from rsp.input.handler import InputHandler
 
 
 class TestAchievementPopupDismissal:

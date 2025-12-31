@@ -18,11 +18,11 @@ import random
 import traceback
 from typing import Any
 
-from rsp.entities.characters import Enemy
+from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData
 from rsp.entities.base import Colors, Position, parse_coordinate_string
-from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
+from rsp.entities.characters import Enemy
 from rsp.systems.save import SaveGameManager
 
 

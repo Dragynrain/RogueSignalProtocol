@@ -10,12 +10,12 @@ import time
 
 from tcod.sdl.render import BlendMode
 
-from rsp.utils.colors import ColorManager
-from rsp.utils.color_thresholds import ColorThresholdManager
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData
 from rsp.entities.base import Colors, EnemyState, Position, TargetingMode
 from rsp.rendering.base import MapRendererBase, can_render_at_position
+from rsp.utils.color_thresholds import ColorThresholdManager
+from rsp.utils.colors import ColorManager
 
 # Module-level constant for resetting texture color_mod after tinting
 NORMAL_TINT = Colors.PURE_WHITE

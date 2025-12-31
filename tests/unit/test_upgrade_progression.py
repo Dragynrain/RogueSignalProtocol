@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from rsp.entities.characters import Player
-from rsp.core.config import GameConfig
 from rsp.combat.inventory import CodeHack
+from rsp.core.config import GameConfig
+from rsp.entities.characters import Player
 
 
 class TestUpgradeApplication(unittest.TestCase):

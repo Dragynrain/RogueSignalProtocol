@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING, Any
 # Import game modules
 from rsp.core.config import GameConfig
 from rsp.core.file_paths import get_data_directory
-from rsp.entities.position import serialize_position_dict, tuple_to_coord_string
 from rsp.core.version import VERSION
+from rsp.entities.position import serialize_position_dict, tuple_to_coord_string
 
 if TYPE_CHECKING:
     from rsp.core.engine import GameEngine

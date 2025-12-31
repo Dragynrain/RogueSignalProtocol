@@ -18,15 +18,15 @@ from collections import defaultdict
 
 import tcod
 
-from rsp.core.data_loading import DataLoader
 from rsp.core.config import GameConfig, GameSettings
-from rsp.rendering.coordinates import CoordinateHelpers
+from rsp.core.data_loading import DataLoader
 from rsp.entities.base import Colors, ensure_color_tuple
-from rsp.rendering.tiles import TileManager
-from rsp.ui.help_hints import get_graphics_preview_instructions
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.base import BaseInputHandler
+from rsp.rendering.coordinates import CoordinateHelpers
+from rsp.rendering.tiles import TileManager
 from rsp.ui.common import render_char_safe
+from rsp.ui.help_hints import get_graphics_preview_instructions
 
 
 class GraphicsPreviewMenu(BaseInputHandler):

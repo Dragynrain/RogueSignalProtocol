@@ -19,9 +19,10 @@ from unittest.mock import Mock, patch
 
 import pygame
 
+from rsp.core.config import GameSettings
+
 # Import game modules
 from rsp.systems.audio import SoundManager
-from rsp.core.config import GameSettings
 
 
 class TestSoundManagerAvailability(unittest.TestCase):

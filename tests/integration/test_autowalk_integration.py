@@ -16,10 +16,10 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from rsp.entities.characters import Enemy
 from rsp.core.config import GameConfig, GameSettings
 from rsp.core.engine import GameEngine
 from rsp.entities.base import Position
+from rsp.entities.characters import Enemy
 from rsp.level.map import GameMap
 
 

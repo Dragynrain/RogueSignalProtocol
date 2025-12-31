@@ -8,10 +8,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from rsp.entities.base import EnemyState, Position
+
 # Import actual classes
 from rsp.entities.characters import Enemy
 from rsp.entities.enemies import EnemyManager
-from rsp.entities.base import EnemyState, Position
 from tests.fixtures.real_game_data import create_test_map_with_real_tiles
 from tests.fixtures.simple_fixtures import create_test_map, enemy_builder, player
 

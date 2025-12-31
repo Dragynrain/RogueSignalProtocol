@@ -9,8 +9,8 @@ Loads terrain descriptions from game_rules.json. Used by inspection panel render
 
 from typing import Any
 
-from rsp.core.data_loading import DataLoader
 from rsp.core.data import GameData
+from rsp.core.data_loading import DataLoader
 from rsp.entities.base import Colors, Position
 
 

@@ -16,9 +16,10 @@ from unittest.mock import Mock
 import tcod.console
 import tcod.event
 
+from rsp.core.config import GameSettings
+from rsp.entities.enums import EnemyState
 from rsp.systems.achievement_popups import AchievementPopup, AchievementPopupManager
 from rsp.systems.achievements import Achievement
-from rsp.core.config import GameSettings
 from rsp.ui.dialogue import (
     DialogueState,
     UnifiedRenderer,
@@ -27,7 +28,6 @@ from rsp.ui.dialogue import (
     create_inventory_attack_dialogue,
     create_overclock_warning_dialogue,
 )
-from rsp.entities.enums import EnemyState
 from tests.test_agent import GameTestAgent
 
 

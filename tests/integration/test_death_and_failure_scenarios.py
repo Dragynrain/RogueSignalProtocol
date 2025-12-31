@@ -443,8 +443,8 @@ class TestDeathDialogueDismissal:
     def test_death_dialogue_dismissal_with_keyboard(self, basic_game_engine):
         """Test that dismissing death dialogue with keyboard returns False (exit to menu)."""
 
-        from rsp.ui.dialogue import create_death_dialogue
         from rsp.input.handler import InputHandler
+        from rsp.ui.dialogue import create_death_dialogue
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)
@@ -472,8 +472,8 @@ class TestDeathDialogueDismissal:
         """Test that dismissing death dialogue with mouse click returns False (exit to menu)."""
         import tcod.event
 
-        from rsp.ui.dialogue import create_death_dialogue
         from rsp.input.handler import InputHandler
+        from rsp.ui.dialogue import create_death_dialogue
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)
@@ -527,9 +527,9 @@ class TestDeathDialogueDismissal:
         """Test that dismissing non-death dialogue returns True (continue game)."""
         import tcod.event
 
-        from rsp.ui.dialogue import DialogueBox
         from rsp.entities.base import Colors
         from rsp.input.handler import InputHandler
+        from rsp.ui.dialogue import DialogueBox
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)

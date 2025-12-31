@@ -20,13 +20,6 @@ import tcod.sdl.joystick
 
 from rsp.core.config import GameConfig, GameSettings
 from rsp.entities.base import Colors, clamp
-from rsp.ui.help_hints import (
-    get_controls_hub_help,
-    get_gamepad_binding_instructions,
-    get_gamepad_bindings_help,
-    get_gamepad_settings_help,
-    get_keyboard_bindings_help,
-)
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.mappings import (
     MODIFIER_ONLY_KEYS,
@@ -35,9 +28,16 @@ from rsp.input.mappings import (
     axis_to_display_name,
     button_to_display_name,
 )
+from rsp.ui.common import render_char_safe
+from rsp.ui.help_hints import (
+    get_controls_hub_help,
+    get_gamepad_binding_instructions,
+    get_gamepad_bindings_help,
+    get_gamepad_settings_help,
+    get_keyboard_bindings_help,
+)
 from rsp.ui.menu_base import BaseMenu
 from rsp.ui.screen_utils import ScreenRenderingUtils, ScrollableListManager
-from rsp.ui.common import render_char_safe
 
 if TYPE_CHECKING:
     from rsp.input.mappings import InputMapper

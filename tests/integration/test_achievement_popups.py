@@ -8,7 +8,11 @@ import time
 
 import pytest
 
-from rsp.systems.achievement_popups import AchievementPopup, AchievementPopupManager, get_popup_duration
+from rsp.systems.achievement_popups import (
+    AchievementPopup,
+    AchievementPopupManager,
+    get_popup_duration,
+)
 from rsp.systems.achievements import ALL_ACHIEVEMENTS, AchievementManager
 
 # Note: clean_achievement_state and test_console fixtures now available from conftest.py

@@ -14,13 +14,13 @@ import tcod
 
 from rsp.core.config import GameConfig
 from rsp.entities.base import Colors
-from rsp.ui.help_content import HelpContent
-from rsp.ui.help_hints import get_help_screen_help, get_lore_viewer_help
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.base import BaseInputHandler
+from rsp.ui.common import render_char_safe
+from rsp.ui.help_content import HelpContent
+from rsp.ui.help_hints import get_help_screen_help, get_lore_viewer_help
 from rsp.ui.screen_utils import ScreenRenderingUtils
 from rsp.utils.story import StoryFragmentManager
-from rsp.ui.common import render_char_safe
 
 
 def create_help_menu(settings, context=None, tile_manager=None):

@@ -12,8 +12,8 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from rsp.utils.autowalk import AutoWalk
 from rsp.entities.base import Position
+from rsp.utils.autowalk import AutoWalk
 
 
 class TestAutoWalkState(unittest.TestCase):

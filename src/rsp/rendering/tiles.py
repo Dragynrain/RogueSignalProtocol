@@ -21,8 +21,8 @@ import sys
 import tcod
 import tcod.sdl
 
-from rsp.entities.base import Colors
 from rsp.core.errors import GameErrorHandler
+from rsp.entities.base import Colors
 from rsp.rendering.dimensions import TileDimensionCalculator
 
 # Fallback color when sprite color extraction fails

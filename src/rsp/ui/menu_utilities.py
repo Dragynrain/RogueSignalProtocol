@@ -12,8 +12,8 @@ import logging
 import tcod
 
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Colors
+from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.rendering.utils import draw_bordered_box
 
 

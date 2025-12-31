@@ -20,10 +20,10 @@ import tcod
 
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData
-from rsp.entities.base import Colors
 from rsp.core.errors import GameErrorHandler
-from rsp.ui.screen_utils import ScreenRenderingUtils
+from rsp.entities.base import Colors
 from rsp.ui.common import render_char_safe
+from rsp.ui.screen_utils import ScreenRenderingUtils
 from rsp.utils.unicode import GameGlyphs
 
 

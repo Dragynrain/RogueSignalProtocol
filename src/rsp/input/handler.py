@@ -32,7 +32,6 @@ import tcod.event
 import tcod.sdl.joystick
 
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.coordinates import InputCoordinateConverter
 from rsp.input.device_tracker import InputDeviceType, set_last_device
@@ -45,6 +44,7 @@ from rsp.input.modals import (
     LookModeInputHandler,
     TargetingInputHandler,
 )
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class InputHandler:

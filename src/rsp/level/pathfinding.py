@@ -14,8 +14,8 @@ import logging
 import numpy as np
 import tcod
 
-from rsp.entities.base import Position
 from rsp.core.errors import GameErrorHandler
+from rsp.entities.base import Position
 
 
 class PathfindingHelper:

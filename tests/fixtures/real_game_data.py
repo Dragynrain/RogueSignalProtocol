@@ -3,8 +3,8 @@ Real game data fixtures for testing actual game behavior.
 Use real GameData instead of mocks wherever possible.
 """
 
-from rsp.entities.characters import Enemy
 from rsp.entities.base import Position
+from rsp.entities.characters import Enemy
 from rsp.level.map import GameMap
 
 

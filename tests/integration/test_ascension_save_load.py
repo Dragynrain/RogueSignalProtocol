@@ -264,9 +264,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace increase should be multiplied by A3 modifier."""
         from unittest.mock import MagicMock
 
-        from rsp.systems.ascension import calculate_ascension_modifiers
         from rsp.core.config import GameBalance
         from rsp.core.state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         # Setup: A3 has 2.0x trace multiplier
         modifiers = calculate_ascension_modifiers(3)
@@ -296,9 +296,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace should only increase once per TRACE_INCREASE_INTERVAL, not twice."""
         from unittest.mock import MagicMock
 
-        from rsp.systems.ascension import calculate_ascension_modifiers
         from rsp.core.config import GameBalance
         from rsp.core.state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         # Use A0 (no modifier) for simpler calculation
         modifiers = calculate_ascension_modifiers(0)
@@ -329,9 +329,9 @@ class TestTraceIncreaseWithAscensionModifiers:
         """Trace should not increase before reaching the interval."""
         from unittest.mock import MagicMock
 
-        from rsp.systems.ascension import calculate_ascension_modifiers
         from rsp.core.config import GameBalance
         from rsp.core.state import TurnProcessor
+        from rsp.systems.ascension import calculate_ascension_modifiers
 
         modifiers = calculate_ascension_modifiers(0)
 

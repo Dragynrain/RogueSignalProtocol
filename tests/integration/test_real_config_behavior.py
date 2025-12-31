@@ -14,10 +14,10 @@ The goal is to catch issues like:
 
 import pytest
 
+from rsp.combat.inventory import CodeHack, ExploitItem
+from rsp.core.config import GameBalance, GameConfig, RoomGenerationConfig
 from rsp.core.data_loading import DataLoader
 from rsp.entities.characters import Enemy, Player
-from rsp.core.config import GameBalance, GameConfig, RoomGenerationConfig
-from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestRealConfigIntegration:

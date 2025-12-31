@@ -53,8 +53,8 @@ class TestDeathHandlingConsistency:
 
     def test_overheat_death_sets_correct_death_cause(self):
         """Overheat death should set death_cause to 'overheat'."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         agent = GameTestAgent(seed=42)
         init_session_metrics()
@@ -155,8 +155,8 @@ class TestDeathCauseDetection:
 
     def test_overheat_detected_from_bump_attack(self):
         """Death from bump attack overheat should be classified as overheat."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         agent = GameTestAgent(seed=42)
         init_session_metrics()

@@ -28,17 +28,18 @@ The LevelGenerator now coordinates specialized subsystems:
 import logging
 import random
 
-# Import required classes and configs
-from rsp.systems.ascension import AscensionModifiers
 from rsp.core.config import GameConfig, RoomGenerationConfig
 from rsp.entities.base import Position
 from rsp.level.layout import AdvancedLayoutGenerator
+from rsp.level.pathfinding import PathfindingHelper
 from rsp.level.placement import TilePlacementGenerator
 
 # Import specialized level generation subsystems
 from rsp.level.structure import BSPRoomGenerator, CorridorGenerator, RoomGenerator
 from rsp.level.tactical import TacticalGenerator
-from rsp.level.pathfinding import PathfindingHelper
+
+# Import required classes and configs
+from rsp.systems.ascension import AscensionModifiers
 
 
 class LevelGenerator:

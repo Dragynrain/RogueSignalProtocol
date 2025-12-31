@@ -11,13 +11,13 @@ import webbrowser
 
 import tcod
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameConfig, GameSettings
+from rsp.core.version import VERSION_DISPLAY
 from rsp.entities.base import Colors
+from rsp.ui.common import render_char_safe
 from rsp.ui.help_hints import get_about_menu_help
 from rsp.ui.menu_base import BaseMenu
-from rsp.ui.common import render_char_safe
-from rsp.core.version import VERSION_DISPLAY
+from rsp.utils.colors import ColorManager
 
 
 class AboutMenu(BaseMenu):

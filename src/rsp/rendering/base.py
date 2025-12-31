@@ -37,8 +37,8 @@ CRITICAL RULES:
 import logging
 
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Position
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class MapRendererBase:

@@ -13,10 +13,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from rsp.entities.base import Position
 from rsp.combat.inventory import CodeHack
-from rsp.rendering.base import can_render_at_position
 from rsp.core.state import GameStateManager
+from rsp.entities.base import Position
+from rsp.rendering.base import can_render_at_position
 
 
 class TestCodeHackUnknownEffect:

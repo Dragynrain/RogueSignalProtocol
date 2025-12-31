@@ -14,9 +14,7 @@ This script:
 """
 
 import argparse
-import os
 import re
-import shutil
 from pathlib import Path
 
 # Project root (parent of scripts/)
@@ -252,7 +250,6 @@ def update_imports_in_file(filepath: Path, import_mapping: dict[str, str], dry_r
         print(f"  ERROR reading {filepath}: {e}")
         return 0
 
-    original = content
     changes = 0
 
     for old_module, new_import in import_mapping.items():
@@ -301,7 +298,7 @@ def update_conftest_path(dry_run: bool = True) -> None:
     """Update conftest.py to add src to Python path."""
     conftest = PROJECT_ROOT / "tests" / "conftest.py"
     if not conftest.exists():
-        print(f"  SKIP: conftest.py not found")
+        print("  SKIP: conftest.py not found")
         return
 
     content = conftest.read_text(encoding="utf-8")
@@ -324,10 +321,10 @@ sys.path.insert(0, os.path.join(_project_root, 'src'))'''
 
     if content != original:
         if dry_run:
-            print(f"  Would update conftest.py path setup")
+            print("  Would update conftest.py path setup")
         else:
             conftest.write_text(content, encoding="utf-8")
-            print(f"  Updated conftest.py path setup")
+            print("  Updated conftest.py path setup")
 
 
 def update_all_imports(dry_run: bool = True) -> int:

@@ -8,8 +8,8 @@ Tests settings validation and color theme handling:
 - Invalid configuration handling
 """
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameSettings
+from rsp.utils.colors import ColorManager
 
 
 class TestSettingsValidation:

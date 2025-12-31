@@ -11,11 +11,12 @@ import logging
 import os
 import sys
 
-import tcod
-
 # Add src directory to path for rsp package imports
 import sys as _sys
 from pathlib import Path as _Path
+
+import tcod
+
 _src_dir = _Path(__file__).parent / "src"
 _sys.path.insert(0, str(_src_dir))
 del _sys, _Path, _src_dir

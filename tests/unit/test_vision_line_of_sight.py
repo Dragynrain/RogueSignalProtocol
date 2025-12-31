@@ -14,8 +14,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from rsp.entities.characters import Enemy
 from rsp.entities.base import Position
+from rsp.entities.characters import Enemy
 from rsp.level.map import GameMap, RestoreNode
 from tests.fixtures.simple_fixtures import player
 

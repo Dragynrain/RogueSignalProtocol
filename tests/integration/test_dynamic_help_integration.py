@@ -494,8 +494,8 @@ class TestEdgeCases:
 
     def test_none_mapper_uses_default(self):
         """Verify passing None mapper uses default singleton."""
-        from rsp.ui.help_hints import get_main_menu_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_main_menu_help
 
         # Reset device tracker to keyboard (other tests may have set it to gamepad)
         set_last_device(InputDeviceType.KEYBOARD)

@@ -10,33 +10,33 @@ Delegates specialized tasks to coordinator classes for better modularity.
 import logging
 import random
 
-from rsp.systems.achievement_popups import AchievementPopupManager
-from rsp.systems.ascension import calculate_ascension_modifiers
-from rsp.systems.audio import NullSoundManager, SoundManager
-from rsp.entities.characters import Enemy
 from rsp.combat.combat import ExploitSystem
 
 # Import all necessary modules
 from rsp.core.config import GameBalance, GameConfig, GameSettings
-from rsp.systems.death import PlayerDeathHandler
-from rsp.ui.dialogue import DialogueState
-from rsp.entities.enemies import EnemyManager
-from rsp.entities.base import Colors, Position
 from rsp.core.errors import GameErrorHandler
-from rsp.input.handler import InputHandler
-from rsp.level.generator import LevelGenerator
-from rsp.level.map import GameMap
-from rsp.utils.narrative import NarrativeManager
-from rsp.entities.player import Player
-from rsp.systems.save import SaveGameManager
 
 # Import new specialized modules
 from rsp.core.session import GameSession
 
 # Import modular game systems
 from rsp.core.state import GameStateManager, MessageLog, TurnProcessor
-from rsp.utils.story import StoryFragmentManager
+from rsp.entities.base import Colors, Position
+from rsp.entities.characters import Enemy
+from rsp.entities.enemies import EnemyManager
+from rsp.entities.player import Player
+from rsp.input.handler import InputHandler
+from rsp.level.generator import LevelGenerator
+from rsp.level.map import GameMap
 from rsp.level.visibility import VisibilityManager
+from rsp.systems.achievement_popups import AchievementPopupManager
+from rsp.systems.ascension import calculate_ascension_modifiers
+from rsp.systems.audio import NullSoundManager, SoundManager
+from rsp.systems.death import PlayerDeathHandler
+from rsp.systems.save import SaveGameManager
+from rsp.ui.dialogue import DialogueState
+from rsp.utils.narrative import NarrativeManager
+from rsp.utils.story import StoryFragmentManager
 
 
 class GameEngine:

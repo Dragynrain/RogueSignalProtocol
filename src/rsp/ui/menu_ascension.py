@@ -11,13 +11,13 @@ import logging
 import tcod
 import tcod.constants
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameConfig, GameSettings
 from rsp.entities.base import Colors
 from rsp.input.actions import InputAction, InputContext
+from rsp.ui.common import render_char_safe
 from rsp.ui.menu_base import BaseMenu
 from rsp.ui.screen_utils import ScrollableListManager
-from rsp.ui.common import render_char_safe
+from rsp.utils.colors import ColorManager
 
 # Ascension level names for display
 ASCENSION_NAMES = {

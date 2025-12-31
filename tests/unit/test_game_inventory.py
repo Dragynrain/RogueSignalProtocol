@@ -19,8 +19,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from rsp.entities.base import ExploitDefinition, TargetingMode
 from rsp.combat.inventory import CodeHack, ExploitItem, InventoryItem, InventoryManager
+from rsp.entities.base import ExploitDefinition, TargetingMode
 
 
 class TestInventoryManagerInitialization:

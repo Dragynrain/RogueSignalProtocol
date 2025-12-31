@@ -138,8 +138,8 @@ class TestTargetingModeCriticalPath:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
@@ -806,8 +806,8 @@ class TestTargetingModeComprehensive:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
         from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()

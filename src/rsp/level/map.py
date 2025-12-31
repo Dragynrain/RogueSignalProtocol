@@ -16,8 +16,8 @@ from functools import lru_cache
 import tcod
 import tcod.constants
 
-from rsp.entities.base import Position
 from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
+from rsp.entities.base import Position
 
 
 @dataclass

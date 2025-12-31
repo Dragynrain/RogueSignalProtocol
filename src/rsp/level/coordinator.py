@@ -16,11 +16,11 @@ import logging
 import random
 import traceback
 
-from rsp.entities.characters import Enemy
+from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData, GameUpgrades
 from rsp.entities.base import EnemyMovement, Position, PositionValidator
-from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
+from rsp.entities.characters import Enemy
 from rsp.systems.save import SaveGameManager
 
 

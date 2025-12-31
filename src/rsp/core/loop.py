@@ -18,13 +18,15 @@ import traceback  # noqa: E402
 
 import tcod  # noqa: E402
 
-from rsp.systems.audio import SoundManager  # noqa: E402
 from rsp.core.config import GameConfig, GameSettings  # noqa: E402
 from rsp.core.engine import GameEngine  # noqa: E402
 from rsp.entities.base import Colors  # noqa: E402
-from rsp.rendering.tiles import TileManager  # noqa: E402
-from rsp.input.handler import InputHandler  # noqa: E402
 from rsp.input.actions import InputAction  # noqa: E402
+from rsp.input.handler import InputHandler  # noqa: E402
+from rsp.rendering.core import GameRenderer  # noqa: E402
+from rsp.rendering.tiles import TileManager  # noqa: E402
+from rsp.systems.audio import SoundManager  # noqa: E402
+from rsp.ui.common import render_char_safe  # noqa: E402
 from rsp.ui.menu_about import AboutMenu  # noqa: E402
 from rsp.ui.menu_achievements import AchievementsMenu  # noqa: E402
 from rsp.ui.menu_ascension import AscensionMenu  # noqa: E402
@@ -38,8 +40,6 @@ from rsp.ui.menu_graphics_preview import GraphicsPreviewMenu  # noqa: E402
 from rsp.ui.menu_help_lore import LoreMenu, create_help_menu  # noqa: E402
 from rsp.ui.menus import MainMenu, MenuBackground, SettingsMenu  # noqa: E402
 from rsp.utils.mouse import MenuMouseHandler  # noqa: E402
-from rsp.rendering.core import GameRenderer  # noqa: E402
-from rsp.ui.common import render_char_safe  # noqa: E402
 
 # Module-level reference to current game engine for crash reporting
 _current_game_engine = None

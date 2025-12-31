@@ -14,13 +14,13 @@ import tcod
 
 from rsp.core.config import GameConfig
 from rsp.rendering.coordinates import CoordinateHelpers
-from rsp.ui.dialogue import UnifiedRenderer
-from rsp.ui.menu_help_lore import create_help_menu
 from rsp.rendering.glyphs import GlyphsMapRenderer
 from rsp.rendering.graphics import GraphicsMapRenderer
 
 # Import specialized renderers
 from rsp.rendering.ui import UIRenderer
+from rsp.ui.dialogue import UnifiedRenderer
+from rsp.ui.menu_help_lore import create_help_menu
 
 
 class GameRenderer:

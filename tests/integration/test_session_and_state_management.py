@@ -132,8 +132,8 @@ class TestStateConsistency:
         initial_equipped_count = len(engine.player.inventory_manager.equipped_exploits)
 
         # Add an exploit
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         exploit_key = list(GameData.EXPLOITS.keys())[0]
         exploit_def = GameData.EXPLOITS[exploit_key]

@@ -12,11 +12,11 @@ Extracted from game_rendering_ui.py to improve modularity.
 
 import tcod
 
-from rsp.utils.color_thresholds import ColorThresholdManager
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData
 from rsp.entities.base import Colors
 from rsp.ui.common import render_char_safe
+from rsp.utils.color_thresholds import ColorThresholdManager
 from rsp.utils.unicode import GameGlyphs
 
 

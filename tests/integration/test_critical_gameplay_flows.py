@@ -65,8 +65,8 @@ class TestDeathHandlerExceptionResilience:
         # Set up an active dialogue
         import tcod.event
 
-        from rsp.ui.dialogue import DialogueBox
         from rsp.entities.base import Colors
+        from rsp.ui.dialogue import DialogueBox
 
         dialogue = DialogueBox(
             title="TEST",
@@ -444,8 +444,8 @@ class TestDeathDialogueQueuing:
 
         import tcod.event
 
-        from rsp.ui.dialogue import DialogueBox
         from rsp.entities.base import Colors
+        from rsp.ui.dialogue import DialogueBox
 
         # Clear any queued dialogues first
         engine.dialogue_state.dialogue_queue = []

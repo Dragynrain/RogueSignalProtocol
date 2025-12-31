@@ -20,9 +20,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from rsp.entities.characters import Enemy
 from rsp.core.engine import GameEngine
 from rsp.entities.base import EnemyState, Position
+from rsp.entities.characters import Enemy
 from rsp.systems.save import SaveGameManager
 from tests.fixtures.simple_fixtures import enemy_builder, minimal_mock_game
 

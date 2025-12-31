@@ -56,8 +56,8 @@ class TestAudioStoryIntegration(unittest.TestCase):
     def test_enemy_trace_level_audio_with_story_context(self):
         """Test that enemy trace level audio works correctly when story fragments are present."""
         # Set up enemy and story fragment
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import EnemyState
+        from rsp.entities.characters import Enemy
 
         enemy = Enemy(Position(15, 15), "virus")
         enemy.state = EnemyState.UNAWARE

@@ -7,11 +7,11 @@ Tests the complete look mode workflow without heavy mocking.
 import pytest
 import tcod.event
 
+from rsp.combat.inventory import CodeHack, ExploitItem
 from rsp.core.data import GameData
 from rsp.core.engine import GameEngine
 from rsp.entities.base import Position
 from rsp.utils.inspection import EntityInspector
-from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestLookModeIntegration:

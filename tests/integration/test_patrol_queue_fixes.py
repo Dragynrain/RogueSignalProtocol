@@ -12,9 +12,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from rsp.entities.characters import Enemy, Player
 from rsp.core.engine import GameEngine
 from rsp.entities.base import EnemyMovement, EnemyState, Position
+from rsp.entities.characters import Enemy, Player
 from rsp.level.map import GameMap
 
 

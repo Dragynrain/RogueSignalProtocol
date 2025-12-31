@@ -454,8 +454,8 @@ class TestGameEngineAscensionIntegration:
         """GameEngine should calculate and store AscensionModifiers."""
         from unittest.mock import Mock
 
-        from rsp.systems.ascension import AscensionModifiers
         from rsp.core.engine import GameEngine
+        from rsp.systems.ascension import AscensionModifiers
 
         engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=5)
         assert hasattr(engine, "ascension_modifiers")
@@ -504,17 +504,17 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_apply_ascension_modifiers_exists(self):
         """Enemy should have apply_ascension_modifiers method."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy = Enemy(Position(5, 5), "scanner")
         assert hasattr(enemy, "apply_ascension_modifiers")
 
     def test_enemy_hp_bonus_applied(self):
         """A2 enemy_hp_bonus should increase enemy CPU."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
+        from rsp.systems.ascension import AscensionModifiers
 
         enemy = Enemy(Position(5, 5), "scanner")
         original_cpu = enemy.cpu
@@ -527,9 +527,9 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_damage_multiplier_applied(self):
         """A4 enemy_damage_multiplier should be stored for damage calc."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
+        from rsp.systems.ascension import AscensionModifiers
 
         enemy = Enemy(Position(5, 5), "scanner")
 
@@ -541,10 +541,10 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_damage_multiplier_actually_increases_damage(self):
         """A4 enemy_damage_multiplier should actually increase damage dealt."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
         from rsp.entities.player import Player
+        from rsp.systems.ascension import AscensionModifiers
 
         # Create enemy and player
         enemy = Enemy(Position(5, 5), "bot")  # bot does damage
@@ -576,9 +576,9 @@ class TestEnemyAscensionModifiers:
 
     def test_scanner_vision_bonus_applied(self):
         """A1 scanner_vision_bonus should only affect scanners."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
+        from rsp.systems.ascension import AscensionModifiers
 
         scanner = Enemy(Position(5, 5), "scanner")
         patrol = Enemy(Position(10, 10), "patrol")
@@ -597,9 +597,9 @@ class TestEnemyAscensionModifiers:
 
     def test_enemy_vision_bonus_applied_to_all(self):
         """A5 enemy_vision_bonus should affect all enemies."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
+        from rsp.systems.ascension import AscensionModifiers
 
         scanner = Enemy(Position(5, 5), "scanner")
         patrol = Enemy(Position(10, 10), "patrol")
@@ -616,9 +616,9 @@ class TestEnemyAscensionModifiers:
 
     def test_scanner_gets_both_bonuses(self):
         """Scanner at A5 gets both scanner_vision_bonus and enemy_vision_bonus."""
-        from rsp.systems.ascension import AscensionModifiers
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
+        from rsp.systems.ascension import AscensionModifiers
 
         scanner = Enemy(Position(5, 5), "scanner")
         original_vision = scanner.type_data.vision

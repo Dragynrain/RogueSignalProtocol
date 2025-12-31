@@ -14,9 +14,9 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from rsp.systems.audio import NullSoundManager
 from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
+from rsp.systems.audio import NullSoundManager
 
 CA = tcod.sdl.joystick.ControllerAxis
 

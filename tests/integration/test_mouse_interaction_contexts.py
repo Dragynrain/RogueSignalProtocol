@@ -13,8 +13,8 @@ from unittest.mock import Mock, patch
 import tcod.event
 
 from rsp.core.engine import GameEngine
-from rsp.input.handler import InputHandler
 from rsp.input.actions import InputContext
+from rsp.input.handler import InputHandler
 from rsp.ui.menu_about import AboutMenu
 from rsp.ui.menu_achievements import AchievementsMenu
 from rsp.ui.menu_help_lore import HelpMenu, LoreMenu

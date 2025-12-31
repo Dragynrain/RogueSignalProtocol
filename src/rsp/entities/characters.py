@@ -18,8 +18,8 @@ import random
 
 from rsp.core.config import GameBalance, GameConfig
 from rsp.entities.base import Colors, EnemyMovement, EnemyState, Position, PositionValidator
-from rsp.level.pathfinding import PathfindingHelper
 from rsp.entities.player import Player
+from rsp.level.pathfinding import PathfindingHelper
 
 
 class Enemy:

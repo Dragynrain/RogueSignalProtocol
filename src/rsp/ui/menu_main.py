@@ -14,15 +14,15 @@ import logging
 
 import tcod
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameConfig, GameSettings
+from rsp.core.version import VERSION_DISPLAY
 from rsp.entities.base import Colors
+from rsp.systems.save import SaveGameManager
+from rsp.ui.common import render_char_safe
 from rsp.ui.help_hints import get_main_menu_help
 from rsp.ui.menu_base import BaseMenu
-from rsp.systems.save import SaveGameManager
+from rsp.utils.colors import ColorManager
 from rsp.utils.story import StoryFragmentManager
-from rsp.ui.common import render_char_safe
-from rsp.core.version import VERSION_DISPLAY
 
 
 class MainMenu(BaseMenu):

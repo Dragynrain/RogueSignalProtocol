@@ -15,8 +15,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from rsp.entities.base import Colors, EnemyMovement, EnemyState, Position
-from rsp.utils.inspection import EntityInspector
 from rsp.ui.screen_utils import ScreenRenderingUtils
+from rsp.utils.inspection import EntityInspector
 
 
 class TestEntityInspectorPriority:
@@ -862,9 +862,9 @@ class TestInfoPanelColorCoding:
 
     def test_exploit_name_uses_category_color(self):
         """Verify exploit names are colored by category in info panel."""
-        from rsp.utils.colors import ColorManager
         from rsp.core.data import GameData
         from rsp.ui.info_panel import InfoProvider
+        from rsp.utils.colors import ColorManager
 
         game = Mock()
         game.player = Mock()
@@ -894,9 +894,9 @@ class TestInfoPanelColorCoding:
 
     def test_code_hack_name_uses_actual_color(self):
         """Verify code hack names are colored by their actual color in inventory info panel."""
+        from rsp.combat.inventory import CodeHack
         from rsp.entities.base import Colors
         from rsp.ui.info_panel import InfoProvider
-        from rsp.combat.inventory import CodeHack
 
         game = Mock()
         game.code_hack_effects = {

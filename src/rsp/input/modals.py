@@ -12,11 +12,11 @@ import logging
 
 import tcod.event
 
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Position
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.base import BaseInputHandler
 from rsp.input.coordinates import InputCoordinateConverter
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class InventoryInputHandler(BaseInputHandler):

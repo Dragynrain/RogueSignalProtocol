@@ -21,11 +21,11 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from rsp.utils.debug_export import DebugExporter
 from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
 from rsp.input.handler import InputHandler
 from rsp.ui.menus import SettingsMenu
+from rsp.utils.debug_export import DebugExporter
 
 
 @pytest.fixture

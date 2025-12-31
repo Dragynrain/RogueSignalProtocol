@@ -7,8 +7,8 @@ is correctly saved and restored when loading a game.
 
 import pytest
 
-from rsp.entities.characters import Enemy
 from rsp.entities.base import EnemyState, Position
+from rsp.entities.characters import Enemy
 
 
 class TestBlindedTurnsSaveLoad:

@@ -35,8 +35,8 @@ import logging
 import tcod.event
 
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.input.coordinates import InputCoordinateConverter
+from rsp.rendering.coordinates import CoordinateHelpers
 
 
 class DialogueInputManager:
@@ -447,8 +447,8 @@ class DialogueInputManager:
 
     def _perform_debug_export(self) -> None:
         """Actually perform the debug package export."""
-        from rsp.utils.debug_export import export_debug_package
         from rsp.entities.base import Colors
+        from rsp.utils.debug_export import export_debug_package
 
         logging.info("Debug Export: Starting debug package creation")
         self.game.message_log.add_message("Creating debug package...", Colors.YELLOW)

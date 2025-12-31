@@ -298,8 +298,8 @@ class TestMouseGameplay:
 
     def test_click_to_target(self, game_engine):
         """Mouse: Can enter targeting mode."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = game_engine
 

@@ -6,9 +6,9 @@ Tests the actual ExploitSystem class and combat mechanics integration.
 
 from unittest.mock import Mock, patch
 
-from rsp.entities.characters import Player
 from rsp.combat.combat import ExploitSystem
 from rsp.entities.base import ExploitDefinition, Position, TargetingMode
+from rsp.entities.characters import Player
 
 
 def test_exploit_system_initialization(basic_game_engine):

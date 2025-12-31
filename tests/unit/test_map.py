@@ -6,8 +6,8 @@ Tests the actual GameMap class and map query functionality.
 
 from unittest.mock import Mock, patch
 
-from rsp.entities.base import Position
 from rsp.combat.inventory import CodeHack, ExploitItem
+from rsp.entities.base import Position
 
 # Import actual map classes
 from rsp.level.map import GameMap, RestoreNode

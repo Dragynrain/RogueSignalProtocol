@@ -14,10 +14,10 @@ This test suite focuses on real gameplay behavior, not mocked interactions.
 
 import copy
 
+from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData, GameUpgrades
 from rsp.entities.base import EnemyState, Position
-from rsp.combat.inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class TestCompleteLevelPlaythrough:
@@ -135,8 +135,8 @@ class TestCompleteLevelPlaythrough:
 
     def test_exploit_pickup_collection_and_equipping(self, basic_game_engine):
         """Test collecting exploit pickups and equipping them."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = basic_game_engine
 

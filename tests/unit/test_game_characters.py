@@ -18,10 +18,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from rsp.entities.characters import Enemy
 from rsp.entities.base import Position
-from rsp.level.pathfinding import PathfindingHelper
+from rsp.entities.characters import Enemy
 from rsp.entities.player import Player
+from rsp.level.pathfinding import PathfindingHelper
 
 
 class TestPlayerInitialization:

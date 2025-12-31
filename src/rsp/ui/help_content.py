@@ -8,7 +8,6 @@ All game data is loaded directly from JSON files to ensure accuracy.
 Gamepad controls are generated dynamically from InputMapper when available.
 """
 
-import logging
 from typing import TYPE_CHECKING, Any
 
 from rsp.entities.base import Colors, ensure_color_tuple

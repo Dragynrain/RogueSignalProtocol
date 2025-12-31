@@ -20,10 +20,10 @@ import tcod
 import tcod.event
 
 from rsp.core.config import GameSettings
+from rsp.systems.save import SaveGameManager
 from rsp.ui.menu_about import AboutMenu
 from rsp.ui.menu_help_lore import HelpMenu, LoreMenu
 from rsp.ui.menus import MainMenu, MenuBackground, SettingsMenu
-from rsp.systems.save import SaveGameManager
 
 
 class TestMainMenu:

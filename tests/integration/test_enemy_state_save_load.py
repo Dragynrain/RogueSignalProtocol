@@ -9,8 +9,8 @@ Tests roundtrip save/load for enemy fields that were previously missing:
 """
 
 
-from rsp.entities.characters import Enemy
 from rsp.entities.base import EnemyMovement, EnemyState, Position
+from rsp.entities.characters import Enemy
 
 
 class TestEnemyPatrolStateRoundtrip:
@@ -225,8 +225,8 @@ class TestEnemyStateFullRoundtrip:
 
     def test_hostile_patrol_enemy_roundtrip(self, basic_game_engine):
         """Test patrol enemy that became hostile roundtrips correctly."""
-        from rsp.systems.save import SaveGameManager
         from rsp.systems.persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
 
         # Create an enemy that was patrolling and became hostile
         enemy = Enemy(Position(5, 5), "scanner")
@@ -263,8 +263,8 @@ class TestEnemyStateFullRoundtrip:
 
     def test_virus_mimic_enemy_roundtrip(self, basic_game_engine):
         """Test virus enemy with mimic behavior roundtrips correctly."""
-        from rsp.systems.save import SaveGameManager
         from rsp.systems.persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
 
         # Create a virus that was mimicking a static enemy
         enemy = Enemy(Position(7, 7), "virus")

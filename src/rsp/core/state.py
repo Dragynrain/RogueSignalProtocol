@@ -15,10 +15,10 @@ import random
 from dataclasses import dataclass
 from typing import Any
 
-from rsp.core.data_loading import DataLoader
-from rsp.systems.ascension import AscensionModifiers
 from rsp.core.config import GameBalance, GameConfig
+from rsp.core.data_loading import DataLoader
 from rsp.entities.base import Position, ensure_color_tuple
+from rsp.systems.ascension import AscensionModifiers
 
 
 @dataclass

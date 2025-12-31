@@ -12,11 +12,11 @@ import tcod
 import tcod.constants
 
 from rsp.entities.base import Colors
-from rsp.ui.help_hints import get_victory_continue_prompt
 from rsp.input.actions import InputAction, InputContext
+from rsp.ui.common import render_char_safe
+from rsp.ui.help_hints import get_victory_continue_prompt
 from rsp.ui.menu_background import MenuBackground
 from rsp.ui.menu_base import BaseMenu
-from rsp.ui.common import render_char_safe
 
 
 class VictoryScreen(BaseMenu):

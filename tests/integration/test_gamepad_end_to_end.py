@@ -17,11 +17,11 @@ import tcod.event
 import tcod.sdl.joystick
 import tcod.tileset
 
-from rsp.systems.audio import NullSoundManager
 from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
-from rsp.input.handler import InputHandler
 from rsp.input.actions import InputAction, InputContext
+from rsp.input.handler import InputHandler
+from rsp.systems.audio import NullSoundManager
 
 # Controller button/axis shortcuts
 CB = tcod.sdl.joystick.ControllerButton

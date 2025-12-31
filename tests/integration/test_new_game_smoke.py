@@ -22,8 +22,8 @@ from rsp.core.config import GameConfig, GameSettings
 from rsp.core.engine import GameEngine
 from rsp.entities.base import Position
 from rsp.level.generator import LevelGenerator
-from rsp.level.structure import BSPRoomGenerator, RoomGenerator
 from rsp.level.map import GameMap
+from rsp.level.structure import BSPRoomGenerator, RoomGenerator
 
 
 class TestNewGameSmokeTests:
@@ -556,8 +556,8 @@ class TestFullRenderingPipeline:
         """Test rendering with achievement popup active."""
         import tcod
 
-        from rsp.systems.achievements import AchievementManager
         from rsp.rendering.core import GameRenderer
+        from rsp.systems.achievements import AchievementManager
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"

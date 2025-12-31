@@ -9,10 +9,10 @@ Allows programmatic control of game state and actions without rendering.
 import random
 from typing import Any
 
-from rsp.entities.characters import Enemy
 from rsp.core.config import GameConfig
 from rsp.core.engine import GameEngine
 from rsp.entities.base import Position
+from rsp.entities.characters import Enemy
 
 
 class GameTestAgent:

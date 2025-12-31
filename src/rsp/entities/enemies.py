@@ -16,13 +16,12 @@ import logging
 import random
 from typing import TYPE_CHECKING
 
-from rsp.entities.characters import Enemy
-
 # Import necessary entities and configurations
 from rsp.core.config import GameConfig
 from rsp.entities.base import EnemyMovement, Position, PositionValidator
-from rsp.level.pathfinding import PathfindingHelper
+from rsp.entities.characters import Enemy
 from rsp.entities.player import Player
+from rsp.level.pathfinding import PathfindingHelper
 
 # Forward references to avoid circular imports
 if TYPE_CHECKING:

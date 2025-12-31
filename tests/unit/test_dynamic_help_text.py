@@ -183,9 +183,9 @@ class TestDeviceAwareHints:
 
     def test_confirm_hint_keyboard_mode(self):
         """In keyboard mode, confirm hint shows keyboard key only."""
-        from rsp.ui.help_hints import get_confirm_hint_for_device
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_confirm_hint_for_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_confirm_hint_for_device(InputContext.MAIN_MENU)
@@ -196,9 +196,9 @@ class TestDeviceAwareHints:
 
     def test_confirm_hint_gamepad_mode(self):
         """In gamepad mode, confirm hint shows gamepad button only."""
-        from rsp.ui.help_hints import get_confirm_hint_for_device
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_confirm_hint_for_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_confirm_hint_for_device(InputContext.MAIN_MENU)
@@ -209,9 +209,9 @@ class TestDeviceAwareHints:
 
     def test_cancel_hint_keyboard_mode(self):
         """In keyboard mode, cancel hint shows keyboard key only."""
-        from rsp.ui.help_hints import get_cancel_hint_for_device
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_cancel_hint_for_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_cancel_hint_for_device(InputContext.MAIN_MENU)
@@ -221,9 +221,9 @@ class TestDeviceAwareHints:
 
     def test_cancel_hint_gamepad_mode(self):
         """In gamepad mode, cancel hint shows gamepad button only."""
-        from rsp.ui.help_hints import get_cancel_hint_for_device
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_cancel_hint_for_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_cancel_hint_for_device(InputContext.MAIN_MENU)
@@ -233,8 +233,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_confirm_option_keyboard(self):
         """Dialogue confirm option shows [Y] in keyboard mode."""
-        from rsp.ui.help_hints import get_dialogue_confirm_option_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_dialogue_confirm_option_for_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         option = get_dialogue_confirm_option_for_device("Yes")
@@ -246,8 +246,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_confirm_option_gamepad(self):
         """Dialogue confirm option shows [A] in gamepad mode."""
-        from rsp.ui.help_hints import get_dialogue_confirm_option_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_dialogue_confirm_option_for_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         option = get_dialogue_confirm_option_for_device("Yes")
@@ -259,8 +259,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_cancel_option_keyboard(self):
         """Dialogue cancel option shows [N] in keyboard mode."""
-        from rsp.ui.help_hints import get_dialogue_cancel_option_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_dialogue_cancel_option_for_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         option = get_dialogue_cancel_option_for_device("No")
@@ -270,8 +270,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_cancel_option_gamepad(self):
         """Dialogue cancel option shows [B] in gamepad mode."""
-        from rsp.ui.help_hints import get_dialogue_cancel_option_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_dialogue_cancel_option_for_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         option = get_dialogue_cancel_option_for_device("No")
@@ -281,8 +281,8 @@ class TestDeviceAwareHints:
 
     def test_nav_hint_keyboard_mode(self):
         """Nav hint shows keyboard keys in keyboard mode."""
-        from rsp.ui.help_hints import get_nav_hint_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_nav_hint_for_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_nav_hint_for_device()
@@ -292,8 +292,8 @@ class TestDeviceAwareHints:
 
     def test_nav_hint_gamepad_mode(self):
         """Nav hint shows D-Pad in gamepad mode."""
-        from rsp.ui.help_hints import get_nav_hint_for_device
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_nav_hint_for_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_nav_hint_for_device()
@@ -303,9 +303,9 @@ class TestDeviceAwareHints:
 
     def test_explicit_device_override(self):
         """Can explicitly specify device to override auto-detection."""
-        from rsp.ui.help_hints import get_confirm_hint_for_device
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_confirm_hint_for_device
 
         # Set to keyboard mode
         set_last_device(InputDeviceType.KEYBOARD)
@@ -329,9 +329,9 @@ class TestEndToEndDeviceSwitching:
 
     def test_menu_help_switches_on_device_change(self):
         """Menu help text changes when device changes."""
-        from rsp.ui.help_hints import get_menu_help
         from rsp.input.actions import InputContext
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_menu_help
 
         # Start with keyboard
         set_last_device(InputDeviceType.KEYBOARD)
@@ -354,8 +354,8 @@ class TestEndToEndDeviceSwitching:
 
     def test_dialogue_options_switch_on_device_change(self):
         """Dialogue options change when device changes."""
-        from rsp.ui.help_hints import get_dialogue_cancel_option, get_dialogue_confirm_option
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_dialogue_cancel_option, get_dialogue_confirm_option
 
         # Keyboard mode
         set_last_device(InputDeviceType.KEYBOARD)
@@ -379,8 +379,8 @@ class TestEndToEndDeviceSwitching:
 
     def test_inventory_help_switches_on_device_change(self):
         """Inventory help text changes when device changes."""
-        from rsp.ui.help_hints import get_inventory_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_inventory_help
 
         set_last_device(InputDeviceType.KEYBOARD)
         kb_help = get_inventory_help()
@@ -412,8 +412,8 @@ class TestGraphicsModeWidthLimits:
 
     def test_main_menu_help_fits_gamepad(self):
         """Main menu help fits in graphics box (gamepad)."""
-        from rsp.ui.help_hints import get_main_menu_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_main_menu_help
 
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_main_menu_help(use_graphics_mode=True)
@@ -428,8 +428,8 @@ class TestGraphicsModeWidthLimits:
 
     def test_about_menu_help_fits_gamepad(self):
         """About menu help fits in graphics box (gamepad)."""
-        from rsp.ui.help_hints import get_about_menu_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_about_menu_help
 
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_about_menu_help(use_graphics_mode=True)
@@ -444,8 +444,8 @@ class TestGraphicsModeWidthLimits:
 
     def test_settings_menu_help_fits_gamepad(self):
         """Settings menu help fits in graphics box (gamepad)."""
-        from rsp.ui.help_hints import get_settings_menu_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_settings_menu_help
 
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_settings_menu_help(use_graphics_mode=True)
@@ -460,8 +460,8 @@ class TestGraphicsModeWidthLimits:
 
     def test_controls_hub_help_fits_gamepad(self):
         """Controls hub help fits in graphics box (gamepad)."""
-        from rsp.ui.help_hints import get_controls_hub_help
         from rsp.input.device_tracker import InputDeviceType, set_last_device
+        from rsp.ui.help_hints import get_controls_hub_help
 
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_controls_hub_help(use_graphics_mode=True)

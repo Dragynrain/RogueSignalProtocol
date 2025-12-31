@@ -17,8 +17,8 @@ import tcod.event
 
 from rsp.core.config import GameConfig
 from rsp.entities.base import Position
-from rsp.input.handler import InputHandler
 from rsp.input.coordinates import InputCoordinateConverter
+from rsp.input.handler import InputHandler
 
 
 def create_mock_game():

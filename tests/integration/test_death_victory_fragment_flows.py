@@ -18,8 +18,8 @@ Key integration points tested:
 
 import pytest
 
-from rsp.entities.base import Position
 from rsp.combat.inventory import StoryFragment
+from rsp.entities.base import Position
 from rsp.utils.story import StoryFragmentManager
 
 
@@ -541,8 +541,8 @@ class TestEnemyAttackOnDeadPlayer:
         engine.player.cpu = 0
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -571,8 +571,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -598,8 +598,8 @@ class TestBumpAttackOverheat:
         engine.player.heat = engine.player.max_heat - 3  # 97 heat
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -624,8 +624,8 @@ class TestBumpAttackOverheat:
         engine.player.heat = engine.player.max_heat - 5
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -647,8 +647,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):
@@ -676,8 +676,8 @@ class TestBumpAttackOverheat:
         initial_cpu = engine.player.cpu
 
         # Place an enemy adjacent to player
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy_pos = Position(engine.player.x + 1, engine.player.y)
         if engine.game_map.is_valid_position(enemy_pos):

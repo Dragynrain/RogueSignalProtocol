@@ -24,10 +24,10 @@ Node placement strategies:
 import logging
 import random
 
-from rsp.systems.ascension import AscensionModifiers
 from rsp.core.config import GameConfig
 from rsp.entities.base import Position
 from rsp.level.map import RestoreNode
+from rsp.systems.ascension import AscensionModifiers
 
 
 class TilePlacementGenerator:

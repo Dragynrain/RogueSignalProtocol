@@ -14,9 +14,9 @@ ascension modifiers are working as intended.
 
 import pytest
 
-from rsp.systems.ascension import calculate_ascension_modifiers
-from rsp.entities.characters import Enemy
 from rsp.entities.base import EnemyState, Position
+from rsp.entities.characters import Enemy
+from rsp.systems.ascension import calculate_ascension_modifiers
 from tests.test_agent import GameTestAgent
 
 # Base enemy stats from game_content.json for reference

@@ -17,8 +17,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from rsp.core.data import GameData
 from rsp.combat.inventory import CodeHack, ExploitItem
+from rsp.core.data import GameData
 from tests.fixtures.simple_fixtures import create_real_player
 
 

@@ -16,9 +16,9 @@ Key responsibilities:
 - Maintain backward compatibility with existing code
 """
 
+from rsp.combat.turn_manager import GameTurnManager
 from rsp.level.coordinator import GameLevelCoordinator
 from rsp.systems.persistence import GameStatePersistence
-from rsp.combat.turn_manager import GameTurnManager
 
 
 class GameSession:

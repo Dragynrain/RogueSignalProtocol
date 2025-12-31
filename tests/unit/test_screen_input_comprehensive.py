@@ -86,8 +86,8 @@ class TestMainMenuInputSupport:
 
     def test_keyboard_navigation(self, settings):
         """MainMenu responds to arrow keys."""
-        from rsp.ui.menu_main import MainMenu
         from rsp.systems.save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -99,8 +99,8 @@ class TestMainMenuInputSupport:
 
     def test_dpad_navigation(self, settings):
         """MainMenu responds to D-pad."""
-        from rsp.ui.menu_main import MainMenu
         from rsp.systems.save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -114,8 +114,8 @@ class TestMainMenuInputSupport:
 
     def test_keyboard_confirm(self, settings):
         """MainMenu responds to Enter key."""
-        from rsp.ui.menu_main import MainMenu
         from rsp.systems.save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
@@ -126,8 +126,8 @@ class TestMainMenuInputSupport:
 
     def test_gamepad_confirm(self, settings):
         """MainMenu responds to A button."""
-        from rsp.ui.menu_main import MainMenu
         from rsp.systems.save import SaveGameManager
+        from rsp.ui.menu_main import MainMenu
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()

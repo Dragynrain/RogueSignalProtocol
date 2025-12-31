@@ -52,8 +52,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_down_arrow(self, inventory_engine):
         """Keyboard: Down arrow moves selection down."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -67,8 +67,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_up_arrow(self, inventory_engine):
         """Keyboard: Up arrow moves selection up."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -81,8 +81,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_down(self, inventory_engine):
         """Keyboard: Page Down moves 5 items down."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -96,8 +96,8 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_up(self, inventory_engine):
         """Keyboard: Page Up moves 5 items up."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -112,8 +112,8 @@ class TestInventoryComprehensive:
 
     def test_dpad_down_navigation(self, inventory_engine):
         """D-pad: Down button navigates down."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -127,8 +127,8 @@ class TestInventoryComprehensive:
 
     def test_dpad_up_navigation(self, inventory_engine):
         """D-pad: Up button navigates up."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -141,8 +141,8 @@ class TestInventoryComprehensive:
 
     def test_left_stick_vertical(self, inventory_engine):
         """Left stick: Vertical axis navigates inventory."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -161,8 +161,8 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_top_from_bottom(self, inventory_engine):
         """Navigation: Wraps to top when going down from bottom."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -184,8 +184,8 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_bottom_from_top(self, inventory_engine):
         """Navigation: Wraps to bottom when going up from top."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -211,8 +211,8 @@ class TestInventoryComprehensive:
 
     def test_confirm_selects_item(self, inventory_engine):
         """Confirm: Selects item for use/equip."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -247,8 +247,8 @@ class TestInventoryComprehensive:
 
     def test_escape_closes(self, inventory_engine):
         """Escape: Closes inventory screen."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -260,8 +260,8 @@ class TestInventoryComprehensive:
 
     def test_i_key_toggles_closed(self, inventory_engine):
         """I key: Toggles inventory closed."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -273,8 +273,8 @@ class TestInventoryComprehensive:
 
     def test_face_button_b_closes(self, inventory_engine):
         """Face button B: Closes inventory."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -290,8 +290,8 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_navigation(self, inventory_engine):
         """Empty inventory: Navigation doesn't crash."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -308,8 +308,8 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_confirm(self, inventory_engine):
         """Empty inventory: Confirm doesn't crash."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -330,8 +330,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_down_navigation(self, inventory_engine):
         """Rapid down navigation handled correctly."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -351,8 +351,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_alternating_navigation(self, inventory_engine):
         """Rapid alternating up/down handled."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -367,8 +367,8 @@ class TestInventoryComprehensive:
 
     def test_rapid_page_navigation(self, inventory_engine):
         """Rapid page up/down handled."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 
@@ -403,8 +403,8 @@ class TestInventoryComprehensive:
 
     def test_single_item_navigation(self, inventory_engine):
         """Single item: Navigation stays on that item."""
-        from rsp.input.handler import InputHandler
         from rsp.input.actions import InputAction
+        from rsp.input.handler import InputHandler
 
         engine = inventory_engine
 

@@ -10,9 +10,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
+from rsp.entities.base import EnemyMovement, EnemyState, Position
 from rsp.entities.characters import Enemy
 from rsp.entities.enemies import EnemyManager
-from rsp.entities.base import EnemyMovement, EnemyState, Position
 from tests.fixtures.simple_fixtures import player
 
 

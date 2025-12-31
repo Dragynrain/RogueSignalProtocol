@@ -137,8 +137,8 @@ class TestCodeHackTracking:
         session = get_current_session()
         assert session is not None
 
-        from rsp.systems.achievements import TOTAL_CODE_HACK_TYPES
         from rsp.combat.inventory import CodeHack
+        from rsp.systems.achievements import TOTAL_CODE_HACK_TYPES
 
         # All 6 code colors and their names
         code_data = [

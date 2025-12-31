@@ -11,8 +11,6 @@ Includes fail-fast tests to verify behavior when JSON is missing or corrupted
 
 import json
 import os
-import tempfile
-from unittest.mock import patch
 
 import pytest
 import tcod.event

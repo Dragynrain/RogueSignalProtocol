@@ -853,8 +853,8 @@ class TestConfigRealObjectInstantiation:
 
     def test_enemy_creation_with_real_config(self):
         """Verify Enemy can be created with real config data."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
 
         enemy = Enemy(Position(15, 15), "scanner")
 
@@ -865,8 +865,8 @@ class TestConfigRealObjectInstantiation:
 
     def test_code_hack_with_real_balance_values(self):
         """Verify CodeHack uses real balance values from JSON."""
-        from rsp.core.config import GameBalance, GameConfig
         from rsp.combat.inventory import CodeHack
+        from rsp.core.config import GameBalance, GameConfig
         from rsp.entities.player import Player
 
         GameConfig._config_data = None

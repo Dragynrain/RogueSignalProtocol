@@ -19,9 +19,9 @@ import tcod.context
 import tcod.event
 import tcod.tileset
 
-from rsp.systems.audio import NullSoundManager
 from rsp.core.config import GameSettings
 from rsp.core.loop import initialize_game_systems
+from rsp.systems.audio import NullSoundManager
 from rsp.ui.menus import MenuBackground
 
 

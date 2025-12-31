@@ -12,16 +12,16 @@ import textwrap
 
 import tcod
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameConfig
-from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.entities.base import Colors
-from rsp.ui.help_content import HelpContent
-from rsp.ui.help_hints import get_help_screen_help
 from rsp.input.actions import InputAction, InputContext
 from rsp.input.base import BaseInputHandler
-from rsp.ui.screen_utils import ScreenRenderingUtils
+from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.ui.common import render_char_safe
+from rsp.ui.help_content import HelpContent
+from rsp.ui.help_hints import get_help_screen_help
+from rsp.ui.screen_utils import ScreenRenderingUtils
+from rsp.utils.colors import ColorManager
 
 
 class GraphicalHelpMenu(BaseInputHandler):

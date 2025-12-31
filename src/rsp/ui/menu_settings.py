@@ -15,12 +15,12 @@ import logging
 
 import tcod
 
-from rsp.utils.colors import ColorManager
 from rsp.core.config import GameConfig, GameSettings
 from rsp.entities.base import Colors
+from rsp.ui.common import render_char_safe
 from rsp.ui.help_hints import get_settings_menu_help
 from rsp.ui.menu_base import BaseMenu
-from rsp.ui.common import render_char_safe
+from rsp.utils.colors import ColorManager
 
 
 class SettingsMenu(BaseMenu):

@@ -17,13 +17,13 @@ import tcod
 from rsp.core.config import GameConfig
 from rsp.core.data import GameData
 from rsp.entities.base import Colors
+from rsp.ui.common import render_char_safe
 from rsp.ui.help_hints import get_inventory_help
 from rsp.ui.message_log import MessageLogRenderer
 from rsp.ui.screen_utils import ScreenRenderingUtils, ScrollableListManager
 
 # Import extracted renderers
 from rsp.ui.status_bar import StatusBarRenderer
-from rsp.ui.common import render_char_safe
 
 
 class UIRenderer:

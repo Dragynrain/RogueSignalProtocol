@@ -11,11 +11,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from rsp.systems.ascension import AscensionModifiers
-from rsp.entities.characters import Enemy
 from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
 from rsp.entities.base import Position
+from rsp.entities.characters import Enemy
+from rsp.systems.ascension import AscensionModifiers
 
 # =============================================================================
 # Test Fixtures
@@ -352,8 +352,8 @@ class TestAscensionModifierGameplayEffects:
 
     def test_a4_damage_multiplier_increases_actual_damage(self, mock_sound_manager, game_settings):
         """A4+ enemies should deal 20% more damage in actual combat."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
+        from rsp.entities.characters import Enemy
         from rsp.entities.player import Player
 
         # Create A4 engine to get modifiers
@@ -423,10 +423,10 @@ class TestAscensionSaveLoadPreservesModifiers:
 
     def test_enemy_damage_multiplier_preserved_after_load(self, mock_sound_manager, game_settings):
         """Enemy damage_multiplier should work correctly after save/load."""
-        from rsp.entities.characters import Enemy
         from rsp.entities.base import Position
-        from rsp.systems.save import SaveGameManager
+        from rsp.entities.characters import Enemy
         from rsp.systems.persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
 
         # Create A4 engine
         engine = create_game_at_ascension(4, mock_sound_manager, game_settings)
@@ -457,8 +457,8 @@ class TestAscensionSaveLoadPreservesModifiers:
 
     def test_player_vision_override_preserved_after_load(self, mock_sound_manager, game_settings):
         """Player ascension_vision_override should work correctly after save/load."""
-        from rsp.systems.save import SaveGameManager
         from rsp.systems.persistence import GameStatePersistence
+        from rsp.systems.save import SaveGameManager
 
         # Create A10 engine
         engine = create_game_at_ascension(10, mock_sound_manager, game_settings)

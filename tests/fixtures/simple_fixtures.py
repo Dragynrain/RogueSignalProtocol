@@ -4,8 +4,8 @@ No complex builder patterns - just create what you need.
 """
 
 from rsp.entities.base import Position
-from rsp.level.map import RestoreNode
 from rsp.entities.player import Player
+from rsp.level.map import RestoreNode
 from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
 
 

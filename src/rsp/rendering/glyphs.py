@@ -10,14 +10,14 @@ import traceback
 
 import tcod
 
-from rsp.utils.colors import ColorManager
-from rsp.utils.color_thresholds import ColorThresholdManager
 from rsp.core.config import GameBalance, GameConfig
 from rsp.core.data import GameData, GameUpgrades
-from rsp.entities.base import Colors, EnemyState, Position, TargetingMode, ensure_color_tuple
 from rsp.core.errors import GameErrorHandler
+from rsp.entities.base import Colors, EnemyState, Position, TargetingMode, ensure_color_tuple
 from rsp.rendering.base import MapRendererBase, can_render_at_position
 from rsp.ui.common import render_char_safe
+from rsp.utils.color_thresholds import ColorThresholdManager
+from rsp.utils.colors import ColorManager
 from rsp.utils.unicode import GameGlyphs
 
 # Normal tint for resetting texture color_mod after tinting

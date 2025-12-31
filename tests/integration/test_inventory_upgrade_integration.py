@@ -7,9 +7,9 @@ Tests how inventory management integrates with upgrade progression and gameplay.
 import unittest
 from unittest.mock import Mock
 
+from rsp.combat.inventory import CodeHack, ExploitItem
 from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
-from rsp.combat.inventory import CodeHack, ExploitItem
 
 
 class TestInventoryUpgradeIntegration(unittest.TestCase):

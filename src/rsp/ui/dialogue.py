@@ -24,12 +24,12 @@ import tcod.constants
 import tcod.event
 
 from rsp.core.data_loading import get_death_messages, get_intro_messages
-from rsp.utils.colors import ColorManager
-from rsp.rendering.coordinates import CoordinateHelpers
-from rsp.entities.base import Colors, ensure_color_tuple
 from rsp.core.errors import GameErrorHandler
-from rsp.utils.story import StoryFragmentManager
+from rsp.entities.base import Colors, ensure_color_tuple
+from rsp.rendering.coordinates import CoordinateHelpers
 from rsp.ui.common import render_char_safe
+from rsp.utils.colors import ColorManager
+from rsp.utils.story import StoryFragmentManager
 
 # ============================================================================
 # Constants
@@ -878,8 +878,8 @@ def create_inventory_attack_dialogue(input_mapper=None) -> DialogueBox:
     Returns:
         DialogueBox for inventory attack warning
     """
-    from rsp.ui.help_hints import _get_mapper
     from rsp.input.actions import InputAction, InputContext
+    from rsp.ui.help_hints import _get_mapper
 
     m = _get_mapper(input_mapper)
     btn_cancel = m.get_button_hint(InputAction.CANCEL, InputContext.INVENTORY)

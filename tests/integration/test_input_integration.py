@@ -116,8 +116,8 @@ class TestContextTransitionsComprehensive:
 
     def test_targeting_mode_cancel_returns_to_gameplay(self, game_engine):
         """Targeting Mode: Cancel returns to gameplay."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = game_engine
 
@@ -242,8 +242,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Equip an exploit
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
@@ -262,8 +262,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Add items to inventory
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
@@ -409,8 +409,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Add exploits
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
@@ -516,8 +516,8 @@ class TestInputIntegrationScenarios:
         engine = game_engine
 
         # Equip exploit
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
@@ -561,8 +561,8 @@ class TestInputIntegrationScenarios:
 
     def test_inventory_with_max_items(self, game_engine):
         """Boundary: Inventory with maximum items."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = game_engine
 
@@ -620,8 +620,8 @@ class TestInputIntegrationScenarios:
 
     def test_targeting_mode_range_validation(self, game_engine):
         """Targeting: Range validation prevents invalid targets."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = game_engine
 
@@ -772,8 +772,8 @@ class TestInputIntegrationScenarios:
     # Final Integration Test
     def test_complete_game_session_all_features(self, game_engine):
         """Integration: Complete game session using all features."""
-        from rsp.core.data import GameData
         from rsp.combat.inventory import ExploitItem
+        from rsp.core.data import GameData
 
         engine = game_engine
 
