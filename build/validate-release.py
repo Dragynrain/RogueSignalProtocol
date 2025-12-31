@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pre-release validation script.
 
-Automates Phase 1 code quality checks from RELEASE_CHECKLIST.md.
+Automates Phase 1 code quality checks from docs/RELEASE_CHECKLIST.md.
 Run before building to catch issues early.
 
 Usage:

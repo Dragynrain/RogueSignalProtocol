@@ -44,7 +44,7 @@ pip install -r requirements.txt
 python RogueSignalProtocol.py
 ```
 
-See **[README_DEV.md](README_DEV.md)** for complete development documentation.
+See **[README_DEV.md](docs/README_DEV.md)** for complete development documentation.
 
 ---
 
@@ -155,7 +155,7 @@ Edit `game_content.json` → `exploits` section:
 }
 ```
 
-See [README_DEV.md](README_DEV.md) for complete modding documentation.
+See [README_DEV.md](docs/README_DEV.md) for complete modding documentation.
 
 ---
 

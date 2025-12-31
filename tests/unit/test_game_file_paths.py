@@ -320,12 +320,12 @@ class TestApplicationDirectory:
         if hasattr(sys, "frozen"):
             monkeypatch.delattr(sys, "frozen")
 
-        # The function will use __file__ from game_file_paths module
+        # The function will use cwd() when not frozen
         result = game_file_paths.get_application_directory()
 
-        # Should return parent of file_paths.py (now in src/rsp/core/)
+        # Should return current working directory (project root)
         assert result.exists()
-        assert (result / "file_paths.py").exists()
+        assert result == Path.cwd()
 
 
 class TestFatalErrorDisplay:

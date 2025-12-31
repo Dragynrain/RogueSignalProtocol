@@ -100,7 +100,7 @@ def load_tileset(settings: GameSettings = None):
     Args:
         settings: GameSettings for UI scale preference. If None, uses normal (64px) tiles.
     """
-    from font_loader_freetype import load_truetype_font_custom
+    from rsp.rendering.font_loader import load_truetype_font_custom
 
     # Determine tile size based on UI scale setting
     if settings is not None:

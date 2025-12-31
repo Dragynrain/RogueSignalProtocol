@@ -11,7 +11,6 @@ Renders cyberspace-styled console patterns when SDL backgrounds unavailable.
 import logging
 import os
 import random
-import sys
 
 # Import game modules
 from rsp.entities.base import ensure_color_tuple
@@ -94,15 +93,14 @@ class MenuBackground:
         """
         Get base path for art directories.
 
-        Handles both frozen (exe) and development paths.
+        Uses centralized path resolution from file_paths module.
 
         Returns:
             Absolute base path
         """
-        if getattr(sys, "frozen", False):
-            return os.path.dirname(sys.executable)
-        else:
-            return os.path.dirname(os.path.abspath(__file__))
+        from rsp.core.file_paths import get_application_directory
+
+        return str(get_application_directory())
 
     def _discover_art_files(self):
         """

@@ -14,18 +14,18 @@ Controls:
 import sys
 from pathlib import Path
 
-# Add parent directory to path so we can import game modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add src directory to path so we can import game modules
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import freetype
 import tcod
 
 # Set DPI awareness first (cross-platform)
-from game_platform import set_dpi_awareness
+from rsp.core.platform import set_dpi_awareness
 
 set_dpi_awareness()
 
-from font_loader_freetype import load_truetype_font_custom  # noqa: E402
+from rsp.rendering.font_loader import load_truetype_font_custom  # noqa: E402
 
 # Unicode ranges to check (only ranges where KreativeSquare has glyphs)
 UNICODE_RANGES = [

@@ -34,8 +34,8 @@ def get_application_directory() -> Path:
         # Running as compiled exe
         return Path(sys.executable).parent
     else:
-        # Running as script
-        return Path(__file__).parent
+        # Running as script - use current working directory (project root)
+        return Path.cwd()
 
 
 def _test_write_permission(directory: Path) -> bool:

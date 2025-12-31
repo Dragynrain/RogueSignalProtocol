@@ -257,7 +257,7 @@ a) Short Game Description
   Q: What makes this different from other stealth roguelikes?A: Four unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) achievement system
   tracking progress across runs, (3) rich cyberpunk narrative with 20+ story fragments, (4) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
 
-  Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (MIT license). See README_DEV.md for modding details.
+  Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (MIT license). See docs/README_DEV.md for modding details.
 
   Q: Are there difficulty options?A: No, not yet.
 

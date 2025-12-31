@@ -101,7 +101,7 @@ class VersionBumper:
         )
 
         # README files
-        for readme in ["README.md", "README_DEV.md"]:
+        for readme in ["README.md", "docs/README_DEV.md"]:
             self.replace_in_file(
                 readme,
                 [

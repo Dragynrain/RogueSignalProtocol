@@ -29,7 +29,7 @@
 **[README.txt](README.txt)** - Game instructions, controls, and gameplay guide
 
 ### For Developers, Modders & Contributors
-**[README_DEV.md](README_DEV.md)** - Complete developer guide including:
+**[README_DEV.md](docs/README_DEV.md)** - Complete developer guide including:
 - Building from source
 - Testing and development workflow
 - Modding and JSON configuration
@@ -175,13 +175,13 @@ For detailed Linux packaging information, see [packaging/linux/README.md](packag
    python RogueSignalProtocol.py
    ```
 
-See **[README_DEV.md](README_DEV.md)** for complete development setup, testing, and building instructions.
+See **[README_DEV.md](docs/README_DEV.md)** for complete development setup, testing, and building instructions.
 
 ---
 
 ## Contributing
 
-We welcome contributions! See **[README_DEV.md](README_DEV.md)** for:
+We welcome contributions! See **[README_DEV.md](docs/README_DEV.md)** for:
 - How to contribute
 - Development workflow
 - Testing requirements

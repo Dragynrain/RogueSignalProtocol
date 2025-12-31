@@ -260,33 +260,15 @@ class PathfindingHelper:
 
     @staticmethod
     def _create_cost_map(game_map, game_engine, moving_enemy):
-        """Create cost map with enemy collision avoidance."""
+        """Create cost map with enemy collision avoidance.
+
+        Note: Player is NOT marked as blocked. Enemies can path TO the player's
+        position, but the queue-filling code in characters.py prevents them from
+        actually stepping ON the player (stops when adjacent).
+        """
         cost_map = game_map.get_walkability_map().copy()
 
-        # Mark player as impassable (enemies path TO adjacent, not ONTO player)
-        if hasattr(game_engine, "player") and game_engine.player is not None:
-            try:
-                player = game_engine.player
-                # Validate coordinates are finite numbers BEFORE int conversion
-                # (NaN/infinity would produce unpredictable int() results)
-                if (
-                    hasattr(player, "x")
-                    and hasattr(player, "y")
-                    and player.x is not None
-                    and player.y is not None
-                    and isinstance(player.x, (int, float))
-                    and isinstance(player.y, (int, float))
-                    and player.x == player.x  # NaN check (NaN != NaN)
-                    and player.y == player.y
-                ):
-                    px, py = int(player.x), int(player.y)
-                    if 0 <= px < game_map.width and 0 <= py < game_map.height:
-                        cost_map[py, px] = 0  # TCOD uses [y, x] indexing
-            except (AttributeError, TypeError, ValueError) as e:
-                logging.debug(f"Failed to mark player as impassable in cost map: {e}")
-                pass  # Skip player blocking if coordinates invalid (e.g., in tests)
-
-        # Mark other enemies as impassable
+        # Mark other enemies as impassable (can't path through other enemies)
         for enemy in game_engine.enemies:
             if enemy.id != moving_enemy.id:
                 x, y = enemy.x, enemy.y

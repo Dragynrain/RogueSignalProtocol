@@ -981,13 +981,13 @@ class Enemy:
         # Admin always targets player (can always see them)
         if self.type == "admin":
             self.last_seen_player = player.position
-            return player.position
+            return player.position  # Original: target player directly
 
         # HOSTILE enemies target player
         if self.state == EnemyState.HOSTILE:
             if self.can_see_player(player, game_map):
                 self.last_seen_player = player.position
-                return player.position
+                return player.position  # Original: target player directly
             # Target last known position
             return self.last_seen_player
 

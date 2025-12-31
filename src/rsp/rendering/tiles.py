@@ -16,7 +16,6 @@ In glyph mode, GlyphsMapRenderer handles all rendering instead.
 import json
 import logging
 import os
-import sys
 
 import tcod
 import tcod.sdl
@@ -82,13 +81,9 @@ class TileManager:
 
     def _get_graphics_dir(self) -> str:
         """Get absolute path to graphics directory."""
-        if getattr(sys, "frozen", False):
-            # Running as compiled executable
-            base_path = os.path.dirname(sys.executable)
-        else:
-            # Running as script
-            base_path = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(base_path, "graphics")
+        from rsp.core.file_paths import get_application_directory
+
+        return os.path.join(str(get_application_directory()), "graphics")
 
     def _load_tile_mappings(self):
         """Load tile mappings from JSON configuration file."""

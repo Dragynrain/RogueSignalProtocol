@@ -35,4 +35,4 @@ This document tracks potential future features and improvements. These are ideas
 
 - These ideas are exploratory and may or may not be implemented
 - Community feedback helps prioritize what gets built
-- Contributions welcome - see [README_DEV.md](../README_DEV.md) for developer guidelines
+- Contributions welcome - see [README_DEV.md](README_DEV.md) for developer guidelines

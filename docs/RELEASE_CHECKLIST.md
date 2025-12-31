@@ -10,7 +10,7 @@ Reusable checklist for alpha, beta, and stable releases.
 
 **Before doing ANYTHING else:**
 
-1. Copy this file: `RELEASE_CHECKLIST.md`
+1. Copy this file: `docs/RELEASE_CHECKLIST.md`
 2. Name the copy with your version: `RELEASE_CHECKLIST_X.Y.Z.md` (e.g., `RELEASE_CHECKLIST_0.9.1.md`)
 3. Work from that copy, checking off items as you complete them
 4. Keep the copy until the release is fully deployed and verified
@@ -31,7 +31,7 @@ This ensures you have a permanent record of progress for each release and preven
 - This prevents missed steps and provides audit trail
 
 ### Rule 1: This is THE ONLY release checklist
-- **USE THIS FILE:** `RELEASE_CHECKLIST.md` (project root)
+- **USE THIS FILE:** `docs/RELEASE_CHECKLIST.md`
 - **DO NOT USE:** `marketing/pre_release_checklist.md` (OBSOLETE - kept for historical reference only)
 - If you find yourself in a different checklist file, STOP and come back here.
 
@@ -154,7 +154,7 @@ gh release delete vNEW-beta --yes       # Delete the release
 
 **Automated by `bump-version.py`:**
 - `game_rules.json` - version field (source of truth)
-- `README.txt`, `README.md`, `README_DEV.md` - version strings and badge URLs
+- `README.txt`, `README.md`, `docs/README_DEV.md` - version strings and badge URLs
 - `docs/wiki/Home.md` - current version display
 - `packaging/linux/PKGBUILD` - pkgver and _vertag
 - `packaging/linux/AppImageBuilder.yml` - version field
@@ -999,7 +999,7 @@ If a critical bug is discovered post-release:
 | `game_rules.json` | 1 (source of truth) |
 | `README.txt` | 1 |
 | `README.md` | 2 |
-| `README_DEV.md` | 2 |
+| `docs/README_DEV.md` | 2 |
 | `docs/wiki/Home.md` | 1 |
 | `packaging/linux/README.md` | 1 |
 | `packaging/linux/PKGBUILD` | 2 (pkgver, _vertag) |

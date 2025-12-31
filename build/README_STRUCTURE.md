@@ -55,7 +55,7 @@ The project now has a clear documentation structure targeting different audience
 - Asset creation
 - Contributing guidelines
 
-**Location**: Project root
+**Location**: `docs/` directory
 
 **When to Edit**: Whenever development processes, architecture, or technical details change
 
@@ -72,14 +72,14 @@ GitHub → README.md → Download release
 
 ### For Developers
 ```
-GitHub → README.md → README_DEV.md
+GitHub → README.md → docs/README_DEV.md
                          ↓
                  Complete technical docs
 ```
 
 ### For Modders
 ```
-GitHub → README.md → README_DEV.md → Modding & Configuration section
+GitHub → README.md → docs/README_DEV.md → Modding & Configuration section
 ```
 
 ---
@@ -134,7 +134,7 @@ copy /Y "README.txt" "dist\README.txt"
 **After**: Three purpose-specific READMEs
 - README.md (GitHub navigation hub)
 - README.txt (player guide - **master copy**)
-- README_DEV.md (developer/modder guide)
+- docs/README_DEV.md (developer/modder guide)
 
 All technical troubleshooting merged into README.txt.
 
@@ -146,7 +146,7 @@ All technical troubleshooting merged into README.txt.
 |------|----------|-----------|-------------|
 | README.md | GitHub visitors | Version/features change | No |
 | README.txt | Players | Game mechanics change | Yes (to dist/) |
-| README_DEV.md | Developers/modders | Technical changes | No |
+| docs/README_DEV.md | Developers/modders | Technical changes | No |
 
 ---
 
@@ -167,13 +167,13 @@ All technical troubleshooting merged into README.txt.
 - Build -> Automatically in dist/
 
 ### "I added a new build type"
-- Edit `README_DEV.md`
+- Edit `docs/README_DEV.md`
 - Update build/ docs if needed
 
 ### "I released a new version"
 - Edit `README.md` (GitHub landing)
 - Edit `README.txt` (version mentioned there too)
-- Edit `README_DEV.md` (version in header)
+- Edit `docs/README_DEV.md` (version in header)
 
 ### "I want to add troubleshooting"
 - Edit `README.txt` (players need it)
@@ -186,6 +186,6 @@ All technical troubleshooting merged into README.txt.
 **Clear separation of concerns**:
 - GitHub visitors → README.md (navigation)
 - Players → README.txt (how to play)
-- Developers → README_DEV.md (how to build/mod)
+- Developers → docs/README_DEV.md (how to build/mod)
 
 **No more duplicate maintenance!**
