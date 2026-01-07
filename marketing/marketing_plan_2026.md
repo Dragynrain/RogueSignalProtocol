@@ -139,7 +139,7 @@ These are directory-style sites where you're adding an entry to a database. They
 - **URL:** https://www.indiedb.com/games/add
 - **Type:** Discovery database with external store links
 - **Why:** 3M+ monthly viewers, Roguelike and Stealth categories, links back to itch.io
-- **Features:** Game profiles display purchase links to external retailers (itch.io, Steam, etc.)
+- **Features:** Game profiles display purchase links to external retailers (itch.io, etc.)
 - **Effort:** 15-20 minutes
 - **Download handling:** Link to itch.io in store links section - no file upload required
 - **Notes:** 
@@ -161,6 +161,7 @@ These are directory-style sites where you're adding an entry to a database. They
   - Owned by Twitch/Amazon
   - Generates automatic press kit from your data
   - Data feeds to game launchers, collectors apps, review sites, and more
+  - **Bonus:** If streamers ever cover your game, having an IGDB entry means they can properly categorize it on Twitch
 
 ### GamingOnLinux Database ✓ VERIFIED
 - **Status:** Already listed ✓
@@ -207,6 +208,57 @@ These are directory-style sites where you're adding an entry to a database. They
 
 ---
 
+## Part 3: Community Visibility (NEW - From Research)
+
+These are ongoing/periodic opportunities to get your game in front of the right audience.
+
+### r/roguelikedev Sharing Saturday ⭐ HIGH VALUE
+- **What:** Weekly thread every Saturday for devs to share progress
+- **URL:** https://www.reddit.com/r/roguelikedev/ (autoposted each Saturday)
+- **Why:** 
+  - Concentrated audience of roguelike enthusiasts
+  - Consistent visibility over time builds recognition
+  - Cogmind dev built significant following partly through this
+- **Effort:** 15-30 minutes/week
+- **Tips from research:**
+  - Post in the first hour for maximum visibility (most activity happens early)
+  - Include GIFs - they get much higher engagement than static screenshots
+  - Be consistent - showing up regularly matters more than one big splash
+- **Note:** This is r/roguelike**dev** not r/roguelikes - it's for development updates, perfect for beta/WIP
+
+### Roguelike Celebration Conference ⭐ HIGH VALUE
+- **What:** Annual virtual conference specifically for roguelikes (October)
+- **URL:** https://roguelike.club/
+- **CFP (Call for Proposals):** Opens ~May/June each year, deadline usually July
+- **Why:**
+  - Talks get posted to YouTube permanently
+  - Audience is exactly your target demographic (hundreds of dedicated roguelike fans)
+  - Past speakers include Caves of Qud devs, Cogmind dev, Dwarf Fortress creators
+  - First-time speakers are welcomed and common
+- **Effort:** Write proposal (free), prepare ~10-20 min talk
+- **Possible talk angles for you:**
+  - Cyberpunk/stealth mechanics in a traditional roguelike
+  - Dual ASCII/graphical rendering approach
+  - Linux-native roguelike development
+  - Open source roguelike development
+- **Timeline:** CFP ~June 2026, event October 2026
+- **Note:** You don't need a finished game - many talks are about works in progress
+
+### Roguelikes Discord
+- **What:** Main community Discord for roguelike fans and devs
+- **Why:** Both Cogmind and Caves of Qud devs mentioned this as "where the community actually hangs out"
+- **Effort:** Ongoing light participation
+- **Note:** Being genuinely helpful in the community > self-promotion
+
+### Rogueliker Website (NEW)
+- **URL:** https://rogueliker.com/
+- **What:** Site that does monthly roundups of new roguelike releases
+- **Why:** They cover both roguelikes and roguelites, have "Gone Rogue" weekly release roundups
+- **How to get featured:** Having a clear release date helps - they pull from upcoming releases
+- **Note:** More focused on commercial releases but worth being on their radar
+
+---
+
 ## Part 4: Submit at 1.0 Launch
 
 These are editorial sites or communities where you get one shot at their attention. Wait for release.
@@ -216,28 +268,37 @@ These are editorial sites or communities where you get one shot at their attenti
 #### GamingOnLinux Editorial (HIGH PRIORITY)
 - **URL:** https://www.gamingonlinux.com/
 - **Contact:** contact@gamingonlinux.com (goes directly to owner Liam Dawe)
-- **Why:** Primary Linux gaming news site, covers indie games, has Steam Curator
-- **Perfect fit because:** Native Linux, open source, Steam Deck compatible
+- **Why:** Primary Linux gaming news site, covers indie games
+- **Perfect fit because:** Native Linux, open source, works on handhelds
 - **Pitch angle:** Native Linux roguelike, free, open source, works on Steam Deck via Flatpak
 - **Note:** List in their DATABASE first (Part 2), then pitch editorial at 1.0
 
-#### Alpha Beta Gamer
+#### Boiling Steam (NEW - HIGH PRIORITY for Linux)
+- **URL:** https://boilingsteam.com/
+- **What:** Linux gaming site that publishes weekly "New Games with Native Linux Clients" roundups
+- **Why:** 
+  - They specifically track and highlight native Linux games
+  - Only ~10% of releases have native Linux builds - you stand out
+  - Regular coverage format means consistent visibility
+- **How:** Contact them or ensure your itch.io page clearly shows Linux support
+- **Angle:** Native Linux traditional roguelike
+
+#### Alpha Beta Gamer ⭐ SUBMIT NOW (they cover betas!)
 - **URL:** https://www.alphabetagamer.com/contact-us/
 - **Contact:** admin@alphabetagamer.com
 - **Alternative:** Post in Discord (https://discord.gg/3Gtqp9BDeY)
-- **Why:** 103k Twitter followers, two YouTube channels, Discord community
+- **Why:** 
+  - 103k Twitter followers, two YouTube channels, Discord community
+  - **They specifically cover free betas** - your game fits perfectly
+  - Have a dedicated "Roguelikes" category
 - **Include:** Download link, YouTube footage if available, screenshots
-- **Note:** Complete games can be featured on YouTube channels
+- **Note:** Don't wait for 1.0 - submit now while still in beta
 
 #### Free Game Planet
 - **URL:** https://www.freegameplanet.com/contact/
 - **Contact:** admin@freegameplanet.com or tweet @FreeGamePlanet
 - **Why:** Blog/curation site specifically for free indie games, has Roguelike and Stealth categories
 - **Effort:** 5-10 minutes for pitch email
-
-#### Indie Game Reviewer
-- **Why:** General indie focus
-- **Effort:** Standard pitch email
 
 #### RetroNuke
 - **Why:** Focuses on pixel art/retro gameplay aesthetics
@@ -247,13 +308,8 @@ These are editorial sites or communities where you get one shot at their attenti
 
 #### r/linux_gaming
 - **Why:** Linux users actively want native games; much friendlier to indie devs than general gaming subs
-- **Angle:** Native Linux roguelike, open source, Steam Deck compatible via Flatpak
+- **Angle:** Native Linux roguelike, open source, works on handhelds via Flatpak
 - **Note:** Engage in community first before posting (standard Reddit etiquette)
-
-#### r/SteamDeck
-- **Why:** Steam Deck users seek games that run well on device
-- **Note:** Be clear it's NOT on Steam but works via Flatpak
-- **Angle:** "Tested and working on Steam Deck via Flatpak"
 
 #### r/roguelikes
 - **Status:** Already posted ✓
@@ -274,11 +330,11 @@ These are editorial sites or communities where you get one shot at their attenti
 - **Members:** ~235k
 - **Why:** More accessible than r/gaming, good for dev updates
 
-### Other Communities
+#### r/opensourcegames
+- **Why:** Community specifically for open source games
+- **Your game fits:** Open source ✓
 
-#### Boiling Steam
-- **URL:** https://boilingsteam.com/
-- **Why:** PC Linux gaming focused
+### Other Communities
 
 #### LinuxGameCast
 - **Why:** Linux gaming webcasts, Twitch presence
@@ -301,7 +357,7 @@ Hi [Name if known],
 
 I'm reaching out about Rogue Signal Protocol, a free cyberpunk stealth roguelike 
 I've been developing solo. I thought it might interest [outlet name] readers because 
-[specific reason - e.g., "it runs natively on Linux and Steam Deck" for GamingOnLinux].
+[specific reason - e.g., "it runs natively on Linux" for GamingOnLinux].
 
 The game features tactical turn-based stealth gameplay with procedurally generated 
 missions and offers both ASCII and graphical display modes. It's free, open source, 
@@ -311,7 +367,7 @@ Press kit: [your press kit URL]
 itch.io: https://dragynrain.itch.io/rogue-signal-protocol
 GitHub: [your repo URL]
 
-Happy to answer any questions or provide keys/builds.
+Happy to answer any questions or provide builds.
 
 Thanks,
 [Your name]
@@ -332,9 +388,10 @@ Thanks,
 - [ ] Take 9-12 screenshots (both visual modes)
 - [ ] Create press kit page/folder
 - [ ] List on IndieDB (link to itch.io for downloads)
-- [ ] List on IGDB (requires screenshots/video online)
-- [ ] List on GamingOnLinux Database
+- [ ] Verify IGDB listing is complete
+- [ ] Verify GamingOnLinux Database listing
 - [ ] List on Lutris Database
+- [ ] **Submit to Alpha Beta Gamer NOW** (they cover betas)
 
 ### Shortly Before 1.0
 - [ ] Cut trailer from footage (60-90 seconds)
@@ -352,37 +409,44 @@ Thanks,
 
 ### Launch Day - Outreach
 - [ ] Email GamingOnLinux (they already have your game in their DB)
-- [ ] Email Alpha Beta Gamer
+- [ ] Email Boiling Steam
 - [ ] Email Free Game Planet
-- [ ] Email 5-10 other review sites
 - [ ] Post to r/playmygame
 - [ ] Post to r/linux_gaming
-- [ ] Post to r/SteamDeck (clarify Flatpak, not Steam)
 - [ ] Post to r/roguelikes [RELEASE] thread
 - [ ] Post to r/IndieGaming
+- [ ] Post to r/opensourcegames
 - [ ] Update Rogue Temple thread
+
+### Ongoing After Launch
+- [ ] Post to r/roguelikedev Sharing Saturday regularly
+- [ ] Consider submitting talk proposal to Roguelike Celebration (CFP opens ~June)
 
 ---
 
-## Part 7: Linux/Steam Deck Messaging
+## Part 7: Linux Messaging
 
-Since you're NOT on Steam but support Steam Deck via Flatpak, be clear in messaging:
+Since you have native Linux support, lean into this angle:
 
 ### What To Say
 - "Native Linux support"
 - "Works on Steam Deck via Flatpak"
 - "Tested on Steam Deck"
 - "Available on itch.io with Linux builds"
-
-### What To Avoid
-- Don't imply it's on Steam
-- Don't say "Steam Deck Verified" (that's a Steam-specific badge)
+- "No Wine/Proton needed"
 
 ### Why This Angle Works
 1. Native Linux = instant credibility (most games rely on Proton/Wine)
 2. Open source = Linux community loves this
 3. Less competition in Linux-specific channels
-4. Steam Deck is hot, roguelikes are perfect for it
+4. Handhelds are hot, roguelikes are perfect for portable play
+
+### Key Linux Outlets
+1. GamingOnLinux (editorial + database)
+2. Boiling Steam (weekly native Linux roundups)
+3. r/linux_gaming
+4. Lutris database
+5. LinuxGameCast
 
 ---
 
@@ -408,6 +472,30 @@ Based on prior community reactions:
 
 ---
 
+## Part 9: The Long Game (What Successful Roguelikes Did)
+
+Research on how games like Caves of Qud and Cogmind grew:
+
+### What Worked For Them
+- **Years of consistent presence** in roguelike communities
+- **Dev blogging** about interesting design/technical challenges
+- **Community contribution** (Cogmind dev created REXPaint tool, moderated r/roguelikedev)
+- **Participating in Sharing Saturday** and similar threads consistently
+- **Speaking at Roguelike Celebration**
+- **Being genuinely embedded** in the community, not just marketing at it
+
+### The "Viral Moment" Reality
+- Caves of Qud got a Sseth review (600k+ views) that drove massive sales
+- But this came AFTER years of community building
+- You can't make viral moments happen, but you can be discoverable when they do
+
+### What This Means For You
+- Database listings = being discoverable
+- Community participation = building reputation over time
+- The goal is slow, steady growth, not one big spike
+
+---
+
 ## Effort Summary
 
 | Task | Time |
@@ -415,9 +503,12 @@ Based on prior community reactions:
 | Press kit creation | 1-2 hours |
 | Trailer creation | 2-3 hours |
 | Database listings (IndieDB, IGDB, GamingOnLinux DB, Lutris) | 45 min - 1 hour total |
+| Alpha Beta Gamer submission | 15 minutes |
 | Pitch emails at launch | 2-3 hours |
 | Reddit posts | 30 min - 1 hour |
 | **Total pre-launch work** | **~8-10 hours** |
+| Sharing Saturday posts (ongoing) | 15-30 min/week |
+| Roguelike Celebration proposal (optional, future) | 2-3 hours |
 
 ---
 
@@ -442,4 +533,14 @@ The goal isn't one viral moment but consistent presence across multiple channels
 | GamingOnLinux DB | Linux games database | ✓ | ✓ | ✓ Yes |
 | Lutris | Linux game manager | ✓ | ✓ | ✓ Yes |
 | RogueBasin | Roguelike wiki | ✓ | ✓ | ✓ Yes |
-| ~~Game Jolt~~ | Marketplace | - | - | ✗ Requires upload |
+| Alpha Beta Gamer | Editorial/YouTube | ✓ **Preferred!** | ✓ | ✓ Yes |
+
+---
+
+## Priority Actions (Top 3 Right Now)
+
+1. **Submit to Alpha Beta Gamer** - They specifically cover free betas, your game fits perfectly
+2. **Verify all database listings are complete** (IndieDB, IGDB, GamingOnLinux DB, Lutris)
+3. **Start posting to r/roguelikedev Sharing Saturday** - Build name recognition before 1.0
+
+Everything else can wait for 1.0 or is ongoing/future opportunity.

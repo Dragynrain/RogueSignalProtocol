@@ -63,7 +63,7 @@ See **"Additional Gaps Found in Review (Post-GAP 17)"** section near end for ful
 |------|-----------------|
 | `coordinator.py` | Fixed layout check BEFORE `generate_level()`, music selection at START |
 | `loop.py` | Tutorial action handler + ESC auto_save wrap |
-| `input/dialogue.py` | Add "TRAINING COMPLETE" and "SIMULATION FAILURE" checks in `handle_dismiss()` |
+| `input/dialogue.py` | Add "TRAINING COMPLETE" and "DE-RESOLVED" checks in `handle_dismiss()` |
 | `engine.py` | `prologue_mode` param + flags + `_show_prologue_intro()` method |
 
 ---
@@ -284,7 +284,7 @@ class FixedLevelData:
 ### 2.2 Create Prologue Layout Definition
 
 Design goals for the prologue map:
-- Small size (~25x20 tiles) for quick completion
+- Small size (26x20 tiles) for quick completion
 - Linear-ish progression teaching one mechanic at a time
 - Safe zones between lessons
 - Clear visual guidance
@@ -446,12 +446,13 @@ class FixedLevelGenerator:
 
     def _place_node(self, x: int, y: int, node_type: str):
         """Place a special node at position."""
+        from rsp.level.map import RestoreNode
         if node_type == 'cooling':
-            self.game_map.cooling_nodes.add((x, y))
+            self.game_map.cooling_nodes[(x, y)] = RestoreNode(node_type="cooling")
         elif node_type == 'cpu':
-            self.game_map.cpu_recovery_nodes.add((x, y))
+            self.game_map.cpu_recovery_nodes[(x, y)] = RestoreNode(node_type="cpu")
         elif node_type == 'ghost':
-            self.game_map.ghost_nodes.add((x, y))
+            self.game_map.ghost_nodes[(x, y)] = RestoreNode(node_type="ghost")
 
     def _create_enemy(
         self, x: int, y: int, enemy_type: str, layout_data: FixedLevelData
@@ -502,6 +503,12 @@ class FixedLevelGenerator:
 | `src/rsp/level/coordinator.py` | Add fixed layout check at START of `generate_procedural_level()` |
 | `src/rsp/level/__init__.py` | Export new classes |
 
+**`__init__.py` exports to add:**
+```python
+from rsp.level.fixed_levels import FixedLevelData, get_prologue_layout
+from rsp.level.fixed_generator import FixedLevelGenerator
+```
+
 **NOTE**: `generator.py` does NOT need modification - all fixed level logic goes in coordinator.
 
 ### 2.6 CRITICAL: Coordinator-Based Fixed Level Check (REVISED)
@@ -551,6 +558,13 @@ def generate_procedural_level(self, skip_level_start_message: bool = False):
         # Set player spawn position
         self.game_engine.player.x = spawn_pos.x
         self.game_engine.player.y = spawn_pos.y
+
+        # Post-generation integration (same as procedural path)
+        self.game_engine.narrative_manager.reset_level_flags()
+        self.game_engine.game_session.turn_manager.reset_blind_spot_tracking()
+        self.game_engine.message_log.add_message(f"{config['name']} loaded")
+        self.game_engine.game_map.invalidate_transparency_cache()
+        self.game_engine.visibility_manager.invalidate_cache()
 
         # Skip all item/enemy placement for fixed layouts (already handled)
     else:
@@ -835,18 +849,27 @@ def __init__(
     self.prologue_completed_pending = False
     self.prologue_restart_pending = False
 
+    # NOTE: This must be integrated into the EXISTING if load_save: ... else: structure
+    # The actual pattern in engine.py is:
+    #   if load_save:
+    #       # load logic (unchanged)
+    #   else:
+    #       # new game logic (add prologue check here)
+
+    # Inside the existing else: branch, add this check:
     if prologue_mode:
         # Prologue-specific initialization
+        self.ascension_level = 0  # Force base difficulty for tutorial
+        self.ascension_modifiers = calculate_ascension_modifiers(0)
         self.game_state.level = 0
         self._randomize_code_hacks()
         self.game_session.generate_procedural_level()
         self._show_prologue_intro()
-    elif not load_save:
-        # Normal new game - always start at level 1
-        self.game_state.level = 1
+    else:
+        # Existing new game initialization (unchanged)
         self._randomize_code_hacks()
         self.game_session.generate_procedural_level()
-        self._show_standard_intro()
+        # ... existing intro messages and dialogue ...
 
 def _show_prologue_intro(self):
     """Show prologue introduction dialogue."""
@@ -959,7 +982,7 @@ def handle_dismiss(self) -> bool:
         return False  # Exit to main menu
 
     # NEW: Prologue death - restart level
-    elif "SIMULATION FAILURE" in dialogue.title:
+    elif "DE-RESOLVED" in dialogue.title:
         self._restart_prologue()
         self.game.dialogue_state.close()
         return True  # Continue game loop (with restarted level)
@@ -1000,8 +1023,11 @@ def _restart_prologue(self):
     # Clear enemies
     game.enemy_manager.enemies.clear()
 
-    # Regenerate the level
-    game.game_session.generate_procedural_level()
+    # Regenerate the level (call coordinator directly to pass skip_level_start_message)
+    game.game_session.level_coordinator.generate_procedural_level(skip_level_start_message=True)
+
+    # Invalidate FOV cache
+    game.visibility_manager.invalidate_cache()
 
     # Show restart message
     game.message_log.add_message("Training simulation restarted", Colors.CYAN)
@@ -1466,11 +1492,11 @@ self.prologue_restart_pending = False
 
 ### GAP 4: Dialogue Title Pattern Mismatch
 
-**Problem**: `handle_dismiss()` in `dialogue.py:273-280` checks for "PURGED", "BREAKTHROUGH", "ROGUE SIGNAL ESTABLISHED". The prologue dialogues use "TRAINING COMPLETE" and "SIMULATION FAILURE" - these need to be added to the check.
+**Problem**: `handle_dismiss()` in `dialogue.py:273-280` checks for "PURGED", "BREAKTHROUGH", "ROGUE SIGNAL ESTABLISHED". The prologue dialogues use "TRAINING COMPLETE" and "DE-RESOLVED" - these need to be added to the check.
 
 **Fix**: The plan already shows adding these checks in Phase 5.4.1. Verify the exact title strings match:
 - Completion: `"TRAINING COMPLETE"`
-- Death: `"SIMULATION FAILURE"`
+- Death: `"DE-RESOLVED"`
 
 ### GAP 5: `prologue_completed` Settings Persistence
 
@@ -1804,10 +1830,10 @@ def _restart_prologue(self):
     # MISSING FROM ORIGINAL PLAN - Clear message log (optional but cleaner)
     game.message_log.messages.clear()
 
-    # Regenerate the level (do NOT call _show_prologue_intro - not first time)
-    game.game_session.generate_procedural_level(skip_level_start_message=True)
+    # Regenerate the level (call coordinator directly to pass skip_level_start_message)
+    game.game_session.level_coordinator.generate_procedural_level(skip_level_start_message=True)
 
-    # MISSING FROM ORIGINAL PLAN - Invalidate FOV cache
+    # Invalidate FOV cache
     game.visibility_manager.invalidate_cache()
 
     # Show restart message
@@ -1824,7 +1850,7 @@ def _restart_prologue(self):
 def clear_all(self):
     """Clear all inventory items (used when restarting prologue)."""
     self.items.clear()
-    self.equipped_exploits = [None] * 5
+    self.equipped_exploits.clear()  # list[str] of exploit keys, not fixed-size
 ```
 
 ### GAP 20: Gateway Confirmation in Prologue
@@ -1862,7 +1888,7 @@ This way:
 
 ### GAP 22: Layout Dimension Inconsistency
 
-**Problem**: Plan says layout is "25x20" in Phase 3.1 but the actual ASCII layout is 26 characters wide x 20 rows.
+**Problem**: Plan originally said layout is "25x20" in Phase 3.1 but the actual ASCII layout is 26 characters wide x 20 rows. **FIXED in Phase 3.1.**
 
 **Fix**: Update Phase 3.2 header to say "26x20":
 ```
