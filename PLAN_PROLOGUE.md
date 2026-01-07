@@ -1,5 +1,20 @@
 # Prologue Level Implementation Plan
 
+## Design Philosophy: Show Don't Tell
+
+**This prologue teaches through environmental design, not text explanations.**
+
+| Instead of... | We do... |
+|--------------|----------|
+| Popup: "Shadows hide you from enemies" | Narrow corridor with patrolling enemy + shadow alcove as only safe spot |
+| Hint: "Use exploits for ranged combat" | Enemy behind wall gap - melee impossible, exploit is only option |
+| Message: "Nodes heal/cool you" | Recovery node placed in shadow escape route after forced combat |
+| Tutorial objectives checklist | Level sections that physically require using each mechanic |
+
+**Result**: Player discovers mechanics through play. They feel clever for figuring things out, not lectured at.
+
+---
+
 ## Review Summary (2026-01-07)
 
 This plan has been reviewed and enhanced with 8 additional gaps (GAP 18-25) addressing:
@@ -131,8 +146,8 @@ Add a new `"0"` entry to `network_configs` (place BEFORE the `"1"` entry):
   "blind_spot_coverage": 0.15,
   "name": "Training Simulation",
   "background_trace": 0,
-  "trace_alert_to_hostile": 0,
-  "trace_continuous_hostile": 0,
+  "trace_alert_to_hostile": 3,
+  "trace_continuous_hostile": 2,
   "cooling_nodes": 1,
   "cpu_nodes": 1,
   "ghost_nodes": 1,
@@ -147,11 +162,13 @@ Add a new `"0"` entry to `network_configs` (place BEFORE the `"1"` entry):
 **IMPORTANT**: These counts are IGNORED for fixed layouts - they're only here for API compatibility. The fixed layout defines exact positions for all entities.
 
 Key differences from normal levels:
-- `background_trace: 0` - No passive trace gain (forgiving)
-- `trace_alert_to_hostile: 0` - Enemies don't raise trace when hostile
-- `trace_continuous_hostile: 0` - No continuous trace from hostile enemies
+- `background_trace: 0` - No passive trace gain (forgiving start)
+- `trace_alert_to_hostile: 3` - Small trace spike when spotted (teaches consequence without instant death)
+- `trace_continuous_hostile: 2` - Low but present continuous trace (creates pressure to resolve combat)
 - `is_prologue: true` - Flag for special handling (death behavior, skip logic)
 - `fixed_layout: true` - Use hand-designed layout instead of procedural generation
+
+**Design philosophy**: Trace penalties are LOW but not ZERO. Player feels the pressure of detection without being overwhelmed. They learn that getting spotted has consequences they need to manage.
 
 **NOTE**: The `is_prologue` and `fixed_layout` flags must be checked in:
 - `generator.py:generate_level()` - to skip procedural generation
@@ -161,21 +178,18 @@ Key differences from normal levels:
 
 ### 1.2 Add Prologue Narrative Content to `narrative_content.json`
 
-Add new entries:
+Add new entries (minimal - layout teaches, not text):
 
 ```json
 "prologue_messages": {
-  "intro": "DIAGNOSTIC MODE ACTIVATED. This training simulation will familiarize you with core infiltration protocols.",
-  "movement_hint": "Use WASD or arrow keys to move. Navigate through the data corridors.",
-  "shadow_hint": "Dark purple tiles are monitoring blind spots. Security cannot see into them. Step inside to test.",
-  "stealth_attack_hint": "Attack from the shadows for +10 bonus damage. Approach the disabled Scanner from the blind spot.",
-  "exploit_hint": "Press 1-5 to activate equipped exploits. Code Injection (1) deals 25 damage at range 5.",
-  "node_hint": "Special nodes provide resources. Blue = cooling (-20 heat), Red = CPU recovery (+20 health), Purple = ghost (-20% trace + stealth).",
-  "code_hack_hint": "Colored data codes have random effects each run. Collect and use them to discover what each color does.",
-  "gateway_hint": "The golden gateway (>) leads to the next network layer. Reach it to progress.",
-  "completion": "TRAINING COMPLETE. Neural interface calibrated. Initiating live infiltration sequence..."
+  "intro": "Training environment initialized. Security response reduced. Reach the gateway.",
+  "completion": "Training complete. You are ready."
 }
 ```
+
+**Design note**: Only two messages. The intro sets minimal context. The completion acknowledges success. Everything in between is taught by the level layout, not text.
+
+**What was removed**: 8 hint messages (movement, shadow, stealth attack, exploit, node, code hack, gateway). These are no longer needed because the level design forces players to discover these mechanics naturally.
 
 ### 1.3 Add Prologue Tracking to User Settings
 
@@ -583,242 +597,181 @@ This approach:
 
 ## Phase 3: Prologue Level Design
 
-### 3.1 Level Layout Philosophy
+### 3.1 Level Layout Philosophy - "Show Don't Tell"
 
-The prologue is divided into "rooms" that teach specific mechanics:
+**Core principle**: The level design teaches mechanics through necessity, not explanations. Players discover how things work by encountering situations where using them is the obvious solution.
 
 ```
-ROOM 1: Movement Basics
-- Open area for WASD practice
-- No enemies, just navigation
+SECTION 1: Safe Start
+- Small open area to get bearings
+- Exploit pickup visible (player will grab it naturally)
+- Single exit leads to first challenge
 
-ROOM 2: Stealth Introduction
-- Introduces blind spots (dark purple tiles)
-- Static Scanner enemy that player can observe
-- Safe shadow cluster to hide in
+SECTION 2: The Chokepoint (teaches observation/patience)
+- Narrow corridor with a patrolling Scanner
+- Player CANNOT pass without waiting for the patrol pattern
+- Shadow alcove halfway through for safety
+- No text needed - the corridor design forces the lesson
 
-ROOM 3: Combat Basics
-- Disabled Bot enemy (low threat)
-- Teaches bump attack (melee)
-- CPU recovery node nearby for healing
+SECTION 3: The Ambush (teaches shadows as escape)
+- Open room with a Bot that WILL spot the player
+- Shadow clusters positioned as obvious escape routes
+- CPU recovery node in the shadows (reward for fleeing there)
+- Player learns: spotted → retreat to shadows → recover
 
-ROOM 4: Exploit Usage
-- Provides Code Injection exploit
-- Patrol enemy at range (teaches ranged combat)
-- Cooling node for heat management
+SECTION 4: The Gap (teaches ranged combat)
+- Patrol enemy visible across a chasm/wall gap
+- Player has exploit from Section 1
+- Only way forward is to use the ranged exploit
+- Cooling node after (teaches heat management through use)
 
-ROOM 5: Advanced Mechanics
-- Ghost node (stealth + trace reduction)
-- Code hack pickup (demonstrates discovery system)
-- Path to gateway with optional challenge
+SECTION 5: The Final Approach (teaches planning)
+- Gateway clearly visible from the start of this section
+- Enemy patrol between player and gateway
+- Multiple shadow paths to choose from
+- Ghost node rewards stealth approach
+- Player must choose: fight through or sneak past
 ```
+
+**Key design changes from original**:
+- Enemies are positioned to CREATE situations, not just exist in rooms
+- Resources (nodes, exploits) are placed as rewards/tools for the situation
+- Chokepoints force engagement with mechanics
+- No tutorial popups needed - the layout IS the tutorial
 
 ### 3.2 Detailed ASCII Layout (26x20)
 
 ```
 Legend:
-# = Wall           . = Floor          s = Blind spot
+# = Wall           . = Floor          s = Blind spot (shadow)
 @ = Player spawn   > = Gateway        c = Cooling node
-r = CPU recovery   g = Ghost node     S = Scanner (disabled for tutorial)
+r = CPU recovery   g = Ghost node     S = Scanner (patrols)
 B = Bot            P = Patrol         e = Exploit pickup
-d = Code hack      + = Doorway (floor with passage marker)
+d = Code hack      + = Doorway
 
 ##########################
-#@....#........#.........#
-#.....#........#....S....#  <- Room 2: Scanner observes but won't attack (tutorial)
-#.....#...c....#.........#  <- Cooling node teaches heat management
-#..sss#........#....#....#  <- Shadow cluster for stealth practice
-#..sss+........+....#....#  <- Doorways connect rooms
-#..sss#........#....#....#
-#.....############..#....#
-#.....#............s#....#  <- Single shadow shows they work in corridors
-#..d..#.....B......s#..e.#  <- Room 3: Bot + exploit pickup
-#.....#............s#....#
-#.....#.....r.......#....#  <- CPU recovery for healing after combat
-#######.............######
-#sss..+.....g.......+...>#  <- Room 5: Ghost node + gateway
-#sss..#.............#....#
-#sss..#.....P.......#....#  <- Room 4: Patrol teaches moving enemy combat
-#.....#.............#..d.#  <- Code hack pickup
-#..e..#....sss......#....#  <- Second exploit (variety)
-#.....#....sss......#....#  <- Shadow cluster for stealth kill practice
+#@....###################
+#..e..#.................#  <- SECTION 1: Safe start, exploit visible
+#.....+.................#
+#####+###################
+#....+.......S..........#  <- SECTION 2: THE CHOKEPOINT
+#.sss#..................#     Scanner patrols this narrow corridor
+#.sss#..................#     Shadow alcove = only safe spot to wait
+#####+###################
+#....+.........#........#  <- SECTION 3: THE AMBUSH
+#....#....B....#..sss...#     Bot WILL spot you entering this room
+#....#.........#..sss...#     Shadows on far side = escape route
+#....#.........+..rss...#     Recovery node rewards fleeing to shadows
+################..####+##
+#d...#..c..#......#.....#  <- SECTION 4: THE GAP
+#....#.....###P###......#     Patrol behind wall - must use ranged exploit
+#....+.....###.###......#     Cooling node for heat after combat
+#####+######...#########+
+#....+......g..#.sss....#  <- SECTION 5: FINAL APPROACH
+#....#.........#.sss..>.#     Gateway visible, shadow path available
+#....#.........#.sss....#     Ghost node rewards stealth choice
 ##########################
 ```
+
+**Design notes - how each section teaches without text:**
+
+| Section | What Player Encounters | What They Learn |
+|---------|----------------------|-----------------|
+| 1 | Exploit on floor, single exit | "I should grab items" |
+| 2 | Narrow corridor, Scanner blocks path, shadow alcove | "I must wait and watch patterns; shadows hide me" |
+| 3 | Open room, Bot spots them, shadows across room | "When spotted, RUN to shadows; nodes heal me" |
+| 4 | Patrol behind wall gap, can't reach melee | "I have a ranged attack; heat builds up" |
+| 5 | Gateway visible, patrol in way, shadow path option | "I can fight OR sneak; ghost makes me stealthier" |
+
+**Critical layout requirements:**
+- Section 2 corridor is 1 tile wide where Scanner patrols - forces waiting
+- Section 3 has NO shadows near entrance - forces player to cross to escape
+- Section 4 wall gap blocks melee - ranged exploit is the only option
+- Section 5 offers choice - reward either approach
 
 ### 3.3 Enemy Configuration
 
-| Enemy | Type | Behavior | HP Override | Notes |
-|-------|------|----------|-------------|-------|
-| S (Scanner) | scanner | STATIC | 20 (reduced) | Tutorial mode: won't raise alerts |
-| B (Bot) | bot | RANDOM | 15 (reduced) | Easy first combat target |
-| P (Patrol) | patrol | PATROL | 25 (reduced) | Teaches timing and ranged combat |
+| Enemy | Type | Behavior | HP Override | Purpose in Layout |
+|-------|------|----------|-------------|-------------------|
+| S (Scanner) | scanner | PATROL | 25 | Patrols chokepoint corridor - forces player to wait and observe |
+| B (Bot) | bot | RANDOM | 20 | Guards Section 3 - WILL spot player, teaching "run to shadows" |
+| P (Patrol) | patrol | PATROL | 30 | Behind wall gap - can only be killed with ranged exploit |
+
+**Important**: Enemies use NORMAL AI behavior. They WILL attack, spot, and chase the player. The tutorial works because:
+1. Layout forces specific encounters (can't skip past Scanner in narrow corridor)
+2. Escape routes (shadows) are clearly positioned
+3. HP is reduced so combat resolves quickly
+4. Trace penalties are low but present (teaches consequence without death spiral)
 
 ### 3.4 Item Placement
 
-| Item | Position | Purpose |
-|------|----------|---------|
-| Cooling Node (c) | Room 2 | Demonstrates heat reduction |
-| CPU Recovery (r) | Room 3 | Healing after first combat |
-| Ghost Node (g) | Room 5 | Advanced stealth mechanic |
-| Code Hack (d) | Room 1, Room 5 | Demonstrates discovery system |
-| Exploit (e) | Room 3, Room 4 | Code Injection + Buffer Overflow |
+| Item | Section | Position Purpose |
+|------|---------|-----------------|
+| Exploit (e) | Section 1 | Given immediately - player will need it in Section 4 |
+| CPU Recovery (r) | Section 3 shadows | Reward for fleeing to shadows after Bot spots them |
+| Cooling Node (c) | Section 4 | Available after using exploit (teaches heat management through use) |
+| Code Hack (d) | Section 4 | Bonus pickup, demonstrates variety |
+| Ghost Node (g) | Section 5 | Rewards stealth approach to final area |
 
-### 3.5 Tutorial Trigger Positions
+**Placement philosophy**: Items are positioned as rewards/tools for the situation they're in, not randomly scattered. Player learns what items do by USING them in context.
 
-Named positions that trigger contextual hints when player steps on them:
+### 3.5 Tutorial Triggers - REMOVED
 
-| Trigger Name | Position | Message |
-|--------------|----------|---------|
-| `first_move` | (2, 1) | Movement hint |
-| `shadow_intro` | (3, 4) | Shadow/blind spot explanation |
-| `first_enemy_view` | (8, 2) | Enemy behavior explanation |
-| `exploit_pickup` | (23, 9) | Exploit usage hint |
-| `node_intro` | (10, 3) | Special node explanation |
-| `gateway_approach` | (22, 13) | Gateway/completion hint |
+**Design decision**: The original plan included 6 position-based tutorial triggers that would display hint messages. These have been REMOVED.
+
+**Rationale**:
+- The redesigned layout teaches through environmental necessity, not text
+- Position triggers interrupt flow and feel patronizing
+- If the layout requires explanation, the layout needs work
+
+**What remains**: Only the intro dialogue (explains the context) and completion dialogue (celebrates success). No mid-game hints.
+
+**Exception - single optional hint**: If playtesting shows players consistently stuck at Section 4 (the ranged combat gap), we may add ONE message when they bump the wall repeatedly: "Target out of reach. Try your equipped exploit [1-5]." This is a fallback, not a planned feature.
 
 ---
 
-## Phase 4: Tutorial System
+## Phase 4: Tutorial System - SIMPLIFIED
 
-### 4.1 Create Tutorial Manager
+**Design change**: The original Phase 4 defined a complex TutorialManager with position triggers, action triggers, and 7-objective progression. This has been **dramatically simplified** because the redesigned layout teaches through environmental design, not text hints.
 
-File: `src/rsp/systems/tutorial.py`
+### 4.1 What's Been Removed
+
+- `TutorialManager` class - NOT NEEDED
+- `TutorialState` tracking - NOT NEEDED
+- Position-based hint triggers - NOT NEEDED
+- Action-based hint triggers - NOT NEEDED
+- 7-objective progression system - NOT NEEDED
+
+### 4.2 What Remains
+
+**Only two dialogues**:
+1. **Intro dialogue** - Brief context setting when prologue starts
+2. **Completion dialogue** - Celebration when player reaches gateway
+
+**No mid-game hints**. The layout teaches through play.
+
+### 4.3 Files to Create
+
+None. No `tutorial.py` file needed.
+
+### 4.4 Files to Modify
+
+None for tutorial hints. All prologue-specific code is in:
+- `engine.py` - prologue_mode flag
+- `dialogue.py` - intro/completion dialogues
+- `death.py` - prologue death handling
+
+### 4.5 Optional Fallback Hint (Implement Only If Needed)
+
+If playtesting reveals players consistently stuck at Section 4 (ranged combat gap), add a SINGLE fallback:
 
 ```python
-"""
-Tutorial system for prologue level.
-
-Manages contextual hints, progress tracking, and tutorial state.
-"""
-
-from dataclasses import dataclass, field
-from typing import Dict, Set, Optional, Callable
-from rsp.entities.base import Position
-
-
-@dataclass
-class TutorialState:
-    """Tracks tutorial progress and triggered hints."""
-    triggered_hints: Set[str] = field(default_factory=set)
-    current_objective: str = "movement"
-    objectives_completed: Set[str] = field(default_factory=set)
-
-
-class TutorialManager:
-    """
-    Manages tutorial progression and contextual hints.
-
-    Triggers hints based on:
-    - Player position (entering new areas)
-    - Player actions (first attack, first exploit use)
-    - Game events (first enemy kill, taking damage)
-    """
-
-    def __init__(self, game_engine, message_log):
-        self.game_engine = game_engine
-        self.message_log = message_log
-        self.state = TutorialState()
-        self.position_triggers: Dict[Position, str] = {}
-        self.action_triggers: Dict[str, str] = {}
-
-    def check_position_trigger(self, position: Position) -> Optional[str]:
-        """Check if position triggers a tutorial message."""
-        pass
-
-    def check_action_trigger(self, action: str) -> Optional[str]:
-        """Check if action triggers a tutorial message."""
-        pass
-
-    def show_hint(self, hint_key: str) -> None:
-        """Display tutorial hint (only once per hint)."""
-        if hint_key in self.state.triggered_hints:
-            return
-        self.state.triggered_hints.add(hint_key)
-        # Get message from narrative_content.json
-        # Display via dialogue or message log
+# In bump-into-wall handler, only in prologue mode:
+if prologue_mode and player tried to melee enemy behind wall 3+ times:
+    message_log.add_message("Target out of reach. Try your exploit [1-5].", Colors.CYAN)
 ```
 
-### 4.2 Tutorial Hint Display Options
-
-Two display modes for tutorial hints:
-
-**Option A: Dialogue Popup (Recommended for key lessons)**
-- Pauses gameplay
-- Ensures player reads the message
-- Use for: shadow intro, exploit explanation, gateway approach
-
-**Option B: Message Log (For minor hints)**
-- Non-intrusive
-- Player can miss if not paying attention
-- Use for: movement hints, combat tips
-
-### 4.3 Tutorial Objectives Progression
-
-```
-1. MOVEMENT: Move to the doorway
-   Trigger: Player moves 5 tiles
-
-2. STEALTH: Enter a blind spot
-   Trigger: Player stands on shadow tile
-
-3. OBSERVE: View the Scanner enemy
-   Trigger: Player has line of sight to Scanner
-
-4. COMBAT: Defeat the Bot
-   Trigger: Bot enemy killed
-
-5. EXPLOIT: Use an equipped exploit
-   Trigger: Any exploit activated
-
-6. HEAL: Use a recovery node
-   Trigger: Player steps on CPU/cooling node
-
-7. ESCAPE: Reach the gateway
-   Trigger: Player reaches gateway tile
-```
-
-### 4.4 Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/rsp/systems/tutorial.py` | Tutorial manager and state |
-
-### 4.5 Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/rsp/core/engine.py` | Initialize TutorialManager for prologue |
-| `src/rsp/combat/turn_manager.py` | Call tutorial position checks on player move |
-| `src/rsp/input/actions.py` | Call tutorial action checks on exploit use |
-
-### 4.6 Tutorial Integration Details (ADDED)
-
-**TutorialManager Instantiation** (File: `src/rsp/core/engine.py`):
-```python
-# In __init__, after other system initialization:
-self.tutorial_manager = None  # Only active in prologue mode
-
-# In prologue mode initialization (or a new _init_prologue_mode method):
-if prologue_mode:
-    from rsp.systems.tutorial import TutorialManager
-    self.tutorial_manager = TutorialManager(self, self.message_log)
-```
-
-**Position Trigger Integration** (File: `src/rsp/core/session.py` or wherever player movement is processed):
-```python
-# After player movement is processed:
-if self.game_engine.tutorial_manager:
-    self.game_engine.tutorial_manager.check_position_trigger(self.game_engine.player.position)
-```
-
-**Action Trigger Integration** (File: `src/rsp/combat/combat.py` or exploit activation):
-```python
-# After exploit is successfully activated:
-if self.game_engine.tutorial_manager:
-    self.game_engine.tutorial_manager.check_action_trigger("exploit_used")
-```
-
-**NOTE**: Phase 4 can be implemented AFTER Phase 5 for a playable but hint-less prologue. Prioritize getting the core flow working first.
+This is defensive - implement only if playtesting shows it's necessary. The goal is zero mid-game text.
 
 ---
 
@@ -1145,7 +1098,7 @@ def _handle_prologue_death(self, cause: str, source: str | None = None):
 
 File: `src/rsp/ui/dialogue.py`
 
-Only 3 dialogues needed (no prompt dialogue with simplified menu).
+Only 3 dialogues needed. **All text is minimal** - the level teaches, not the dialogues.
 
 **KEY ROUTING NOTE**: All prologue dialogues use `valid_keys=[tcod.event.KeySym.RETURN]`. In the existing codebase, ENTER/SPACE/ESC all route to `handle_dismiss()` (NOT `handle_confirm()`). This is correct - the prologue completion/death handlers in `handle_dismiss()` will catch these.
 
@@ -1155,12 +1108,10 @@ def create_prologue_intro_dialogue() -> DialogueBox:
     return DialogueBox(
         title="TRAINING SIMULATION",
         message=(
-            "Welcome to the Training Simulation.\n\n"
-            "This environment will teach core infiltration protocols.\n"
-            "Security is reduced. Failure is not permanent.\n\n"
-            "Reach the gateway to complete training."
+            "Security response reduced.\n"
+            "Reach the gateway."
         ),
-        options=["[ENTER] Begin Training"],
+        options=["[ENTER] Begin"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.CYAN,
         message_color=Colors.WHITE,
@@ -1174,13 +1125,8 @@ def create_prologue_completion_dialogue() -> DialogueBox:
     """Create prologue completion dialogue (returns to main menu)."""
     return DialogueBox(
         title="TRAINING COMPLETE",
-        message=(
-            "Neural interface calibrated.\n"
-            "Combat and stealth protocols synchronized.\n\n"
-            "You are ready for live infiltration.\n"
-            "Select 'New Game' to begin your mission."
-        ),
-        options=["[ENTER] Return to Menu"],
+        message="You are ready.",
+        options=["[ENTER] Continue"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.GREEN,
         message_color=Colors.WHITE,
@@ -1193,13 +1139,9 @@ def create_prologue_completion_dialogue() -> DialogueBox:
 def create_prologue_death_dialogue(cause: str) -> DialogueBox:
     """Create prologue death dialogue (restarts training)."""
     return DialogueBox(
-        title="SIMULATION FAILURE",
-        message=(
-            f"De-Resolution: {cause}\n\n"
-            "Training simulation will restart.\n"
-            "In live infiltration, this would be permanent."
-        ),
-        options=["[ENTER] Restart Training"],
+        title="DE-RESOLVED",
+        message=f"{cause}\n\nRestarting simulation.",
+        options=["[ENTER] Retry"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.YELLOW,
         message_color=Colors.WHITE,
@@ -1209,6 +1151,11 @@ def create_prologue_death_dialogue(cause: str) -> DialogueBox:
         priority=10,
     )
 ```
+
+**What changed from original**:
+- Intro: Removed "Welcome", removed explanation of what training teaches, removed "Failure is not permanent" (let them discover that)
+- Completion: Removed "Neural interface calibrated" technobabble, removed instructions to select New Game
+- Death: Removed "In live infiltration, this would be permanent" - don't explain permadeath, let them experience it in the real game
 
 ### 5.7 Files to Modify (Phase 5)
 
@@ -1238,22 +1185,14 @@ def test_prologue_has_required_elements():
 def test_prologue_enemy_positions_valid():
     """Verify enemies spawn on floor tiles, not walls."""
 
-def test_tutorial_triggers_fire_once():
-    """Verify tutorial hints only display once."""
+def test_prologue_chokepoint_is_narrow():
+    """Verify Section 2 corridor forces single-file movement past Scanner."""
+
+def test_prologue_section3_no_shadows_at_entrance():
+    """Verify Section 3 has no shadows near entrance (forces crossing)."""
 ```
 
-File: `tests/unit/test_tutorial_manager.py`
-
-```python
-def test_position_trigger_detection():
-    """Verify position triggers fire at correct locations."""
-
-def test_action_trigger_detection():
-    """Verify action triggers fire on correct actions."""
-
-def test_objective_progression():
-    """Verify objectives complete in correct order."""
-```
+**Removed**: `test_tutorial_manager.py` - no longer needed since TutorialManager was removed.
 
 ### 6.2 Integration Tests
 
@@ -1278,13 +1217,15 @@ def test_menu_always_shows_tutorial():
 
 ### 6.3 Gameplay Polish Checklist
 
-- [ ] Tutorial messages are clear and concise
-- [ ] Enemy difficulty is appropriate for learning
-- [ ] Level layout provides clear progression path
-- [ ] All mechanics are demonstrated before completion
-- [ ] Prologue can be completed in 3-5 minutes
-- [ ] Visual distinction from normal levels (different music?)
-- [ ] Satisfying completion feedback
+- [ ] Section 2 chokepoint forces waiting for Scanner patrol (can't rush through)
+- [ ] Section 3 Bot spots player entering (no way to avoid initial detection)
+- [ ] Section 3 shadow escape route is obvious when panicking
+- [ ] Section 4 wall gap clearly blocks melee (player tries bumping before using exploit)
+- [ ] Section 5 offers viable stealth OR combat path to gateway
+- [ ] Enemy HP lets combat resolve in 2-3 hits (not tedious)
+- [ ] Trace pressure is noticeable but not lethal
+- [ ] Prologue can be completed in 2-4 minutes
+- [ ] Death → restart feels smooth, not punishing
 
 ### 6.4 Edge Cases to Handle
 
@@ -1305,10 +1246,12 @@ def test_menu_always_shows_tutorial():
 |------|--------------|---------|
 | `src/rsp/level/fixed_levels.py` | ~80 | FixedLevelData class + PROLOGUE_LAYOUT constant |
 | `src/rsp/level/fixed_generator.py` | ~150 | FixedLevelGenerator class |
-| `src/rsp/systems/tutorial.py` | ~120 | TutorialManager + TutorialState |
-| `tests/unit/test_fixed_level_generator.py` | ~100 | Fixed layout parsing tests |
-| `tests/unit/test_tutorial_manager.py` | ~80 | Tutorial trigger tests |
+| `tests/unit/test_fixed_level_generator.py` | ~100 | Fixed layout parsing + design verification tests |
 | `tests/integration/test_prologue_flow.py` | ~100 | Full prologue flow tests |
+
+**Removed from original plan**:
+- `src/rsp/systems/tutorial.py` - NOT NEEDED (layout teaches, not code)
+- `tests/unit/test_tutorial_manager.py` - NOT NEEDED (no TutorialManager)
 
 ### Files to Modify
 
@@ -1347,7 +1290,7 @@ def test_menu_always_shows_tutorial():
 2. **Second**: Test Tutorial menu option launches prologue mode
 3. **Third**: Test prologue completion returns to menu
 4. **Fourth**: Test prologue death/restart behavior
-5. **Last**: Tutorial message triggers
+5. **Fifth**: Playtest the layout - verify each section teaches its lesson through design
 
 ---
 
@@ -1357,15 +1300,16 @@ Recommended implementation sequence:
 
 1. **Phase 1.1-1.3**: Add JSON config entries (can test loading immediately)
 2. **Phase 2.1-2.3**: Create fixed level generator infrastructure
-3. **Phase 3.1-3.5**: Design and implement prologue layout
-4. **Phase 5.1-5.3**: Integrate into game flow (playable prologue)
-5. **Phase 4.1-4.4**: Add tutorial system (enhanced guidance)
-6. **Phase 6.1-6.4**: Testing and polish
+3. **Phase 3.1-3.4**: Design and implement prologue layout
+4. **Phase 5.1-5.6**: Integrate into game flow (playable prologue)
+5. **Phase 6.1-6.4**: Testing and polish
+
+**Note**: Phase 4 (Tutorial System) is now minimal - just verify the two dialogues work.
 
 This order allows for playable milestones:
-- After Phase 3: Prologue level exists but no tutorial hints
-- After Phase 5: Full prologue flow works
-- After Phase 6: Polished tutorial experience
+- After Phase 3: Prologue level can be generated
+- After Phase 5: Full prologue flow works (menu → play → complete/die → menu)
+- After Phase 6: Layout playtested and tuned
 
 ---
 
@@ -1388,7 +1332,8 @@ These questions have been resolved based on user input and typical roguelike pat
    - Simple, predictable behavior
 
 4. **Death in prologue**: **Restart prologue (no permadeath)**
-   - Tutorial deaths show educational message about permadeath
+   - Death shows minimal "DE-RESOLVED" message, restarts immediately
+   - No explanation of permadeath - let them discover that in the real game
    - Restart prologue with reset stats
    - No save file created/deleted during prologue
 
