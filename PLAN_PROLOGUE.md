@@ -140,6 +140,13 @@
 23. New thought: `diagonal_discover` (Sixth Review)
 24. Death hint system: `DEATH_HINTS` dict, `prologue_death_count`, `last_death_section` (Sixth Review)
 25. `get_death_hint()` function and dialogue integration (Sixth Review)
+26. New thought: `stealth_choice` for Section 5 left path (Seventh Review)
+27. Heat threshold lowered to 40 for `heat_high` trigger (Seventh Review)
+28. TOO CLOSE audio cue in `get_visibility_status()` (Seventh Review)
+29. New thoughts: `cooling_node_use`, `cpu_node_use`, `ghost_node_use` (Eighth Review)
+30. Heat-specific death hint: `heat_death` when player dies with heat > 60 (Eighth Review)
+31. Admin foreshadowing in completion dialogue: "Stay too long, and something worse than guards will find you" (Eighth Review)
+32. Movement queue teaching explicitly called out in Section 1 design (Eighth Review)
 
 **Key File Touch Points:**
 | File | Critical Changes |
@@ -270,7 +277,7 @@ Add new entries:
 ```json
 "prologue_messages": {
   "intro": "Remote uplink active. Reach the gateway.",
-  "completion": "Gateway reached. You are ready.",
+  "completion": "Gateway reached. You are ready.\n\nThe real networks won't be this forgiving. Stay too long, and something worse than guards will find you.",
   "death": "CONNECTION LOST",
   "restart": "Re-establishing uplink... I know more now."
 },
@@ -291,16 +298,21 @@ Add new entries:
   "exploit_ranged_practice": "The exploit worked from a distance. Useful.",
   "utility_pickup": "This one reveals enemy vision... not all exploits are weapons.",
   "code_hack_discovery": "The effect matched the color. Worth remembering.",
-  "intent_observe": "I can see where it's going... gives me time to plan.",
+  "intent_observe": "I can see where it's going... the next three moves.",
   "heat_high": "Running hot... need to cool down.",
-  "gateway_spotted": "The gateway. I can see it from here..."
+  "cooling_node_use": "Heat dissipating... these nodes are useful.",
+  "cpu_node_use": "Systems restored. Good to know these exist.",
+  "ghost_node_use": "Invisible... but only for a moment.",
+  "stealth_choice": "The quieter route. Worth the extra steps.",
+  "gateway_spotted": "The gateway. Almost there."
 },
 "prologue_death_hints": {
   "section_1": "Next time, wait for an opening...",
   "section_2": "Distance matters. Too close and they see through everything.",
   "section_3": "Need to break their line of sight faster.",
   "section_4": "There must be a way to reach them from here...",
-  "section_5": "Patience. Watch the pattern."
+  "section_5": "Patience. Watch the pattern.",
+  "heat_death": "Overheated... those nodes might help next time."
 }
 ```
 
@@ -316,8 +328,8 @@ Add new entries:
 - `exploit_ranged_practice`: Confirms ranged exploit use in low-stakes practice
 - `utility_pickup`: Teaches that exploits have variety beyond damage
 - `code_hack_discovery`: Teaches color = effect pattern for code hacks
-- `intent_observe`: Teaches reading enemy movement prediction
-- `gateway_spotted`: Updated to trigger earlier via wall gap
+- `intent_observe`: Teaches reading enemy movement queue (next 3 moves visible)
+- `gateway_spotted`: Triggers when gateway enters FOV
 - `restart`: Updated to acknowledge player learning ("I know more now")
 
 **New elements added (Sixth Review):**
@@ -325,7 +337,23 @@ Add new entries:
 - `prologue_death_hints`: Section-specific reflections shown after death (implicit, not explicit tips)
 - Code hack relocated from Section 2 to Section 3 (cleaner lesson separation)
 
+**New elements added (Seventh Review):**
+- `stealth_choice`: Acknowledges player choice when taking left (stealth) path in Section 5
+- `intent_observe`: Updated to explicitly mention "next three moves" (the movement queue)
+- Permadeath foreshadowing added to completion dialogue
+- Heat threshold for `heat_high` lowered to 40 (triggers after 2 Code Injections at 20 heat each)
+- TOO CLOSE audio cue implementation details added to Phase 4.5
+
+**New elements added (Eighth Review):**
+- Node usage thoughts: `cooling_node_use`, `cpu_node_use`, `ghost_node_use` (confirms node mechanics work)
+- Heat-specific death hint: `heat_death` shown when player dies with heat > 60 (replaces section-based hint)
+- Admin foreshadowing: Completion dialogue now hints at 100% trace consequence ("something worse than guards")
+- Movement queue teaching: Section 1 explicitly teaches reading the 3-move enemy intent display
+- Section 5 branching clarity: LEFT (safer, ghost node reward) vs RIGHT (faster, riskier) tradeoff documented
+
 **Death hints philosophy**: Death hints are phrased as internal reflections ("Next time, wait for an opening...") rather than explicit instructions ("Tip: Press '.' to wait"). This maintains the show-don't-tell approach even when providing post-death guidance.
+
+**Heat death detection**: If player dies with heat > 60 (indicating exploit overuse), show `heat_death` hint instead of section-based hint. This provides specific guidance for the actual cause of death.
 
 **What was removed**: 8 external hint messages (movement, shadow, stealth attack, exploit, node, code hack, gateway). These are replaced by sparse internal thoughts triggered by specific situations.
 
@@ -830,13 +858,14 @@ This approach:
 - **Scanner** (STATIC): For blind spot range lesson (can't chase, safe to learn from)
 
 ```
-SECTION 1: The Chokepoint (teaches TURN-BASED + WAIT)
+SECTION 1: The Chokepoint (teaches TURN-BASED + WAIT + MOVEMENT QUEUE)
 - Narrow corridor with Patrol walking back and forth
 - Patrol BLOCKS the only passage - player MUST wait for opening
 - Player discovers: when I move, it moves. Pressing '.' lets me wait.
+- MOVEMENT QUEUE VISIBLE: Patrol's next 3 moves shown - player can read pattern
+- Thought triggers: "It moves when I move..." then "I can see where it's going..."
 - Exploit pickup AFTER the chokepoint (reward for learning WAIT)
-- Thought: "It only moves when I do... I should wait for an opening."
-- CRITICAL: This teaches the two most fundamental roguelike actions
+- CRITICAL: This teaches turn-based, waiting, AND reading enemy intent
 
 SECTION 2: The Blind Spot Trap (teaches blind spots work AT DISTANCE ONLY)
 - Scanner at end of corridor (STATIC, vision 5)
@@ -868,8 +897,9 @@ SECTION 4: The Gap (teaches ranged exploits)
 
 SECTION 5: Final Approach (player choice - branching synthesis)
 - TWO distinct paths to gateway (LEFT and RIGHT)
-- LEFT path: Stealth approach with blind spots + ghost node reward
-- RIGHT path: More exposed but direct to gateway
+- LEFT path: Stealth approach with blind spots + ghost node reward (safer, slower)
+- RIGHT path: Shorter but exposed - faster if you can handle combat (riskier, faster)
+- CLEAR TRADEOFF: Ghost node (temporary invisibility) vs speed
 - Patrol guards the center area between paths
 - Multiple valid strategies:
   a) Left stealth: Time patrol, use blind spots, collect ghost node
@@ -877,6 +907,7 @@ SECTION 5: Final Approach (player choice - branching synthesis)
   c) Mixed: Start one path, adapt based on patrol position
 - Gateway clearly visible - player owns their strategy
 - This section tests everything learned, doesn't teach new mechanics
+- Thought on left path: "The quieter route. Worth the extra steps."
 ```
 
 **Design principles**:
@@ -933,13 +964,14 @@ d = Code hack (teaches color = effect discovery)
 | 1a | Diagonal movement | L-shaped wall corner near spawn | Diagonal cuts corner (2 moves vs 3) - natural discovery |
 | 1a | Turn-based observation | Patrol visible from spawn row | Player sees "it moves when I move" BEFORE any risk |
 | 1a | Melee combat | Damaged Scanner blocks exit | MUST bump to attack - safe first combat (0 damage enemy) |
-| 1b | WAIT action | Patrol blocks corridor access | MUST time entry - active learning after observation |
+| 1b | WAIT action + Movement queue | Patrol blocks corridor access | MUST time entry - movement queue shows next 3 moves to help |
 | 2 | Blind spots at RANGE | Blind spot trail leads TO Scanner | Forces failure when adjacent + TOO CLOSE feedback |
 | 3 | Alert + FOV bidirectionality | Patrol route crosses entry | Guaranteed encounter - "If I see them, they see me" |
 | 3 | Non-combat exploit (Threat Scan) | Threat Scan in escape area | Teaches not all exploits are weapons |
 | 3 | Code hack discovery | Code hack near CPU node in escape area | Reward after escaping - teaches color = effect |
 | 4 | Ranged exploits + Heat | Patrol across gap (constrained), Code Injection guaranteed | Predictable target, Cooling Node teaches recovery |
-| 5 | Synthesis + Branching | LEFT stealth path vs RIGHT combat path | Player chooses strategy - meaningful decision |
+| 4 | Node usage (Cooling) | Cooling node after combat | Natural use point - player just generated heat |
+| 5 | Synthesis + Branching | LEFT stealth path vs RIGHT combat path | Player chooses strategy - Ghost node vs speed tradeoff |
 
 **Critical layout requirements:**
 - Section 1a: L-shaped wall creates diagonal shortcut opportunity (optional but faster)
@@ -1100,6 +1132,18 @@ game_engine.prologue_spotted_in_blind_spot = False
 
 **Implementation location**: Add to `src/rsp/ui/status_bar.py` with a prologue mode check. The `prologue_spotted_in_blind_spot` flag is set in `turn_manager.py` when detecting blind spot adjacency failure.
 
+**Audio cue for TOO CLOSE**: When `spotted_in_blind_spot` is True, play a short audio cue to reinforce the visual feedback. Reuse the alert sound at lower volume:
+
+```python
+# In get_visibility_status() or the calling code:
+if spotted_in_blind_spot and in_blind_spot:
+    # Play audio cue (alert sound at 50% volume)
+    game_engine.sound_manager.play_sound("alert", volume=0.5)
+    return "TOO CLOSE!", Colors.ALERT_RED
+```
+
+This provides multi-sensory feedback: visual (red text flash), audio (alert sound), and narrative (internal thought "Too close!"). The combination reinforces the blind spot range rule through multiple channels.
+
 ### 4.6 Reactive Internal Voice System (IMPLEMENT)
 
 Tutorial guidance delivered as the protagonist's internal thoughts - **reactive to player actions**, not pre-emptive instructions. The character reflects on what just happened, teaching through experience.
@@ -1212,7 +1256,34 @@ PROLOGUE_THOUGHTS = {
         "color": Colors.DIM_CYAN,
     },
 
-    # === SECTION 5: GATEWAY ===
+    # === NODE USAGE ===
+    # Confirmation: cooling node works
+    "cooling_node_use": {
+        "trigger": "player_uses_cooling_node",
+        "message": "Heat dissipating... these nodes are useful.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Confirmation: CPU recovery node works
+    "cpu_node_use": {
+        "trigger": "player_uses_cpu_node",
+        "message": "Systems restored. Good to know these exist.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Confirmation: ghost node works
+    "ghost_node_use": {
+        "trigger": "player_uses_ghost_node",
+        "message": "Invisible... but only for a moment.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 5: PLAYER CHOICE ===
+    # Acknowledgment: player chooses stealth path
+    "stealth_choice": {
+        "trigger": "player_enters_section_5_left_path",
+        "message": "The quieter route. Worth the extra steps.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Gateway spotted
     "gateway_spotted": {
         "trigger": "gateway_enters_fov",
         "message": "The gateway. Almost there.",
@@ -1257,7 +1328,11 @@ def reset_prologue_thoughts():
 | `alert_escape_success` | `turn_manager.py` state transition | ALERT -> UNAWARE transition |
 | `exploit_observe` | `input_handler.py` bump detection | Move into wall, visible enemy within 5 tiles |
 | `exploit_success` | `combat.py` after kill | Enemy killed by exploit (not melee) |
-| `heat_high` | `combat.py` after exploit use | Player heat > 60 (threshold for warning) |
+| `heat_high` | `combat.py` after exploit use | Player heat >= 40 (triggers after 2 Code Injections) |
+| `cooling_node_use` | `game_map.py` node interaction | First time player uses cooling node |
+| `cpu_node_use` | `game_map.py` node interaction | First time player uses CPU recovery node |
+| `ghost_node_use` | `game_map.py` node interaction | First time player uses ghost node |
+| `stealth_choice` | `input_handler.py` position check | Player enters left path area in Section 5 (x <= 5, y >= 22) |
 | `gateway_spotted` | `visibility_manager.py` FOV update | Gateway position enters visible tiles |
 
 **Example player experience:**
@@ -1664,7 +1739,7 @@ def create_prologue_completion_dialogue() -> DialogueBox:
     """Create prologue completion dialogue (returns to main menu)."""
     return DialogueBox(
         title="UPLINK ESTABLISHED",
-        message="Gateway reached. You are ready.",
+        message="Gateway reached. You are ready.\n\nThe real networks won't be this forgiving. Stay too long, and something worse than guards will find you.",
         options=["[ENTER] Continue"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.GREEN,
@@ -1693,8 +1768,11 @@ def create_prologue_death_dialogue(cause: str) -> DialogueBox:
 
 **What changed from original**:
 - Intro: Removed "Welcome", removed explanation of what training teaches, removed "Failure is not permanent" (let them discover that)
-- Completion: Removed "Neural interface calibrated" technobabble, removed instructions to select New Game
-- Death: Removed "In live infiltration, this would be permanent" - don't explain permadeath, let them experience it in the real game
+- Completion: Removed "Neural interface calibrated" technobabble, removed instructions to select New Game. Added subtle permadeath foreshadowing: "The real networks won't be this forgiving."
+- Death: Removed "In live infiltration, this would be permanent" - don't explain permadeath explicitly, just foreshadow it in completion
+
+**Eighth Review changes**:
+- Completion dialogue now includes Admin foreshadowing: "Stay too long, and something worse than guards will find you." This hints at 100% trace consequences without explicit explanation.
 
 ### 5.7 Files to Modify (Phase 5)
 
