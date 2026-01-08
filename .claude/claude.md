@@ -48,6 +48,7 @@
 
 - ALWAYS check official docs BEFORE assuming API behavior
 - Research first, implement second
+- **PLAN files**: Keep current state only - no revision history, no "Review N" sections. Git tracks history.
 
 ---
 

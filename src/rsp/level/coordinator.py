@@ -100,11 +100,17 @@ class GameLevelCoordinator:
 
             fixed_gen = FixedLevelGenerator(self.game_engine.game_map, self.game_engine)
             layout = get_prologue_layout()
-            spawn_pos, enemies = fixed_gen.generate_from_layout(layout, self.game_engine.level)
+            spawn_pos, enemies, layout_data = fixed_gen.generate_from_layout(
+                layout, self.game_engine.level
+            )
 
-            # Add enemies to enemy_manager
+            # Add enemies to enemy_manager with fixed patrol routes
             for enemy in enemies:
                 self.game_engine.enemy_manager.enemies.append(enemy)
+                # Assign fixed patrol routes for deterministic behavior
+                spawn_key = (enemy.position.x, enemy.position.y)
+                if spawn_key in layout_data.patrol_routes:
+                    enemy.patrol_points = layout_data.patrol_routes[spawn_key]
 
             # Set player spawn position
             self.game_engine.player.x = spawn_pos.x

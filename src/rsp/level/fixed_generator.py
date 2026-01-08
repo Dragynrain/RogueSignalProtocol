@@ -45,7 +45,7 @@ class FixedLevelGenerator:
 
     def generate_from_layout(
         self, layout_data: FixedLevelData, level: int = 0
-    ) -> tuple[Position, list[Enemy]]:
+    ) -> tuple[Position, list[Enemy], FixedLevelData]:
         """
         Generate map from fixed layout, populating game_map directly.
 
@@ -57,7 +57,8 @@ class FixedLevelGenerator:
             level: Level number (0 for prologue)
 
         Returns:
-            Tuple of (player_spawn_position, list_of_enemies)
+            Tuple of (player_spawn_position, list_of_enemies, layout_data)
+            The layout_data is returned for access to patrol_routes etc.
         """
         spawn_pos = None
         enemies = []
@@ -108,7 +109,7 @@ class FixedLevelGenerator:
             f"spawn={spawn_pos}, enemies={len(enemies)}, gateway={self.game_map.gateway}"
         )
 
-        return spawn_pos, enemies
+        return spawn_pos, enemies, layout_data
 
     def _clear_map_data(self):
         """Clear all existing map data before generating."""

@@ -92,7 +92,7 @@ class TestGenerateFromLayout:
             ]
         )
 
-        spawn_pos, enemies = self.generator.generate_from_layout(layout)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(layout)
 
         assert spawn_pos == Position(1, 1)
         assert self.game_map.gateway == Position(3, 1)
@@ -151,7 +151,7 @@ class TestGenerateFromLayout:
             ]
         )
 
-        spawn_pos, enemies = self.generator.generate_from_layout(layout)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(layout)
 
         assert len(enemies) == 1
         assert enemies[0].type == "patrol"
@@ -167,7 +167,7 @@ class TestGenerateFromLayout:
             ]
         )
 
-        spawn_pos, enemies = self.generator.generate_from_layout(layout)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(layout)
 
         assert len(enemies) == 1
         assert enemies[0].type == "scanner"
@@ -184,7 +184,7 @@ class TestGenerateFromLayout:
             ]
         )
 
-        spawn_pos, enemies = self.generator.generate_from_layout(layout)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(layout)
 
         assert len(enemies) == 1
         assert enemies[0].type == "scanner"
@@ -297,7 +297,7 @@ class TestGenerateFromLayout:
             ]
         )
 
-        spawn_pos, enemies = self.generator.generate_from_layout(layout)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(layout)
 
         assert spawn_pos == Position(1, 1)
 
@@ -356,14 +356,14 @@ class TestPrologueLayoutGeneration:
 
     def test_prologue_generates_without_error(self):
         """Prologue layout generates successfully."""
-        spawn_pos, enemies = self.generator.generate_from_layout(self.prologue_layout, level=0)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(self.prologue_layout, level=0)
 
         assert spawn_pos is not None
         assert isinstance(spawn_pos, Position)
 
     def test_prologue_spawn_position(self):
         """Prologue spawn is at (1, 1)."""
-        spawn_pos, enemies = self.generator.generate_from_layout(self.prologue_layout, level=0)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(self.prologue_layout, level=0)
 
         assert spawn_pos == Position(1, 1)
 
@@ -375,7 +375,7 @@ class TestPrologueLayoutGeneration:
 
     def test_prologue_has_enemies(self):
         """Prologue generates enemies."""
-        spawn_pos, enemies = self.generator.generate_from_layout(self.prologue_layout, level=0)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(self.prologue_layout, level=0)
 
         assert len(enemies) > 0
 
@@ -404,7 +404,7 @@ class TestPrologueLayoutGeneration:
 
     def test_prologue_damaged_scanner_has_5hp(self):
         """Damaged Scanner in prologue has 5 HP."""
-        spawn_pos, enemies = self.generator.generate_from_layout(self.prologue_layout, level=0)
+        spawn_pos, enemies, _ = self.generator.generate_from_layout(self.prologue_layout, level=0)
 
         # Find the damaged scanner (X is at position near spawn)
         damaged_scanner = None
