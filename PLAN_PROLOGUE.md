@@ -1,17 +1,233 @@
 # Prologue Level Implementation Plan
 
+## Mechanic Reference (from codebase analysis)
+
+**This section documents ACTUAL game mechanics. Tutorial design MUST match these.**
+
+### Enemy States (turn_manager.py)
+- **UNAWARE**: Default. Patrols/wanders. No hostility.
+- **ALERT**: Triggered when enemy sees player. **1 turn grace period.** Player can break LOS to de-escalate.
+- **HOSTILE**: Pursues player, increases trace. 15% chance per turn to de-escalate if player escapes LOS.
+
+### Blind Spots (characters.py lines 359-362)
+- **Only block vision at range > 1**
+- **Adjacent enemies (grid distance ≤ 1) SEE THROUGH blind spots**
+- Provide +10 stealth attack bonus
+- Ghost nodes also function as blind spots
+
+### Enemy Movement Types (game_content.json)
+- **Scanner**: STATIC (never moves), vision 5, no damage
+- **Patrol**: PATROL (follows routes), vision 4, damage 10
+- **Bot**: RANDOM (wanders unpredictably), vision 3, damage 8 - NOT USED in prologue (replaced with Patrol)
+
+### Patrol Behavior (enemies.py)
+- Follow 2-4 waypoint routes (line, triangle, rectangle patterns)
+- When hostile: break pattern, chase player
+- When player escapes: **return to exact patrol waypoint**
+- Store `original_patrol_index` when going hostile
+
+### Combat (combat.py)
+- Player CAN kill any enemy with exploits
+- Buffer Overflow: melee, 40 damage
+- Code Injection: range 5, 25 damage
+- Heat builds up, limiting exploit spam
+- **Tutorial cannot force stealth - combat is always an option**
+
+### Vision (characters.py can_see_player)
+1. Disabled enemies can't see
+2. Admin always sees (omniscient)
+3. Range check (Euclidean distance)
+4. Invisibility check (Traffic Masquerade)
+5. Blind spot check (only at range > 1)
+6. TCOD FOV check (walls block)
+
+---
+
 ## Design Philosophy: Show Don't Tell
 
-**This prologue teaches through environmental design, not text explanations.**
+**This prologue teaches through environmental design and internal character voice, not external explanations.**
+
+**CRITICAL CONSTRAINTS:**
+1. Use only REAL game mechanics - no tutorial-only elements
+2. Player CAN kill any enemy - can't force "must sneak"
+3. Blind spots only work at range - can't hide adjacent to enemies
+4. Encourage optimal behavior through layout, don't block alternatives
 
 | Instead of... | We do... |
 |--------------|----------|
-| Popup: "Shadows hide you from enemies" | Narrow corridor with patrolling enemy + shadow alcove as only safe spot |
-| Hint: "Use exploits for ranged combat" | Enemy behind wall gap - melee impossible, exploit is only option |
-| Message: "Nodes heal/cool you" | Recovery node placed in shadow escape route after forced combat |
-| Tutorial objectives checklist | Level sections that physically require using each mechanic |
+| Popup: "Enemies move when you move" | Patrol visible through wall gap + thought: "It only moves when I do..." |
+| Popup: "Blind spots hide you at range" | Layout where blind spot saves you from distant enemy, not adjacent |
+| Popup: "Alert gives you 1 turn to escape" | Patrol spots player, they flee to break LOS before HOSTILE |
+| Hint: "Use exploits for ranged combat" | Enemy across gap + thought: "Can't reach them... exploit might work" |
+| Message: "Nodes restore resources" | Node placed where player naturally needs it |
+| Tutorial objectives checklist | Sections where optimal path uses the mechanic |
 
-**Result**: Player discovers mechanics through play. They feel clever for figuring things out, not lectured at.
+**Key insight**: Tutorial encourages, doesn't force. Stealth should be EASIER than combat, not mandatory.
+
+---
+
+## Usability Review (2026-01-07)
+
+This plan was reviewed for newcomer-friendliness and improved with:
+
+**Diegetic Framing** - Replaced "Training Simulation" with immersive narrative:
+- Title: "FIRST INFILTRATION" (not a simulation - it's real)
+- Completion: "UPLINK ESTABLISHED" (success feels earned)
+- Death: "CONNECTION LOST" (diegetic restart framing)
+
+**Minimal Controls Reference** - Reduced to single hint:
+```
+Press ? for help.
+```
+No control listing - let players discover naturally or press ? if stuck. Most will just start pressing arrow keys.
+
+**Continuous Visibility Feedback** - Player visibility state shown persistently:
+- "CONCEALED" status when in blind spot tiles (subtle purple text in status bar)
+- "EXPOSED" status when in open (subtle white text)
+- Status updates in real-time as player moves, teaching the hidden/visible binary that stealth depends on
+
+**Zero Trace in Prologue** - Set `trace_alert_to_hostile: 0` and `trace_continuous_hostile: 0`. Players learn movement, blind spots, and combat without trace complexity. They'll experience trace pressure in Level 1 where stakes are real.
+
+---
+
+## Major Improvements (2026-01-07 Second Review)
+
+After feedback on roguelike/stealth newcomer experience, significant improvements were made:
+
+**CRITICAL DESIGN RULE: NO FAKE MECHANICS**
+- Every element in the prologue must exist in the real game
+- No tutorial-only enemies, hazards, or systems
+- Player learns REAL mechanics, not approximations
+
+**1. Turn-Based Teaching (Section 1: The Window)** - NEW
+- Patrol visible behind wall gap (REAL enemy, PATROL movement)
+- Player observes it moving ONLY when they move
+- Teaches the foundational roguelike lesson before any risk
+- This is THE critical concept everything else builds on
+- NOTE: Uses Patrol (not Scanner) because Scanner is STATIC and doesn't move!
+
+**2. Wait/Timing Teaching (Section 2: The Chokepoint)** - ENHANCED
+- Patrol follows route through narrow corridor (REAL PATROL behavior)
+- Player must time movement or WAIT for opening
+- Blind spot alcove for safe observation before committing
+- Uses actual patrol mechanics, not fake hazards
+
+**3. Exploit Practice Before Stakes (Section 5)** - NEW
+- Patrol with constrained route across small gap (REAL enemy type)
+- Player uses exploit in lower-stakes situation first
+- Builds confidence before Section 6's challenge
+- Reduces gap between "get exploit" and "must use exploit"
+
+**4. Layout Redesigned for Pacing** - CHANGED
+- Better pacing: observe → timing → combat → practice → choice
+- Each mechanic has a "safe observation" phase before engagement
+- All using REAL game elements
+
+**5. Continuous Visibility Status** - ENHANCED
+- Not just one-time "CONCEALED" message
+- Persistent status bar indicator: CONCEALED (purple) / EXPOSED (white)
+- Teaches the hidden/visible binary stealth games depend on
+
+**6. Reactive Internal Voice** - NEW
+- Tutorial guidance delivered as character thoughts REACTING to player actions
+- Responds to outcomes (success/failure), not pre-emptive hints
+- Examples of reactive pairs:
+  - Observation: "It moves when I move..." → Failure: "Should have waited for it to pass."
+  - Observation: "A blind spot... they might not see me here." → Failure: "Too close! They can see right past it."
+  - Success confirms learning: "Timing. That's the key." / "The blind spot worked... but only because I kept my distance."
+- Each thought triggers ONCE, but failure and success are separate
+- Teaches through consequence, creates natural "aha!" moments
+
+---
+
+## Newcomer Experience Improvements (2026-01-07 Third Review)
+
+Critical improvements to ensure roguelike and stealth newcomers actually learn mechanics:
+
+**1. WAIT Action Now Explicitly Taught (Section 1)**
+- Changed from passive observation (Patrol behind wall) to active requirement
+- Patrol now BLOCKS the only corridor - player MUST use WAIT (`.`) to let it pass
+- Combined turn-based and WAIT into single foundational lesson
+- Internal thought: "It only moves when I do... I should wait for an opening."
+
+**2. Blind Spot Range Rule Now Forced (Section 2)**
+- Redesigned as "Blind Spot Trap" - obvious path leads adjacent to Scanner
+- Player WILL get spotted in blind spot when adjacent (forced failure state)
+- Alternate path at range clearly visible after failure
+- Two-part thought sequence: failure message, then success message
+- Scanner is STATIC so failure is safe - no chase, no death
+
+**3. Alert Encounter Now Guaranteed (Section 3)**
+- Uses Patrol with route crossing player entry (predictable, guaranteed encounter)
+- Patrol's predictable route ensures encounter is not RNG-dependent
+- Every player will experience the alert/escape mechanic
+
+**4. Controls Added to Intro Dialogue**
+- Added: "Arrow keys to move. Period (.) to wait."
+- Changed: "Press ? for help" to "Press ? for full controls"
+- No longer assumes players will discover movement keys
+
+**5. Internal Voice Now Reactive (Not Pre-emptive)**
+- Changed from "hints before action" to "reflection after outcome"
+- Each mechanic now has observation/failure/success thoughts:
+  - `turn_based_observe` → `wait_fail` / `wait_success`
+  - `blindspot_observe` → `blindspot_adjacent_fail` / `blindspot_range_success`
+  - `alert_to_hostile_fail` / `alert_escape_success`
+- Player learns through consequence, not instruction
+- Success thoughts confirm understanding ("Timing. That's the key.")
+
+**What Was NOT Changed:**
+- Exploit timing: Given in Section 1, used in Section 4 (2 sections gap is reasonable)
+- No "guaranteed death" moment - prologue death is optional, not forced
+- Gamepad not mentioned - controls hint covers keyboard; gamepad users know their setup
+
+---
+
+## Newcomer Experience Improvements (2026-01-07 Fourth Review)
+
+After analysis of roguelike and stealth newcomer experience, six additional improvements:
+
+**1. Melee Combat Teaching (Section 1)** - NEW
+- Added damaged Scanner (5 HP) blocking spawn alcove exit
+- Player MUST bump into it to proceed - teaches "walk into enemy = attack"
+- Scanner is STATIC and deals 0 damage - completely safe first combat
+- Happens BEFORE the Patrol timing lesson - establishes combat basics first
+- Internal thought after kill: "Walking into them... that works."
+
+**2. Blind Spot Trap Enhanced Feedback (Section 2)** - IMPROVED
+- When player spotted in blind spot while adjacent: status flashes "TOO CLOSE!" in red
+- Provides immediate visual feedback connecting distance to detection
+- The reactive thought "Too close! They can see right past it." reinforces the lesson
+- Alternate path made MORE visible - clear blind spot trail at range 3-4
+
+**3. Exploit Thought More Helpful (Section 4)** - IMPROVED
+- Changed from: "Can't reach them from here..."
+- Changed to: "Can't reach them from here... maybe an exploit would work."
+- More direct hint for players who forgot they have an exploit
+- Still feels like natural internal reasoning, not instruction
+
+**4. Heat Management Teaching (Section 4)** - CLARIFIED
+- Patrol HP set so player needs 2 Code Injection uses to kill
+- This naturally depletes heat, making Cooling Node placement meaningful
+- Added observation thought when heat is high: "Running hot... need to cool down."
+- Cooling Node positioned so player walks over it naturally after combat
+
+**5. FOV Bidirectionality Teaching (Section 1)** - NEW
+- Added thought when first spotted by Patrol: "If I can see them, they can see me."
+- Teaches the fundamental stealth game concept that vision is bidirectional
+- Triggers on first ALERT state - natural learning moment
+
+**6. Death Restart Messaging (Dialogue)** - IMPROVED
+- Changed death dialogue from just "CONNECTION LOST"
+- Now shows: "CONNECTION LOST" then "Re-establishing uplink..."
+- Makes restart feel intentional, not like a bug
+- Clearer that progress reset is by design
+
+**What Was NOT Changed:**
+- Overall 5-section structure remains intact
+- All enemies still use real game mechanics (no fake tutorial enemies)
+- Trace remains at zero - learned in real game
+- Combat always optional except for Section 1 damaged Scanner
 
 ---
 
@@ -21,7 +237,7 @@ This plan has been reviewed and enhanced with 8 additional gaps (GAP 18-25) addr
 - **State reset completeness** (GAP 18): Prologue restart now resets inventory, turn counter, admin flag, message log, and FOV cache
 - **Missing helper methods** (GAP 19): `InventoryManager.clear_all()` needed for clean restart
 - **Gateway handling** (GAP 20): Decision needed on whether to skip confirmation dialogue in prologue
-- **Consistency fixes** (GAP 21-22): Level start message skip on restart, layout dimension correction (26x20 not 25x20)
+- **Consistency fixes** (GAP 21-22): Level start message skip on restart, layout dimension correction (28x25)
 - **Metrics isolation** (GAP 23): Prologue sessions should not pollute achievement metrics
 - **Difficulty normalization** (GAP 24): Force ascension_level=0 in prologue
 - **ESC handling safety** (GAP 25): Prevent ESC-to-menu during prologue dialogues
@@ -49,6 +265,26 @@ See **"Additional Gaps Found in Review (Post-GAP 17)"** section near end for ful
 - `death_handler.reset()` method already exists - use it for prologue restart
 - Tutorial enemies use normal AI with reduced HP - no special behavior modification needed
 
+**Layout Dimensions:** 28 wide x 25 tall
+
+**Design Elements (ALL REAL GAME MECHANICS):**
+- `X` = Damaged Scanner (STATIC, 5 HP - Section 1: melee teaching, safe first combat)
+- `P` = Patrol (PATROL movement - Sections 1, 3, 4, 5: predictable routes for reliable teaching)
+- `S` = Scanner (STATIC - Section 2: blind spot trap, can't chase so safe to fail against)
+- `s` = Blind spots (hide at range > 1 ONLY - adjacent enemies see through!)
+- `c/r/g` = Nodes (real items)
+- `e` = Exploit (real item)
+- Continuous CONCEALED/EXPOSED/TOO CLOSE status indicator (prologue-only UI)
+- Internal character voice (prologue-only guidance)
+
+**Key Mechanic Teaching:**
+- Section 1a: Melee combat (Damaged Scanner blocks exit - must bump to attack)
+- Section 1b: Turn-based + WAIT (Patrol blocks corridor - must wait)
+- Section 2: Blind spots work at RANGE ONLY (Blind spot trap forces adjacent failure, TOO CLOSE feedback)
+- Section 3: Alert grace period + FOV bidirectionality (Patrol crosses path - guaranteed encounter)
+- Section 4: Ranged combat + Heat (Patrol across gap, 2 Code Injection uses, Cooling Node)
+- Section 5: Synthesis (Patrol, multiple paths - tests all learned mechanics)
+
 **Must-Add Items Not In Original Phases:**
 1. `get_prologue_layout()` function in `fixed_levels.py` (GAP 1)
 2. Prologue flag initialization in `engine.py` `__init__` (GAP 3)
@@ -57,14 +293,23 @@ See **"Additional Gaps Found in Review (Post-GAP 17)"** section near end for ful
 5. `InventoryManager.clear_all()` method (GAP 19)
 6. Force `ascension_level=0` in prologue mode (GAP 24)
 7. Expanded `_restart_prologue()` with full state reset (GAP 18)
+8. `get_visibility_status()` in status_bar.py (prologue UI with TOO CLOSE flash)
+9. Internal character voice system with `shown_thoughts` tracking
+10. `reset_prologue_thoughts()` call on prologue restart
+11. `prologue_spotted_in_blind_spot` flag in engine.py (Fourth Review)
+12. `ENEMY_HP_OVERRIDES` dict in fixed_generator.py for X character (Fourth Review)
+13. New thoughts: `melee_success`, `fov_bidirectional`, `heat_high` (Fourth Review)
+14. Death restart message: "Re-establishing uplink..." (Fourth Review)
 
 **Key File Touch Points:**
 | File | Critical Changes |
 |------|-----------------|
 | `coordinator.py` | Fixed layout check BEFORE `generate_level()`, music selection at START |
 | `loop.py` | Tutorial action handler + ESC auto_save wrap |
-| `input/dialogue.py` | Add "TRAINING COMPLETE" and "DE-RESOLVED" checks in `handle_dismiss()` |
-| `engine.py` | `prologue_mode` param + flags + `_show_prologue_intro()` method |
+| `input/dialogue.py` | Add "UPLINK ESTABLISHED", "CONNECTION LOST", and "Re-establishing uplink..." |
+| `engine.py` | `prologue_mode` param + flags + `_show_prologue_intro()` + `prologue_spotted_in_blind_spot` |
+| `turn_manager.py` | Set `prologue_spotted_in_blind_spot` when blind spot adjacency failure detected |
+| `combat.py` | Trigger `melee_success` and `heat_high` thoughts |
 
 ---
 
@@ -95,7 +340,7 @@ During plan review, the following issues were identified and corrected:
 ### Verified as Correct
 
 - Level 0 config lookup works (fallback to level 1 only if key missing)
-- Map size difference (26x20 layout in 80x50 map) is handled by filling with walls
+- Map size difference (28x25 layout in 80x50 map) is handled by filling with walls
 - `get_controllers()` is safe in menu context (not during gameplay)
 
 ---
@@ -144,10 +389,10 @@ Add a new `"0"` entry to `network_configs` (place BEFORE the `"1"` entry):
 "0": {
   "enemies": 3,
   "blind_spot_coverage": 0.15,
-  "name": "Training Simulation",
+  "name": "First Infiltration",
   "background_trace": 0,
-  "trace_alert_to_hostile": 3,
-  "trace_continuous_hostile": 2,
+  "trace_alert_to_hostile": 0,
+  "trace_continuous_hostile": 0,
   "cooling_nodes": 1,
   "cpu_nodes": 1,
   "ghost_nodes": 1,
@@ -162,13 +407,13 @@ Add a new `"0"` entry to `network_configs` (place BEFORE the `"1"` entry):
 **IMPORTANT**: These counts are IGNORED for fixed layouts - they're only here for API compatibility. The fixed layout defines exact positions for all entities.
 
 Key differences from normal levels:
-- `background_trace: 0` - No passive trace gain (forgiving start)
-- `trace_alert_to_hostile: 3` - Small trace spike when spotted (teaches consequence without instant death)
-- `trace_continuous_hostile: 2` - Low but present continuous trace (creates pressure to resolve combat)
+- `background_trace: 0` - No passive trace gain
+- `trace_alert_to_hostile: 0` - No trace penalty when spotted (learn trace in real game)
+- `trace_continuous_hostile: 0` - No continuous trace from combat (focus on movement/combat basics)
 - `is_prologue: true` - Flag for special handling (death behavior, skip logic)
 - `fixed_layout: true` - Use hand-designed layout instead of procedural generation
 
-**Design philosophy**: Trace penalties are LOW but not ZERO. Player feels the pressure of detection without being overwhelmed. They learn that getting spotted has consequences they need to manage.
+**Design philosophy**: Trace is ZERO in prologue. Players learn movement, blind spots, and combat without the additional complexity of trace management. They'll experience trace pressure in Level 1 where the stakes are real and the mechanic has meaning.
 
 **NOTE**: The `is_prologue` and `fixed_layout` flags must be checked in:
 - `generator.py:generate_level()` - to skip procedural generation
@@ -178,18 +423,42 @@ Key differences from normal levels:
 
 ### 1.2 Add Prologue Narrative Content to `narrative_content.json`
 
-Add new entries (minimal - layout teaches, not text):
+Add new entries:
 
 ```json
 "prologue_messages": {
-  "intro": "Training environment initialized. Security response reduced. Reach the gateway.",
-  "completion": "Training complete. You are ready."
+  "intro": "Remote uplink active. Reach the gateway.",
+  "completion": "Gateway reached. You are ready.",
+  "death": "CONNECTION LOST",
+  "restart": "Re-establishing uplink..."
+},
+"prologue_thoughts": {
+  "melee_success": "Walking into them... that works.",
+  "turn_based_observe": "It moves when I move...",
+  "wait_fail": "Should have waited for it to pass.",
+  "wait_success": "Timing. That's the key.",
+  "fov_bidirectional": "If I can see them, they can see me.",
+  "blindspot_observe": "A blind spot... they might not see me here.",
+  "blindspot_adjacent_fail": "Too close! They can see right past it.",
+  "blindspot_range_success": "The blind spot worked... but only because I kept my distance.",
+  "alert_to_hostile_fail": "Too slow! Should have broken line of sight faster.",
+  "alert_escape_success": "Breaking line of sight... that bought me time.",
+  "exploit_observe": "Can't reach them from here... maybe an exploit would work.",
+  "exploit_success": "The exploit worked. Good to know.",
+  "heat_high": "Running hot... need to cool down.",
+  "gateway_spotted": "The gateway. Almost there."
 }
 ```
 
-**Design note**: Only two messages. The intro sets minimal context. The completion acknowledges success. Everything in between is taught by the level layout, not text.
+**Design note**: Only four system messages (intro/completion/death/restart). The `prologue_thoughts` are reactive - triggered by player actions (observations, failures, successes), not pre-emptive instructions. This feels like natural internal monologue, not a tutorial system.
 
-**What was removed**: 8 hint messages (movement, shadow, stealth attack, exploit, node, code hack, gateway). These are no longer needed because the level design forces players to discover these mechanics naturally.
+**New thoughts added (Fourth Review):**
+- `melee_success`: Teaches bump-to-attack after killing Damaged Scanner
+- `fov_bidirectional`: Teaches that vision works both ways when first spotted
+- `exploit_observe`: Now more helpful - mentions exploits explicitly
+- `heat_high`: Teaches heat management when heat exceeds threshold
+
+**What was removed**: 8 external hint messages (movement, shadow, stealth attack, exploit, node, code hack, gateway). These are replaced by sparse internal thoughts triggered by specific situations.
 
 ### 1.3 Add Prologue Tracking to User Settings
 
@@ -245,16 +514,16 @@ from rsp.entities.base import Position
 # Map legend:
 # '#' = Wall
 # '.' = Floor
-# 's' = Blind spot (shadow)
+# 's' = Blind spot
 # '@' = Player spawn
 # '>' = Gateway (exit)
 # 'c' = Cooling node
 # 'r' = CPU recovery node
 # 'g' = Ghost node
-# 'S' = Scanner enemy (disabled/tutorial mode)
-# 'B' = Bot enemy (reduced HP for tutorial)
-# 'P' = Patrol enemy (reduced HP for tutorial)
-# 'e' = Exploit pickup
+# 'X' = Damaged Scanner (5 HP, 0 damage - melee teaching)
+# 'S' = Scanner enemy (STATIC, vision 5)
+# 'P' = Patrol enemy (PATROL routes) - used for all mobile enemies in prologue
+# 'e' = Exploit pickup (always Code Injection in prologue)
 # 'd' = Code hack (data code)
 # '+' = Door/passage marker (floor tile, visual only)
 
@@ -284,35 +553,58 @@ class FixedLevelData:
 ### 2.2 Create Prologue Layout Definition
 
 Design goals for the prologue map:
-- Small size (26x20 tiles) for quick completion
-- Linear-ish progression teaching one mechanic at a time
-- Safe zones between lessons
-- Clear visual guidance
+- Size: 28x25 tiles
+- **Teaches correct mechanics**: Blind spots work at RANGE, not adjacent
+- Linear progression: Turn-based → Blind Spots → Alert/Escape → Combat → Choice
+- Each section can be completed multiple ways (stealth encouraged, combat allowed)
+- **ALL REAL MECHANICS**: Only uses elements that exist in the actual game
 
 ```python
 PROLOGUE_LAYOUT = """
-##########################
-#@....#........#.........#
-#.....#........#....S....#
-#.....#...c....#.........#
-#..sss#........#....#....#
-#..sss+........+....#....#
-#..sss#........#....#....#
-#.....############..#....#
-#.....#............s#....#
-#..d..#.....B......s#..e.#
-#.....#............s#....#
-#.....#.....r.......#....#
-#######.............######
-#sss..+.....g.......+...>#
-#sss..#.............#....#
-#sss..#.....P.......#....#
-#.....#.............#..d.#
-#..e..#....sss......#....#
-#.....#....sss......#....#
-##########################
+############################
+#@...P..+.e...............#
+#.X.#.....................#
+#...+.....................#
+#...#.....................#
+####+#####################
+#....+....................#
+#sss.#....................#
+#sss.#....................#
+#sss.+...........S........#
+#....#....................#
+#....#.........sss........#
+####+#########+###########
+#....+.........+....sss...#
+#....#....P....#....sss...#
+#....#....+....#....rss...#
+#....#....+....+....sss...#
+################....###+###
+#....#..c..############...#
+#....#.....####P####......#
+#....+.....####.####......#
+####+########.....#######+#
+#....+.....g.......#.sss..#
+#....#.........P...#.sss.>#
+############################
 """
 ```
+
+**Layout changes from review (2026-01-07):**
+1. **Section 1 observation**: Patrol moved to row 1, visible from spawn. Player observes turn-based movement BEFORE killing X.
+2. **Section 4 predictability**: Bot replaced with Patrol. Patrols follow routes (predictable), Bots wander (could leave zone). Wall added above to constrain movement.
+
+**ALL elements are real game mechanics (from game_content.json):**
+- `X` = Damaged Scanner (STATIC - 5 HP, vision 5, 0 damage - teaches melee combat safely)
+- `P` = Patrol (PATROL movement - follows routes, damage 10) - used in Sections 1, 3, 4, 5
+- `S` = Scanner (STATIC - doesn't move, vision 5, 0 damage)
+- `s` = Blind spot (hides player at range > 1 ONLY - adjacent enemies see through!)
+- `c/r/g` = Nodes (real items)
+- `e` = Code Injection exploit (guaranteed ranged for Section 4)
+
+**Enemy usage reasoning:**
+- Patrol (P): Used in ALL sections with mobile enemies - predictable routes enable guaranteed teaching
+- Scanner (S): Used in Section 2 - STATIC, can't chase, safe to fail against when learning
+- Bot NOT used: RANDOM movement could leave teaching zone; replaced with constrained Patrol
 
 ### 2.3 Implement FixedLevelGenerator Class
 
@@ -350,13 +642,17 @@ class FixedLevelGenerator:
 
     Used for tutorial levels and special hand-designed areas.
     Directly populates GameMap with walls, floors, nodes, and entities.
+
+    ALL REAL GAME MECHANICS - no tutorial-only elements.
     """
 
-    # Character to tile type mapping
-    FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'S', 'B', 'P', 'e', 'd', '+', 's'}
-    ENEMY_CHARS = {'S': 'scanner', 'B': 'bot', 'P': 'patrol'}
+    # Character to tile type mapping (ALL REAL GAME ELEMENTS)
+    FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'X', 'S', 'P', 'e', 'd', '+', 's'}
+    ENEMY_CHARS = {'X': 'scanner', 'S': 'scanner', 'P': 'patrol'}  # X = damaged scanner
     NODE_CHARS = {'c': 'cooling', 'r': 'cpu', 'g': 'ghost'}
     ITEM_CHARS = {'e': 'exploit', 'd': 'code_hack'}
+    # Special enemy HP overrides (X = damaged scanner, Section 4 patrol needs 2 exploits)
+    ENEMY_HP_OVERRIDES = {'X': 5}  # Damaged Scanner has 5 HP (one-shot with melee)
 
     def __init__(self, game_map, game_engine=None):
         self.game_map = game_map
@@ -400,7 +696,7 @@ class FixedLevelGenerator:
                 if char in self.FLOOR_CHARS:
                     self.game_map.walls.discard((x, y))
 
-                # Handle special characters
+                # Handle special characters (ALL REAL GAME ELEMENTS)
                 if char == '@':
                     spawn_pos = Position(x, y)
                 elif char == '>':
@@ -410,10 +706,12 @@ class FixedLevelGenerator:
                 elif char in self.NODE_CHARS:
                     self._place_node(x, y, self.NODE_CHARS[char])
                 elif char in self.ENEMY_CHARS:
-                    enemy = self._create_enemy(x, y, self.ENEMY_CHARS[char], layout_data)
+                    enemy = self._create_enemy(
+                        x, y, self.ENEMY_CHARS[char], layout_data, layout_char=char
+                    )
                     enemies.append(enemy)
                 elif char in self.ITEM_CHARS:
-                    self._place_item(x, y, self.ITEM_CHARS[char])
+                    self._place_item(x, y, self.ITEM_CHARS[char], level)
 
         if spawn_pos is None:
             logging.error("Fixed level has no player spawn (@)! Using (1,1)")
@@ -455,14 +753,28 @@ class FixedLevelGenerator:
             self.game_map.ghost_nodes[(x, y)] = RestoreNode(node_type="ghost")
 
     def _create_enemy(
-        self, x: int, y: int, enemy_type: str, layout_data: FixedLevelData
+        self, x: int, y: int, enemy_type: str, layout_data: FixedLevelData,
+        layout_char: str = None
     ) -> Enemy:
-        """Create enemy with optional tutorial overrides."""
+        """Create enemy with optional tutorial HP overrides.
+
+        Uses REAL enemy types only - scanner, bot, patrol.
+        X = Damaged Scanner (5 HP) for melee teaching.
+
+        Args:
+            x, y: Position
+            enemy_type: The actual enemy type (scanner, bot, patrol)
+            layout_data: Layout data with optional overrides
+            layout_char: Original character from layout (e.g., 'X' for damaged scanner)
+        """
         enemy = Enemy(Position(x, y), enemy_type)
 
-        # Apply tutorial HP reduction (enemies easier in prologue)
-        # Default: 50% HP for tutorial enemies
-        if enemy_type in layout_data.enemy_overrides:
+        # Apply HP override from layout character (e.g., X = damaged scanner)
+        if layout_char and layout_char in self.ENEMY_HP_OVERRIDES:
+            enemy.cpu = self.ENEMY_HP_OVERRIDES[layout_char]
+            enemy.max_cpu = self.ENEMY_HP_OVERRIDES[layout_char]
+        # Also check layout_data overrides for additional customization
+        elif enemy_type in layout_data.enemy_overrides:
             overrides = layout_data.enemy_overrides[enemy_type]
             if 'hp' in overrides:
                 enemy.cpu = overrides['hp']
@@ -470,11 +782,15 @@ class FixedLevelGenerator:
 
         return enemy
 
-    def _place_item(self, x: int, y: int, item_type: str):
+    def _place_item(self, x: int, y: int, item_type: str, level: int = 0):
         """Place an item at position."""
         if item_type == 'exploit':
-            # Pick a random exploit from available pool
-            exploit_key = random.choice(list(GameData.EXPLOITS.keys()))
+            # Prologue: Always place Code Injection (ranged) to guarantee Section 4 works
+            # Regular levels: Random exploit from pool
+            if level == 0:
+                exploit_key = "code_injection"  # Range 5, ensures player can hit Patrol across gap
+            else:
+                exploit_key = random.choice(list(GameData.EXPLOITS.keys()))
             exploit_def = GameData.EXPLOITS[exploit_key]
             self.game_map.exploit_pickups[(x, y)] = ExploitItem(exploit_key, exploit_def)
         elif item_type == 'code_hack':
@@ -611,123 +927,181 @@ This approach:
 
 ## Phase 3: Prologue Level Design
 
-### 3.1 Level Layout Philosophy - "Show Don't Tell"
+### 3.1 Level Layout Philosophy - Encourage, Don't Force
 
-**Core principle**: The level design teaches mechanics through necessity, not explanations. Players discover how things work by encountering situations where using them is the obvious solution.
+**Core principle**: Layout makes optimal behavior EASIER, not mandatory. Player can always fight - stealth is just more efficient.
+
+**MECHANIC CONSTRAINTS (from code analysis):**
+- Blind spots only hide at range > 1. Adjacent enemies SEE THROUGH.
+- Alert state gives 1 turn grace to break LOS before HOSTILE.
+- Player CAN kill any enemy with exploits. Can't block combat path.
+- Patrols return to routes after player escapes.
+
+**ENEMY SELECTION:**
+- **Patrol** (PATROL movement): All mobile enemies - predictable routes for reliable teaching
+- **Scanner** (STATIC): For blind spot range lesson (can't chase, safe to learn from)
 
 ```
-SECTION 1: Safe Start
-- Small open area to get bearings
-- Exploit pickup visible (player will grab it naturally)
-- Single exit leads to first challenge
+SECTION 1: The Chokepoint (teaches TURN-BASED + WAIT)
+- Narrow corridor with Patrol walking back and forth
+- Patrol BLOCKS the only passage - player MUST wait for opening
+- Player discovers: when I move, it moves. Pressing '.' lets me wait.
+- Exploit pickup AFTER the chokepoint (reward for learning WAIT)
+- Thought: "It only moves when I do... I should wait for an opening."
+- CRITICAL: This teaches the two most fundamental roguelike actions
 
-SECTION 2: The Chokepoint (teaches observation/patience)
-- Narrow corridor with a patrolling Scanner
-- Player CANNOT pass without waiting for the patrol pattern
-- Shadow alcove halfway through for safety
-- No text needed - the corridor design forces the lesson
+SECTION 2: The Blind Spot Trap (teaches blind spots work AT DISTANCE ONLY)
+- Scanner at end of corridor (STATIC, vision 5)
+- Blind spot tiles line the OBVIOUS direct path to Scanner
+- Player walks through blind spots toward Scanner - feels safe
+- At range 1 (adjacent): SPOTTED despite being in blind spot!
+- Adjacent enemies see PAST blind spots - this is the key lesson
+- Scanner is STATIC so consequence is minor (alert, not death)
+- Alternate path visible: blind spots at range 3-4 from Scanner
+- Thoughts: "Too close! They can see right past it." then later
+  "The blind spot worked... but only because I kept my distance."
+- CRITICAL: Forces the failure state so player learns the range rule
 
-SECTION 3: The Ambush (teaches shadows as escape)
-- Open room with a Bot that WILL spot the player
-- Shadow clusters positioned as obvious escape routes
-- CPU recovery node in the shadows (reward for fleeing there)
-- Player learns: spotted → retreat to shadows → recover
+SECTION 3: The Patrol Route (teaches ALERT grace period)
+- Patrol follows predictable route that CROSSES player's entry path
+- Player WILL be spotted (guaranteed teaching moment)
+- Blind spot cluster at far side (range > 1 from patrol route)
+- Player experiences: spotted -> ALERT -> flee -> break LOS -> de-escalate
+- CPU recovery node in blind spot rewards successful escape
+- Thought: "They saw me! But I broke the line of sight..."
+- Uses Patrol (PATROL) for guaranteed encounter - predictable movement
 
-SECTION 4: The Gap (teaches ranged combat)
-- Patrol enemy visible across a chasm/wall gap
+SECTION 4: The Gap (teaches ranged exploits)
+- Patrol visible across wall gap (melee clearly impossible)
 - Player has exploit from Section 1
-- Only way forward is to use the ranged exploit
-- Cooling node after (teaches heat management through use)
+- Use ranged exploit OR take long winding path (exploit is faster)
+- Cooling node for heat recovery after combat
+- Thought: "Can't reach them from here... but my exploit might."
 
-SECTION 5: The Final Approach (teaches planning)
-- Gateway clearly visible from the start of this section
-- Enemy patrol between player and gateway
-- Multiple shadow paths to choose from
-- Ghost node rewards stealth approach
-- Player must choose: fight through or sneak past
+SECTION 5: Final Approach (player choice - synthesis)
+- Patrol between player and gateway
+- Multiple valid approaches:
+  a) Fight: Use remaining exploits (costs heat/resources)
+  b) Stealth: Time patrol pattern, use blind spots at range
+  c) Mixed: Partial stealth, finish with combat
+- Ghost node on stealth path rewards that approach
+- Gateway clearly visible - player owns their strategy
+- This section tests everything learned, doesn't teach new mechanics
 ```
 
-**Key design changes from original**:
-- Enemies are positioned to CREATE situations, not just exist in rooms
-- Resources (nodes, exploits) are placed as rewards/tools for the situation
-- Chokepoints force engagement with mechanics
-- No tutorial popups needed - the layout IS the tutorial
+**Design principles**:
+- **Encourage, don't force**: Stealth is easier/cheaper, not mandatory
+- **Teach through consequence**: Getting spotted = trace increase, not instant death
+- **Range matters**: Blind spots demonstrated at distance first
+- **Combat is valid**: Always an option, just resource-expensive
 
-### 3.2 Detailed ASCII Layout (26x20)
+### 3.2 Detailed ASCII Layout (28x25)
 
 ```
 Legend:
-# = Wall           . = Floor          s = Blind spot (shadow)
+# = Wall           . = Floor          s = Blind spot
 @ = Player spawn   > = Gateway        c = Cooling node
-r = CPU recovery   g = Ghost node     S = Scanner (patrols)
-B = Bot            P = Patrol         e = Exploit pickup
-d = Code hack      + = Doorway
+r = CPU recovery   g = Ghost node     S = Scanner (STATIC, vision 5)
+X = Damaged Scanner (STATIC, 5 HP, 0 damage - melee teaching)
+P = Patrol (PATROL routes)
+e = Exploit pickup (always Code Injection in prologue)
++ = Doorway
 
-##########################
-#@....###################
-#..e..#.................#  <- SECTION 1: Safe start, exploit visible
-#.....+.................#
-#####+###################
-#....+.......S..........#  <- SECTION 2: THE CHOKEPOINT
-#.sss#..................#     Scanner patrols this narrow corridor
-#.sss#..................#     Shadow alcove = only safe spot to wait
-#####+###################
-#....+.........#........#  <- SECTION 3: THE AMBUSH
-#....#....B....#..sss...#     Bot WILL spot you entering this room
-#....#.........#..sss...#     Shadows on far side = escape route
-#....#.........+..rss...#     Recovery node rewards fleeing to shadows
-################..####+##
-#d...#..c..#......#.....#  <- SECTION 4: THE GAP
-#....#.....###P###......#     Patrol behind wall - must use ranged exploit
-#....+.....###.###......#     Cooling node for heat after combat
-#####+######...#########+
-#....+......g..#.sss....#  <- SECTION 5: FINAL APPROACH
-#....#.........#.sss..>.#     Gateway visible, shadow path available
-#....#.........#.sss....#     Ghost node rewards stealth choice
-##########################
+############################
+#@...P..+.e...............#  <- SECTION 1a: OBSERVATION + MELEE
+#.X.#.....................#     Patrol visible from spawn - observe turn-based!
+#...+.....................#     Then X blocks exit - teaches bump-to-attack
+#...#.....................#  <- SECTION 1b: THE CHOKEPOINT
+####+#####################     Door leads to corridor - time the Patrol
+#....+....................#  <- SECTION 2: THE BLIND SPOT TRAP
+#sss.#....................#     Blind spots line the OBVIOUS direct path
+#sss.#....................#     Walking through blind spots feels safe...
+#sss.+...........S........#     But adjacent to Scanner = SPOTTED! (TOO CLOSE!)
+#....#....................#     Scanner is STATIC (safe to fail against)
+#....#.........sss........#     Alternate path: blind spots at RANGE work
+####+#########+###########
+#....+.........+....sss...#  <- SECTION 3: THE PATROL ROUTE
+#....#....P....#....sss...#     Patrol route CROSSES player entry
+#....#....+....#....rss...#     WILL be spotted - FOV is bidirectional!
+#....#....+....+....sss...#     Flee to blind spots, break LOS
+################....###+###
+#....#..c..############...#  <- SECTION 4: THE GAP
+#....#.....####P####......#     Patrol across gap - needs ranged exploit
+#....+.....####.####......#     Walls constrain movement, Cooling Node nearby
+####+########.....#######+#
+#....+.....g.......#.sss..#  <- SECTION 5: FINAL APPROACH
+#....#.........P...#.sss.>#     Patrol guards gateway - player choice
+############################     Ghost node rewards stealth path
 ```
 
-**Design notes - how each section teaches without text:**
+**How each section teaches mechanics:**
 
-| Section | What Player Encounters | What They Learn |
-|---------|----------------------|-----------------|
-| 1 | Exploit on floor, single exit | "I should grab items" |
-| 2 | Narrow corridor, Scanner blocks path, shadow alcove | "I must wait and watch patterns; shadows hide me" |
-| 3 | Open room, Bot spots them, shadows across room | "When spotted, RUN to shadows; nodes heal me" |
-| 4 | Patrol behind wall gap, can't reach melee | "I have a ranged attack; heat builds up" |
-| 5 | Gateway visible, patrol in way, shadow path option | "I can fight OR sneak; ghost makes me stealthier" |
+| Section | Mechanic | Layout Design | Why It Works |
+|---------|----------|---------------|--------------|
+| 1a | Turn-based observation | Patrol visible from spawn row | Player sees "it moves when I move" BEFORE any risk |
+| 1a | Melee combat | Damaged Scanner blocks exit | MUST bump to attack - safe first combat (0 damage enemy) |
+| 1b | WAIT action | Patrol blocks corridor access | MUST time entry - active learning after observation |
+| 2 | Blind spots at RANGE | Blind spot trap leads adjacent to Scanner | Forces failure state + TOO CLOSE feedback |
+| 3 | Alert + FOV bidirectionality | Patrol route crosses entry | Guaranteed encounter - "If I see them, they see me" |
+| 4 | Ranged exploits + Heat | Patrol across gap (constrained), Code Injection guaranteed | Predictable target, Cooling Node teaches recovery |
+| 5 | Synthesis | Multiple paths | Tests all learned mechanics - player choice |
 
 **Critical layout requirements:**
-- Section 2 corridor is 1 tile wide where Scanner patrols - forces waiting
-- Section 3 has NO shadows near entrance - forces player to cross to escape
-- Section 4 wall gap blocks melee - ranged exploit is the only option
-- Section 5 offers choice - reward either approach
+- Section 1a: Damaged Scanner blocks ONLY exit - player must learn melee to proceed
+- Section 1b: Patrol blocks ONLY path - player cannot proceed without waiting
+- Section 2: Obvious blind spot path leads ADJACENT to Scanner - failure is the lesson
+- Section 2: Alternate blind spot path at range 3-4 - success after learning the rule
+- Section 3: Patrol route MUST cross player entry point - guaranteed spotting
+- Section 3: Blind spots at FAR side - player must flee TO them, not start in them
+- Section 4: Wall gap wide enough that melee is clearly impossible
+- Section 5: Both combat and stealth paths viable - neither forced
 
 ### 3.3 Enemy Configuration
 
-| Enemy | Type | Behavior | HP Override | Purpose in Layout |
-|-------|------|----------|-------------|-------------------|
-| S (Scanner) | scanner | PATROL | 25 | Patrols chokepoint corridor - forces player to wait and observe |
-| B (Bot) | bot | RANDOM | 20 | Guards Section 3 - WILL spot player, teaching "run to shadows" |
-| P (Patrol) | patrol | PATROL | 30 | Behind wall gap - can only be killed with ranged exploit |
+| Section | Enemy | Type | Behavior | HP | Why This Enemy |
+|---------|-------|------|----------|-----|----------------|
+| 1a | X | scanner | STATIC | 5 | Damaged Scanner - teaches melee (0 damage, safe first combat) |
+| 1b | P | patrol | PATROL | 40 | Blocks corridor - forces WAIT. Predictable = learnable |
+| 2 | S | scanner | STATIC | 35 | Doesn't move/chase - safe to fail against when learning |
+| 3 | P | patrol | PATROL | 40 | Predictable route crosses entry - GUARANTEED encounter |
+| 4 | P | patrol | PATROL | 40 | Constrained patrol across gap - needs 2 Code Injection hits (25 dmg each) |
+| 5 | P | patrol | PATROL | 40 | Predictable route - timing is optional strategy |
 
-**Important**: Enemies use NORMAL AI behavior. They WILL attack, spot, and chase the player. The tutorial works because:
-1. Layout forces specific encounters (can't skip past Scanner in narrow corridor)
-2. Escape routes (shadows) are clearly positioned
-3. HP is reduced so combat resolves quickly
-4. Trace penalties are low but present (teaches consequence without death spiral)
+**Why these enemy choices work:**
+
+| Enemy | Key Trait | Tutorial Use |
+|-------|-----------|--------------|
+| Damaged Scanner (X) | STATIC, 5 HP, 0 damage | Perfect for first combat - can't hurt player, teaches bump-to-attack |
+| Scanner | STATIC (won't chase) | Perfect for blind spot failure - player learns safely |
+| Patrol | PATROL (predictable) | Guarantees teaching moments - player can learn patterns |
+
+**Enemy behaviors (from game_content.json):**
+- **Damaged Scanner (X)**: STATIC, vision 5, 0 damage, 5 HP - Special tutorial enemy, same AI as Scanner
+- **Scanner**: STATIC, vision 5, 0 damage - Can only watch, never attacks
+- **Patrol**: PATROL, vision 4, 10 damage - Follows routes, attacks if hostile
+
+**Important notes:**
+1. All enemies use NORMAL AI - no tutorial-specific behavior
+2. Damaged Scanner (X) is a regular Scanner with reduced HP (5) - not a new enemy type
+3. Scanner in Section 2 can't chase - if player is spotted, they just get alert (safe failure)
+4. Section 4 uses Patrol (not Bot) - predictable movement stays in range for ranged combat lesson
+5. Section 4 Patrol has 40 HP (default) - requires 2 Code Injection uses (25 damage each), teaches heat
+6. Trace is set to zero in prologue - being spotted doesn't hurt progression
 
 ### 3.4 Item Placement
 
 | Item | Section | Position Purpose |
 |------|---------|-----------------|
-| Exploit (e) | Section 1 | Given immediately - player will need it in Section 4 |
-| CPU Recovery (r) | Section 3 shadows | Reward for fleeing to shadows after Bot spots them |
-| Cooling Node (c) | Section 4 | Available after using exploit (teaches heat management through use) |
-| Code Hack (d) | Section 4 | Bonus pickup, demonstrates variety |
+| Code Injection (e) | Section 1 | Always this exploit (range 5) - guarantees Section 4 works |
+| CPU Recovery (r) | Section 3 blind spots | Reward for fleeing to blind spots after Patrol spots them |
+| Cooling Node (c) | Section 4 | Available after exploit use (teaches heat management naturally) |
 | Ghost Node (g) | Section 5 | Rewards stealth approach to final area |
 
 **Placement philosophy**: Items are positioned as rewards/tools for the situation they're in, not randomly scattered. Player learns what items do by USING them in context.
+
+**Key timing**: Code Injection is picked up in Section 1 but not NEEDED until Section 4. This gives player time to notice they have it, wonder what it does, maybe even try pressing 1-5 experimentally before they MUST use it.
+
+**Why Code Injection is guaranteed**: Section 4 requires ranged combat across a gap. If the player only had melee exploits (Buffer Overflow), they'd be stuck. Code Injection (range 5, 25 damage) ensures the lesson works.
 
 ### 3.5 Tutorial Triggers - REMOVED
 
@@ -775,17 +1149,236 @@ None for tutorial hints. All prologue-specific code is in:
 - `dialogue.py` - intro/completion dialogues
 - `death.py` - prologue death handling
 
-### 4.5 Optional Fallback Hint (Implement Only If Needed)
+### 4.5 Continuous Visibility Feedback (IMPLEMENT)
 
-If playtesting reveals players consistently stuck at Section 4 (ranged combat gap), add a SINGLE fallback:
+Show player's visibility state persistently in the status bar during prologue:
 
 ```python
-# In bump-into-wall handler, only in prologue mode:
-if prologue_mode and player tried to melee enemy behind wall 3+ times:
-    message_log.add_message("Target out of reach. Try your exploit [1-5].", Colors.CYAN)
+# In status bar rendering, when prologue_mode is True:
+def get_visibility_status(player_pos, game_map, enemies, spotted_in_blind_spot=False):
+    """Return visibility status text and color for prologue.
+
+    Args:
+        player_pos: Player's current position
+        game_map: The game map with blind_spots set
+        enemies: List of enemies to check adjacency
+        spotted_in_blind_spot: True if player was just spotted while in blind spot
+    """
+    in_blind_spot = (player_pos.x, player_pos.y) in game_map.blind_spots
+
+    # Special case: spotted while in blind spot (adjacent enemy saw through)
+    if spotted_in_blind_spot and in_blind_spot:
+        return "TOO CLOSE!", Colors.ALERT_RED  # Flash red briefly
+
+    if in_blind_spot:
+        return "CONCEALED", Colors.ELECTRIC_PURPLE
+    else:
+        return "EXPOSED", Colors.DIM_WHITE
+
+# Render in status bar area (near HP/Heat display):
+status_text, status_color = get_visibility_status(
+    player.position, game_map, enemies,
+    spotted_in_blind_spot=game_engine.prologue_spotted_in_blind_spot
+)
+console.print(x=STATUS_X, y=STATUS_Y, string=status_text, fg=status_color)
+
+# Reset the flash flag after rendering
+game_engine.prologue_spotted_in_blind_spot = False
 ```
 
-This is defensive - implement only if playtesting shows it's necessary. The goal is zero mid-game text.
+**Three states:**
+- `CONCEALED` (purple) - In blind spot, hidden from enemies at range
+- `EXPOSED` (white) - Not in blind spot, visible to enemies with LOS
+- `TOO CLOSE!` (red, brief flash) - In blind spot but spotted anyway (adjacent enemy)
+
+**Rationale**: Stealth games constantly show hidden/visible state. The `TOO CLOSE!` flash provides immediate visual feedback when the blind spot range rule fails, reinforcing the lesson before the internal thought fires.
+
+**Implementation location**: Add to `src/rsp/ui/status_bar.py` with a prologue mode check. The `prologue_spotted_in_blind_spot` flag is set in `turn_manager.py` when detecting blind spot adjacency failure.
+
+### 4.6 Reactive Internal Voice System (IMPLEMENT)
+
+Tutorial guidance delivered as the protagonist's internal thoughts - **reactive to player actions**, not pre-emptive instructions. The character reflects on what just happened, teaching through experience.
+
+**Design principles:**
+- **Reactive**: Responds to outcomes (success/failure), not pre-emptive hints
+- **Reflective**: Character thinks about what just happened and why
+- **Paired**: Most mechanics have both failure and success responses
+- **Natural**: Feels like internal monologue, not a tutorial system
+- **One-shot**: Each thought triggers ONCE per session (but failure/success are separate)
+
+**Philosophy**: Players learn by doing. Pre-emptive hints ("press . to wait") feel like instructions. Reactive thoughts ("Should have waited...") feel like natural learning.
+
+```python
+# Reactive internal voice - responds to what the player DOES, not what they should do
+PROLOGUE_THOUGHTS = {
+    # === SECTION 1a: MELEE COMBAT ===
+    # Success: killed the damaged scanner by bumping
+    "melee_success": {
+        "trigger": "player_kills_enemy_with_melee",
+        "message": "Walking into them... that works.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 1b: TURN-BASED + WAIT ===
+    # Observation (first time seeing patrol move)
+    "turn_based_observe": {
+        "trigger": "player_sees_patrol_move",
+        "message": "It moves when I move...",
+        "color": Colors.DIM_CYAN,
+    },
+    # Failure: walked into patrol without waiting
+    "wait_fail": {
+        "trigger": "patrol_spots_player_in_corridor",
+        "message": "Should have waited for it to pass.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Success: timed movement correctly
+    "wait_success": {
+        "trigger": "player_passes_patrol_undetected",
+        "message": "Timing. That's the key.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 2: BLIND SPOTS AT RANGE ===
+    # Observation (entering blind spot area)
+    "blindspot_observe": {
+        "trigger": "player_enters_blind_spot_first_time",
+        "message": "A blind spot... they might not see me here.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Failure: spotted in blind spot (adjacent - they see past it)
+    "blindspot_adjacent_fail": {
+        "trigger": "enemy_spots_player_in_adjacent_blind_spot",
+        "message": "Too close! They can see right past it.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Success: blind spot worked at range
+    "blindspot_range_success": {
+        "trigger": "player_hidden_in_blind_spot_at_range",
+        "message": "The blind spot worked... but only because I kept my distance.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 3: ALERT AND ESCAPE ===
+    # Observation: FOV is bidirectional (first time spotted)
+    "fov_bidirectional": {
+        "trigger": "enemy_first_spots_player",
+        "message": "If I can see them, they can see me.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Failure: went hostile (didn't escape in time)
+    "alert_to_hostile_fail": {
+        "trigger": "enemy_transitions_alert_to_hostile",
+        "message": "Too slow! Should have broken line of sight faster.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Success: escaped during alert
+    "alert_escape_success": {
+        "trigger": "player_breaks_los_enemy_deescalates",
+        "message": "Breaking line of sight... that bought me time.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 4: RANGED COMBAT + HEAT ===
+    # Observation (can't reach enemy)
+    "exploit_observe": {
+        "trigger": "player_bumps_wall_near_visible_enemy",
+        "message": "Can't reach them from here... maybe an exploit would work.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Success: used exploit to kill
+    "exploit_success": {
+        "trigger": "player_kills_enemy_with_exploit",
+        "message": "The exploit worked. Good to know.",
+        "color": Colors.DIM_CYAN,
+    },
+    # Observation: heat is getting high
+    "heat_high": {
+        "trigger": "player_heat_exceeds_threshold",
+        "message": "Running hot... need to cool down.",
+        "color": Colors.DIM_CYAN,
+    },
+
+    # === SECTION 5: GATEWAY ===
+    "gateway_spotted": {
+        "trigger": "gateway_enters_fov",
+        "message": "The gateway. Almost there.",
+        "color": Colors.DIM_CYAN,
+    },
+}
+
+# Track shown thoughts - failure and success are tracked separately
+shown_thoughts: set[str] = set()
+
+def show_reactive_thought(thought_key: str, game):
+    """Show internal thought if not already shown this session."""
+    if thought_key in shown_thoughts:
+        return False
+    if thought_key not in PROLOGUE_THOUGHTS:
+        return False
+
+    thought = PROLOGUE_THOUGHTS[thought_key]
+    game.message_log.add_message(thought["message"], thought["color"])
+    shown_thoughts.add(thought_key)
+    return True
+
+def reset_prologue_thoughts():
+    """Reset on prologue restart - lets player learn again."""
+    shown_thoughts.clear()
+```
+
+**Trigger integration points:**
+
+| Thought | Where to Hook | Detection Logic |
+|---------|---------------|-----------------|
+| `melee_success` | `combat.py` after melee kill | Enemy killed by bump attack (first melee kill) |
+| `turn_based_observe` | `turn_manager.py` after enemy moves | First Patrol move while player has LOS |
+| `wait_fail` | `turn_manager.py` enemy state change | Patrol -> ALERT in Section 1 area |
+| `wait_success` | `coordinator.py` position check | Player reaches Section 2 without Patrol going ALERT |
+| `blindspot_observe` | `game_map.py` tile entry | First blind_spot tile entered |
+| `blindspot_adjacent_fail` | `characters.py` can_see_player | Enemy spots player AND player in blind_spot AND distance <= 1 |
+| `blindspot_range_success` | `turn_manager.py` end of turn | Player in blind_spot, enemy has LOS blocked by range |
+| `fov_bidirectional` | `turn_manager.py` first ALERT | First time any enemy goes ALERT (spotted player) |
+| `alert_to_hostile_fail` | `turn_manager.py` state transition | ALERT -> HOSTILE transition |
+| `alert_escape_success` | `turn_manager.py` state transition | ALERT -> UNAWARE transition |
+| `exploit_observe` | `input_handler.py` bump detection | Move into wall, visible enemy within 5 tiles |
+| `exploit_success` | `combat.py` after kill | Enemy killed by exploit (not melee) |
+| `heat_high` | `combat.py` after exploit use | Player heat > 60 (threshold for warning) |
+| `gateway_spotted` | `visibility_manager.py` FOV update | Gateway position enters visible tiles |
+
+**Example player experience:**
+
+```
+Section 2 - Player walks through blind spot toward Scanner:
+
+  [Player enters blind spot tile]
+  Inner voice: "A blind spot... they might not see me here."
+
+  [Player walks adjacent to Scanner, gets spotted despite blind spot]
+  Inner voice: "Too close! They can see right past it."
+
+  [Player retreats, takes alternate path, stays at range 3]
+  Inner voice: "The blind spot worked... but only because I kept my distance."
+```
+
+**Why reactive voice works better than pre-emptive hints:**
+
+| Pre-emptive (worse) | Reactive (better) |
+|---------------------|-------------------|
+| "Press . to wait for enemies to pass" | "Should have waited for it to pass." |
+| "Blind spots only hide you at range > 1" | "Too close! They can see right past it." |
+| "Break line of sight to escape alert" | "Breaking line of sight... that bought me time." |
+
+The reactive approach:
+- Teaches through consequence, not instruction
+- Feels like natural self-reflection
+- Doesn't spoil the learning moment
+- Creates "aha!" moments when success thought confirms understanding
+
+**Message styling:**
+- Use `Colors.DIM_CYAN` or similar muted color
+- Italics if the message log supports it
+- Distinct from combat messages and system alerts
 
 ---
 
@@ -848,6 +1441,9 @@ def __init__(
     # Prologue-specific flags (used by dialogue handlers)
     self.prologue_completed_pending = False
     self.prologue_restart_pending = False
+
+    # Prologue visibility feedback flag (set when spotted in blind spot while adjacent)
+    self.prologue_spotted_in_blind_spot = False
 
     # NOTE: This must be integrated into the EXISTING if load_save: ... else: structure
     # The actual pattern in engine.py is:
@@ -977,12 +1573,12 @@ def handle_dismiss(self) -> bool:
     # ... existing dialogue type checks ...
 
     # NEW: Prologue completion - return to menu
-    elif "TRAINING COMPLETE" in dialogue.title:
+    elif "UPLINK ESTABLISHED" in dialogue.title:
         self.game.dialogue_state.close()
         return False  # Exit to main menu
 
     # NEW: Prologue death - restart level
-    elif "DE-RESOLVED" in dialogue.title:
+    elif "CONNECTION LOST" in dialogue.title:
         self._restart_prologue()
         self.game.dialogue_state.close()
         return True  # Continue game loop (with restarted level)
@@ -1030,7 +1626,7 @@ def _restart_prologue(self):
     game.visibility_manager.invalidate_cache()
 
     # Show restart message
-    game.message_log.add_message("Training simulation restarted", Colors.CYAN)
+    game.message_log.add_message("Uplink re-established", Colors.CYAN)
 ```
 
 File: `src/rsp/level/coordinator.py` - Set the pending flag instead of inventing new flags:
@@ -1132,10 +1728,13 @@ Only 3 dialogues needed. **All text is minimal** - the level teaches, not the di
 def create_prologue_intro_dialogue() -> DialogueBox:
     """Create prologue introduction dialogue (shown when prologue starts)."""
     return DialogueBox(
-        title="TRAINING SIMULATION",
+        title="FIRST INFILTRATION",
         message=(
-            "Security response reduced.\n"
-            "Reach the gateway."
+            "Remote uplink active.\n"
+            "Reach the gateway.\n"
+            "\n"
+            "Arrow keys to move. Period (.) to wait.\n"
+            "Press ? for full controls."
         ),
         options=["[ENTER] Begin"],
         valid_keys=[tcod.event.KeySym.RETURN],
@@ -1150,8 +1749,8 @@ def create_prologue_intro_dialogue() -> DialogueBox:
 def create_prologue_completion_dialogue() -> DialogueBox:
     """Create prologue completion dialogue (returns to main menu)."""
     return DialogueBox(
-        title="TRAINING COMPLETE",
-        message="You are ready.",
+        title="UPLINK ESTABLISHED",
+        message="Gateway reached. You are ready.",
         options=["[ENTER] Continue"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.GREEN,
@@ -1165,8 +1764,8 @@ def create_prologue_completion_dialogue() -> DialogueBox:
 def create_prologue_death_dialogue(cause: str) -> DialogueBox:
     """Create prologue death dialogue (restarts training)."""
     return DialogueBox(
-        title="DE-RESOLVED",
-        message=f"{cause}\n\nRestarting simulation.",
+        title="CONNECTION LOST",
+        message=f"{cause}\n\nRe-establishing uplink...",
         options=["[ENTER] Retry"],
         valid_keys=[tcod.event.KeySym.RETURN],
         title_color=Colors.YELLOW,
@@ -1214,8 +1813,8 @@ def test_prologue_enemy_positions_valid():
 def test_prologue_chokepoint_is_narrow():
     """Verify Section 2 corridor forces single-file movement past Scanner."""
 
-def test_prologue_section3_no_shadows_at_entrance():
-    """Verify Section 3 has no shadows near entrance (forces crossing)."""
+def test_prologue_section3_no_blindspots_at_entrance():
+    """Verify Section 3 has no blind spots near entrance (forces crossing)."""
 ```
 
 **Removed**: `test_tutorial_manager.py` - no longer needed since TutorialManager was removed.
@@ -1244,8 +1843,8 @@ def test_menu_always_shows_tutorial():
 ### 6.3 Gameplay Polish Checklist
 
 - [ ] Section 2 chokepoint forces waiting for Scanner patrol (can't rush through)
-- [ ] Section 3 Bot spots player entering (no way to avoid initial detection)
-- [ ] Section 3 shadow escape route is obvious when panicking
+- [ ] Section 3 Patrol spots player entering (guaranteed encounter for alert teaching)
+- [ ] Section 3 blind spot escape route is obvious when panicking
 - [ ] Section 4 wall gap clearly blocks melee (player tries bumping before using exploit)
 - [ ] Section 5 offers viable stealth OR combat path to gateway
 - [ ] Enemy HP lets combat resolve in 2-3 hits (not tedious)
@@ -1270,14 +1869,22 @@ def test_menu_always_shows_tutorial():
 
 | File | Lines (est.) | Purpose |
 |------|--------------|---------|
-| `src/rsp/level/fixed_levels.py` | ~80 | FixedLevelData class + PROLOGUE_LAYOUT constant |
-| `src/rsp/level/fixed_generator.py` | ~150 | FixedLevelGenerator class |
+| `src/rsp/level/fixed_levels.py` | ~80 | FixedLevelData class + PROLOGUE_LAYOUT constant (28x25) |
+| `src/rsp/level/fixed_generator.py` | ~150 | FixedLevelGenerator class (real game elements only) |
 | `tests/unit/test_fixed_level_generator.py` | ~100 | Fixed layout parsing + design verification tests |
 | `tests/integration/test_prologue_flow.py` | ~100 | Full prologue flow tests |
 
 **Removed from original plan**:
 - `src/rsp/systems/tutorial.py` - NOT NEEDED (layout teaches, not code)
 - `tests/unit/test_tutorial_manager.py` - NOT NEEDED (no TutorialManager)
+
+### New Data Structures Required
+
+| Location | Addition | Purpose |
+|----------|----------|---------|
+| `src/rsp/ui/status_bar.py` | `get_visibility_status()` | Show CONCEALED/EXPOSED status in prologue |
+
+**NOTE**: No new game mechanics needed - prologue uses ONLY existing game elements.
 
 ### Files to Modify
 
@@ -1428,22 +2035,19 @@ def reset_temporary_effects(self):
 # After PROLOGUE_LAYOUT constant definition:
 
 def get_prologue_layout() -> FixedLevelData:
-    """Get the prologue level layout data."""
+    """Get the prologue level layout data.
+
+    ALL REAL ENEMY TYPES - each chosen for specific teaching purpose.
+    """
     return FixedLevelData(
         layout=[line for line in PROLOGUE_LAYOUT.strip().split('\n') if line],
-        name="Training Simulation",
-        tutorial_triggers={
-            "first_move": Position(2, 1),
-            "shadow_intro": Position(3, 4),
-            "first_enemy_view": Position(8, 2),
-            "exploit_pickup": Position(23, 9),
-            "node_intro": Position(10, 3),
-            "gateway_approach": Position(22, 13),
-        },
+        name="First Infiltration",
+        tutorial_triggers={},  # Not used - layout teaches through design, not triggers
         enemy_overrides={
-            "scanner": {"hp": 20},
-            "bot": {"hp": 15},
-            "patrol": {"hp": 25},
+            # Use default HP from game_content.json - Patrol is 40 HP, Scanner is 35 HP
+            # Section 4 Patrol: 40 HP / 25 dmg per Code Injection = 2 hits (teaches heat)
+            # All other Patrols: 40 HP (standard combat)
+            # Scanner: 35 HP (doesn't matter - it's Section 2 blind spot trap, player usually avoids)
         }
     )
 ```
@@ -1492,11 +2096,11 @@ self.prologue_restart_pending = False
 
 ### GAP 4: Dialogue Title Pattern Mismatch
 
-**Problem**: `handle_dismiss()` in `dialogue.py:273-280` checks for "PURGED", "BREAKTHROUGH", "ROGUE SIGNAL ESTABLISHED". The prologue dialogues use "TRAINING COMPLETE" and "DE-RESOLVED" - these need to be added to the check.
+**Problem**: `handle_dismiss()` in `dialogue.py:273-280` checks for "PURGED", "BREAKTHROUGH", "ROGUE SIGNAL ESTABLISHED". The prologue dialogues use "UPLINK ESTABLISHED" and "CONNECTION LOST" - these need to be added to the check.
 
 **Fix**: The plan already shows adding these checks in Phase 5.4.1. Verify the exact title strings match:
-- Completion: `"TRAINING COMPLETE"`
-- Death: `"DE-RESOLVED"`
+- Completion: `"UPLINK ESTABLISHED"`
+- Death: `"CONNECTION LOST"`
 
 ### GAP 5: `prologue_completed` Settings Persistence
 
@@ -1695,7 +2299,7 @@ base_options = [
 **Problem**: The `handle_dismiss()` method uses string matching on dialogue titles. This is fragile if titles change.
 
 **Mitigation**:
-1. Use constants for dialogue titles (e.g., `PROLOGUE_COMPLETE_TITLE = "TRAINING COMPLETE"`)
+1. Use constants for dialogue titles (e.g., `PROLOGUE_COMPLETE_TITLE = "UPLINK ESTABLISHED"`)
 2. Or use the `user_pref_key` field to identify dialogue types (though this requires more changes)
 
 **Current approach is acceptable** - titles are unlikely to change, and string matching is the existing pattern.
@@ -1830,6 +2434,12 @@ def _restart_prologue(self):
     # MISSING FROM ORIGINAL PLAN - Clear message log (optional but cleaner)
     game.message_log.messages.clear()
 
+    # Reset prologue tutorial flags
+    if hasattr(game, '_shown_concealed_message'):
+        del game._shown_concealed_message
+    if hasattr(game, '_wall_bump_count'):
+        del game._wall_bump_count
+
     # Regenerate the level (call coordinator directly to pass skip_level_start_message)
     game.game_session.level_coordinator.generate_procedural_level(skip_level_start_message=True)
 
@@ -1837,7 +2447,7 @@ def _restart_prologue(self):
     game.visibility_manager.invalidate_cache()
 
     # Show restart message
-    game.message_log.add_message("Training simulation restarted", Colors.CYAN)
+    game.message_log.add_message("Uplink re-established", Colors.CYAN)
 ```
 
 ### GAP 19: Player.clear_all() Method Missing
@@ -1867,7 +2477,7 @@ elif "GATEWAY" in dialogue.title:
     if getattr(self.game, 'prologue_mode', False):
         # Prologue completion - don't call next_level()
         # Instead, trigger the completion flow
-        self.game.game_session.progress_to_next_level()  # This will show TRAINING COMPLETE
+        self.game.game_session.progress_to_next_level()  # This will show UPLINK ESTABLISHED
     else:
         # Normal gateway - proceed to next level
         self.game.sound_manager.play_sound("level_complete")
@@ -1877,7 +2487,7 @@ elif "GATEWAY" in dialogue.title:
 
 This way:
 - Player sees familiar "Proceed through gateway?" dialogue
-- Confirming in prologue triggers `progress_to_next_level()` which detects prologue mode and shows "TRAINING COMPLETE"
+- Confirming in prologue triggers `progress_to_next_level()` which detects prologue mode and shows "UPLINK ESTABLISHED"
 - Confirming in normal game works as before
 
 ### GAP 21: Prologue Skips Level Start Message on Restart
@@ -1888,11 +2498,11 @@ This way:
 
 ### GAP 22: Layout Dimension Inconsistency
 
-**Problem**: Plan originally said layout is "25x20" in Phase 3.1 but the actual ASCII layout is 26 characters wide x 20 rows. **FIXED in Phase 3.1.**
+**Problem**: Plan originally said layout is "25x20" in Phase 3.1 but the actual ASCII layout was later redesigned. **FIXED to 28x25 in Third Review.**
 
-**Fix**: Update Phase 3.2 header to say "26x20":
+**Fix**: Update Phase 3.2 header to match current dimensions:
 ```
-### 3.2 Detailed ASCII Layout (26x20)
+### 3.2 Detailed ASCII Layout (28x25)
 ```
 
 ### GAP 23: Metrics Should Be Disabled in Prologue

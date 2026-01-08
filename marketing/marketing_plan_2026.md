@@ -1,13 +1,14 @@
-# Rogue Signal Protocol - Marketing Guide
+# Rogue Signal Protocol - Marketing Guide (Updated & Verified)
 
 ## Game Overview (For Reference)
 
 - **Title:** Rogue Signal Protocol
 - **Genre:** Cyberpunk stealth roguelike
 - **Price:** Free
-- **Platforms:** Windows, Linux (native), Steam Deck (via Flatpak)
+- **Platforms:** Windows, Linux (native), Steam Deck
 - **Source:** Open source (GitHub)
-- **Distribution:** itch.io (primary), GitHub
+- **Distribution:** itch.io (primary), GitHub, Arch (AUR), AppImage
+- **Planned:** Flatpak at 1.0
 - **Visual Modes:** ASCII and graphical
 - **Status:** Final beta, 1.0 imminent
 - **Developer:** DragynRain (solo)
@@ -86,7 +87,8 @@ Bullet points journalists can copy:
 - Turn-based tactical stealth gameplay
 - Procedurally generated cyberpunk missions
 - Dual display modes: ASCII and graphical
-- Native Linux support / Steam Deck compatible
+- Native Linux support (Arch, AppImage, Flatpak coming)
+- Works on Steam Deck
 - Free and open source
 - [Add 2-3 more unique features]
 
@@ -135,16 +137,20 @@ Host on Google Drive/Dropbox with shareable link.
 
 These are directory-style sites where you're adding an entry to a database. They allow external links to itch.io for downloads (no file hosting required). List during beta, update at 1.0.
 
-### IndieDB ✓ VERIFIED
-- **URL:** https://www.indiedb.com/games/add
+### IndieDB ✓ VERIFIED & ACTIVE
+- **URL:** https://www.indiedb.com/
 - **Type:** Discovery database with external store links
 - **Why:** 3M+ monthly viewers, Roguelike and Stealth categories, links back to itch.io
-- **Features:** Game profiles display purchase links to external retailers (itch.io, etc.)
+- **Features:** 
+  - Game profiles display purchase links to external retailers (itch.io, etc.)
+  - Annual "Indie of the Year" awards (deadline typically December)
+  - Active community with news, downloads, screenshots
 - **Effort:** 15-20 minutes
 - **Download handling:** Link to itch.io in store links section - no file upload required
 - **Notes:** 
   - You control which external stores appear on your profile
   - Update page when 1.0 releases
+  - Consider entering Indie of the Year when eligible
 
 ### IGDB (Internet Game Database) ✓ VERIFIED
 - **Status:** Already listed ✓
@@ -163,7 +169,7 @@ These are directory-style sites where you're adding an entry to a database. They
   - Data feeds to game launchers, collectors apps, review sites, and more
   - **Bonus:** If streamers ever cover your game, having an IGDB entry means they can properly categorize it on Twitch
 
-### GamingOnLinux Database ✓ VERIFIED
+### GamingOnLinux Database ✓ VERIFIED & ACTIVE
 - **Status:** Already listed ✓
 - **URL:** https://www.gamingonlinux.com/index.php?module=items_database&view=submit_item
 - **Type:** Linux games database (separate from editorial coverage)
@@ -174,6 +180,7 @@ These are directory-style sites where you're adding an entry to a database. They
   - This is the DATABASE, not the news site
   - No editorial approval needed - just adding an entry
   - Good to list here BEFORE pitching editorial team at 1.0
+  - GamingOnLinux does cover itch.io games editorially
 
 ### Lutris Database ✓ VERIFIED
 - **URL:** https://lutris.net/games → Submit new game
@@ -186,8 +193,11 @@ These are directory-style sites where you're adding an entry to a database. They
   - Contributions go through moderation
   - Lutris doesn't sell games - it's a library manager
 
-### RogueBasin
+### RogueBasin ✓ VERIFIED
 - **Status:** Already listed ✓
+- **URL:** https://roguebasin.com/
+- **Type:** Roguelike wiki/database
+- **Why:** Primary wiki for traditional roguelikes, referenced by roguelike community
 - **Action:** Update entry at 1.0
 
 ### itch.io Page Optimization
@@ -198,6 +208,21 @@ These are directory-style sites where you're adding an entry to a database. They
   - Both ASCII and graphical screenshots visible
   - Continue posting devlog updates
 
+### itch.io Release Announcements Board ✓ VERIFIED (NEW)
+- **URL:** https://itch.io/board/10022/release-announcements
+- **Type:** Official itch.io forum for game announcements
+- **Why:** 
+  - Moderators check these posts and can feature games
+  - Being on itch.io front page has "the most definite impact" per experienced devs
+- **Effort:** 10-15 minutes
+- **Tips:**
+  - Follow their guidelines exactly (description, GIF, screenshots)
+  - Polish your announcement - this is reviewed by itch staff
+  - Post at 1.0 release for maximum impact
+- **Notes:**
+  - No NSFW content
+  - Don't try to game the vote system
+
 ### GitHub Awesome Lists - WAIT
 - **URL:** https://github.com/michelpereira/awesome-open-source-games
 - **Why:** Curated list of open source games
@@ -206,43 +231,56 @@ These are directory-style sites where you're adding an entry to a database. They
 - **Section:** Native → RPG
 - **Effort:** 10-15 minutes (once eligible)
 
+### GitHub Open Source Games List (NEW)
+- **URL:** https://github.com/bobeff/open-source-games
+- **Type:** Another curated list of open source games
+- **Why:** Different maintainer, different audience
+- **Check requirements:** Review their contribution guidelines before submitting
+- **Effort:** 10-15 minutes
+
 ---
 
-## Part 3: Community Visibility (NEW - From Research)
+## Part 3: Community Visibility (Ongoing)
 
 These are ongoing/periodic opportunities to get your game in front of the right audience.
 
-### r/roguelikedev Sharing Saturday ⭐ HIGH VALUE
+### r/roguelikedev Sharing Saturday ⭐ HIGH VALUE - VERIFIED
 - **What:** Weekly thread every Saturday for devs to share progress
 - **URL:** https://www.reddit.com/r/roguelikedev/ (autoposted each Saturday)
 - **Why:** 
   - Concentrated audience of roguelike enthusiasts
   - Consistent visibility over time builds recognition
   - Cogmind dev built significant following partly through this
+  - Thread has been running for 500+ weeks
 - **Effort:** 15-30 minutes/week
 - **Tips from research:**
-  - Post in the first hour for maximum visibility (most activity happens early)
+  - Post in the first hour for maximum visibility (statistical analysis shows most activity happens early)
   - Include GIFs - they get much higher engagement than static screenshots
   - Be consistent - showing up regularly matters more than one big splash
 - **Note:** This is r/roguelike**dev** not r/roguelikes - it's for development updates, perfect for beta/WIP
 
-### Roguelike Celebration Conference ⭐ HIGH VALUE
+### Roguelike Celebration Conference ⭐ HIGH VALUE - VERIFIED
 - **What:** Annual virtual conference specifically for roguelikes (October)
 - **URL:** https://roguelike.club/
-- **CFP (Call for Proposals):** Opens ~May/June each year, deadline usually July
+- **CFP URL:** https://roguelike.club/cfp.html
+- **CFP Timeline:** Opens ~May/June, closes ~July 20
 - **Why:**
   - Talks get posted to YouTube permanently
   - Audience is exactly your target demographic (hundreds of dedicated roguelike fans)
-  - Past speakers include Caves of Qud devs, Cogmind dev, Dwarf Fortress creators
-  - First-time speakers are welcomed and common
+  - Past speakers include Caves of Qud devs, Cogmind dev (Kyzrati), Dwarf Fortress creators (Tarn Adams)
+  - First-time speakers are welcomed - they provide detailed tips for successful proposals
 - **Effort:** Write proposal (free), prepare ~10-20 min talk
 - **Possible talk angles for you:**
   - Cyberpunk/stealth mechanics in a traditional roguelike
   - Dual ASCII/graphical rendering approach
   - Linux-native roguelike development
   - Open source roguelike development
-- **Timeline:** CFP ~June 2026, event October 2026
-- **Note:** You don't need a finished game - many talks are about works in progress
+- **Timeline:** CFP opens ~May 2026, closes ~July 2026, event October 2026
+- **Important tips from their CFP:**
+  - Make it YOUR talk - what unique perspective do you bring?
+  - Be specific about what attendees will learn
+  - Don't rely on deep familiarity with your specific game
+  - Don't just pitch your game - teach something
 
 ### Roguelikes Discord
 - **What:** Main community Discord for roguelike fans and devs
@@ -250,12 +288,15 @@ These are ongoing/periodic opportunities to get your game in front of the right 
 - **Effort:** Ongoing light participation
 - **Note:** Being genuinely helpful in the community > self-promotion
 
-### Rogueliker Website (NEW)
+### Rogueliker Website (VERIFIED - with caveats)
 - **URL:** https://rogueliker.com/
 - **What:** Site that does monthly roundups of new roguelike releases
-- **Why:** They cover both roguelikes and roguelites, have "Gone Rogue" weekly release roundups
-- **How to get featured:** Having a clear release date helps - they pull from upcoming releases
-- **Note:** More focused on commercial releases but worth being on their radar
+- **Caveat:** They primarily cover commercial releases with confirmed release dates
+- **Why:** They do cover traditional roguelikes and have a "Best Free Roguelikes" list
+- **How to get featured:** 
+  - Having a clear 1.0 release date helps
+  - They skip "demo/prologues" but cover full free games
+- **Note:** They explicitly skip "AI-heavy projects" in their monthly roundups
 
 ---
 
@@ -265,40 +306,50 @@ These are editorial sites or communities where you get one shot at their attenti
 
 ### Press/Review Sites
 
-#### GamingOnLinux Editorial (HIGH PRIORITY)
+#### GamingOnLinux Editorial ✓ VERIFIED (HIGH PRIORITY)
 - **URL:** https://www.gamingonlinux.com/
 - **Contact:** contact@gamingonlinux.com (goes directly to owner Liam Dawe)
-- **Why:** Primary Linux gaming news site, covers indie games
+- **Why:** 
+  - Primary Linux gaming news site, covers indie games
+  - They DO cover itch.io games (not just Steam)
+  - Liam maintains curated itch.io Linux games collections
 - **Perfect fit because:** Native Linux, open source, works on handhelds
 - **Pitch angle:** Native Linux roguelike, free, open source, works on Steam Deck via Flatpak
 - **Note:** List in their DATABASE first (Part 2), then pitch editorial at 1.0
 
-#### Boiling Steam (NEW - HIGH PRIORITY for Linux)
+#### ~~Boiling Steam~~ ⚠️ STEAM-ONLY FOR AUTOMATED FEATURES
 - **URL:** https://boilingsteam.com/
-- **What:** Linux gaming site that publishes weekly "New Games with Native Linux Clients" roundups
-- **Why:** 
-  - They specifically track and highlight native Linux games
-  - Only ~10% of releases have native Linux builds - you stand out
-  - Regular coverage format means consistent visibility
-- **How:** Contact them or ensure your itch.io page clearly shows Linux support
-- **Angle:** Native Linux traditional roguelike
+- **Reality check:** Their weekly "New Steam Games with Native Linux Clients" roundups are **Steam-specific**
+- **Since you're not on Steam:** Their automated roundups won't include you
+- **Alternative:** They might still do editorial coverage - worth pitching, but don't expect automatic inclusion
+- **Note:** Removed from primary recommendations
 
-#### Alpha Beta Gamer ⭐ SUBMIT NOW (they cover betas!)
+#### Alpha Beta Gamer ⭐ SUBMIT NOW ✓ VERIFIED (HIGH PRIORITY)
 - **URL:** https://www.alphabetagamer.com/contact-us/
 - **Contact:** admin@alphabetagamer.com
 - **Alternative:** Post in Discord (https://discord.gg/3Gtqp9BDeY)
 - **Why:** 
   - 103k Twitter followers, two YouTube channels, Discord community
-  - **They specifically cover free betas** - your game fits perfectly
-  - Have a dedicated "Roguelikes" category
+  - **They specifically cover free betas** - your game fits their core mission perfectly
+  - Have dedicated "Roguelike" AND "Stealth" categories
+  - "Complete games can be featured on YouTube channels"
+- **Their 4 Golden Rules:**
+  1. Games must be in development ✓
+  2. Sign-ups or downloads must be free to public ✓
+  3. If behind paywall, they may do key giveaway (N/A - you're free)
+  4. Complete/paid games can still be featured on YouTube channels
 - **Include:** Download link, YouTube footage if available, screenshots
-- **Note:** Don't wait for 1.0 - submit now while still in beta
+- **Note:** Don't wait for 1.0 - submit now while still in beta!
 
-#### Free Game Planet
+#### Free Game Planet ✓ VERIFIED
 - **URL:** https://www.freegameplanet.com/contact/
 - **Contact:** admin@freegameplanet.com or tweet @FreeGamePlanet
-- **Why:** Blog/curation site specifically for free indie games, has Roguelike and Stealth categories
+- **Why:** 
+  - Blog/curation site specifically for free indie games
+  - Has Roguelike, Stealth, AND Linux categories
+  - Sister site to Alpha Beta Gamer (same admin)
 - **Effort:** 5-10 minutes for pitch email
+- **Note:** Good for 1.0 release, since they cover "complete" free games
 
 #### RetroNuke
 - **Why:** Focuses on pixel art/retro gameplay aesthetics
@@ -306,16 +357,29 @@ These are editorial sites or communities where you get one shot at their attenti
 
 ### Reddit Communities
 
-#### r/linux_gaming
+#### r/linux_gaming ✓ VERIFIED
+- **Members:** Large, active community
 - **Why:** Linux users actively want native games; much friendlier to indie devs than general gaming subs
-- **Angle:** Native Linux roguelike, open source, works on handhelds via Flatpak
+- **Angle:** Native Linux roguelike, open source, available via Arch/AppImage/Flatpak
 - **Note:** Engage in community first before posting (standard Reddit etiquette)
+
+#### r/SteamDeck ✓ VIABLE NOW
+- **Members:** Large, very active community
+- **Why:** Deck users actively seek games that run well on handheld; sideloading is common
+- **Your situation:** AppImage works on Steam Deck TODAY, Flatpak coming at 1.0
+- **Angle:** "Native Linux roguelike, works on Steam Deck now via AppImage (Flatpak coming soon)"
+- **Why roguelikes work on Deck:**
+  - Turn-based = no timing pressure, perfect for handheld
+  - Pick up/put down friendly
+  - Low system requirements
+- **Timing:** Can post now with AppImage, or wait for Flatpak for cleaner install story
+- **Note:** Be clear about install method (AppImage sideloading vs upcoming Flatpak)
 
 #### r/roguelikes
 - **Status:** Already posted ✓
 - **Action:** Post update at 1.0 with [RELEASE] tag
 
-#### r/playmygame
+#### r/playmygame ✓ VERIFIED
 - **URL:** https://www.reddit.com/r/playmygame/
 - **Why:** Community specifically for self-promotion, wants to discover indie games
 - **Effort:** 5 minutes
@@ -330,8 +394,9 @@ These are editorial sites or communities where you get one shot at their attenti
 - **Members:** ~235k
 - **Why:** More accessible than r/gaming, good for dev updates
 
-#### r/opensourcegames
+#### r/opensourcegames ✓ VERIFIED
 - **Why:** Community specifically for open source games
+- **Rules:** "Submissions should be open source game related... under an open source license. Free closed sourced games don't count."
 - **Your game fits:** Open source ✓
 
 ### Other Communities
@@ -346,7 +411,33 @@ These are editorial sites or communities where you get one shot at their attenti
 
 ---
 
-## Part 5: Pitch Email Template
+## Part 5: Distribution Channels (Beyond itch.io)
+
+### Flathub ✓ VERIFIED (Consider for wider Linux distribution)
+- **URL:** https://flathub.org/
+- **Submission docs:** https://docs.flathub.org/docs/for-app-authors/submission
+- **Type:** The main Flatpak app store for Linux
+- **Why:**
+  - Millions of Linux users
+  - Some distros enable Flathub by default
+  - Games section is growing
+  - Your game would be easily installable via `flatpak install`
+- **Requirements:**
+  - Must create Flatpak manifest
+  - Submit via GitHub pull request
+  - Basic familiarity with Git and Flatpak required
+  - **No AI-generated submissions allowed**
+- **Effort:** Medium - requires learning Flatpak packaging
+- **Timing:** Consider after 1.0 when game is stable
+- **Benefits:**
+  - Automatic updates for users
+  - Cross-distro compatibility
+  - Professional distribution channel
+- **Note:** This is a real distribution channel, not just a database listing
+
+---
+
+## Part 6: Pitch Email Template
 
 Use this as a starting point, customize first paragraph for each outlet:
 
@@ -381,7 +472,7 @@ Thanks,
 
 ---
 
-## Part 6: Launch Day Checklist
+## Part 7: Launch Day Checklist
 
 ### Pre-Launch (This Week)
 - [ ] Capture 10-15 minutes gameplay footage
@@ -391,16 +482,18 @@ Thanks,
 - [ ] Verify IGDB listing is complete
 - [ ] Verify GamingOnLinux Database listing
 - [ ] List on Lutris Database
-- [ ] **Submit to Alpha Beta Gamer NOW** (they cover betas)
+- [ ] **Submit to Alpha Beta Gamer NOW** (they prefer betas!)
 
 ### Shortly Before 1.0
 - [ ] Cut trailer from footage (60-90 seconds)
 - [ ] Add trailer to press kit
 - [ ] Draft pitch email template
 - [ ] Prepare Reddit posts (write but don't post)
+- [ ] Prepare itch.io Release Announcements post
 
 ### Launch Day
 - [ ] Update itch.io page to 1.0
+- [ ] Post to itch.io Release Announcements board (polished, with GIF)
 - [ ] Update IndieDB page
 - [ ] Update IGDB entry
 - [ ] Update RogueBasin entry
@@ -409,10 +502,10 @@ Thanks,
 
 ### Launch Day - Outreach
 - [ ] Email GamingOnLinux (they already have your game in their DB)
-- [ ] Email Boiling Steam
 - [ ] Email Free Game Planet
 - [ ] Post to r/playmygame
 - [ ] Post to r/linux_gaming
+- [ ] Post to r/SteamDeck (emphasize AppImage works now, Flatpak coming)
 - [ ] Post to r/roguelikes [RELEASE] thread
 - [ ] Post to r/IndieGaming
 - [ ] Post to r/opensourcegames
@@ -420,37 +513,47 @@ Thanks,
 
 ### Ongoing After Launch
 - [ ] Post to r/roguelikedev Sharing Saturday regularly
-- [ ] Consider submitting talk proposal to Roguelike Celebration (CFP opens ~June)
+- [ ] Consider submitting talk proposal to Roguelike Celebration (CFP opens ~May)
+- [ ] Consider Flathub submission for wider Linux distribution
 
 ---
 
-## Part 7: Linux Messaging
+## Part 8: Linux Messaging
 
-Since you have native Linux support, lean into this angle:
+Since you have native Linux support with multiple distribution methods, lean into this angle:
 
 ### What To Say
 - "Native Linux support"
-- "Works on Steam Deck via Flatpak"
-- "Tested on Steam Deck"
-- "Available on itch.io with Linux builds"
+- "Available on Arch (AUR)"
+- "AppImage available - works on Steam Deck now"
+- "Flatpak coming at 1.0"
 - "No Wine/Proton needed"
+
+### Current Distribution Story
+| Method | Status | Steam Deck | Notes |
+|--------|--------|------------|-------|
+| itch.io | ✓ Now | Via download | Primary |
+| Arch (AUR) | ✓ Now | N/A | Arch users |
+| AppImage | ✓ Now | ✓ Works | Portable, most distros |
+| Flatpak | 1.0 | ✓ Will work | Cleanest Deck install |
 
 ### Why This Angle Works
 1. Native Linux = instant credibility (most games rely on Proton/Wine)
 2. Open source = Linux community loves this
-3. Less competition in Linux-specific channels
-4. Handhelds are hot, roguelikes are perfect for portable play
+3. Multiple install methods = shows you care about Linux users
+4. AppImage on Deck NOW = immediate playability
+5. Less competition in Linux-specific channels
 
 ### Key Linux Outlets
-1. GamingOnLinux (editorial + database)
-2. Boiling Steam (weekly native Linux roundups)
-3. r/linux_gaming
-4. Lutris database
-5. LinuxGameCast
+1. GamingOnLinux (editorial + database) - covers itch.io games
+2. r/linux_gaming
+3. Lutris database
+4. LinuxGameCast
+5. Flathub (distribution)
 
 ---
 
-## Part 8: AI Usage Strategy
+## Part 9: AI Usage Strategy
 
 Based on prior community reactions:
 
@@ -470,9 +573,14 @@ Based on prior community reactions:
 - Linux communities (they care about platform support)
 - Databases (IGDB, IndieDB, etc. have no AI restrictions for games)
 
+### ⚠️ Sites That Explicitly Filter AI Content
+- **Rogueliker:** Skips "AI-heavy projects" in monthly roundups
+- **Flathub:** "AI-generated submissions are not allowed"
+- **itch.io:** Has AI disclosure field (be honest)
+
 ---
 
-## Part 9: The Long Game (What Successful Roguelikes Did)
+## Part 10: The Long Game (What Successful Roguelikes Did)
 
 Research on how games like Caves of Qud and Cogmind grew:
 
@@ -504,11 +612,13 @@ Research on how games like Caves of Qud and Cogmind grew:
 | Trailer creation | 2-3 hours |
 | Database listings (IndieDB, IGDB, GamingOnLinux DB, Lutris) | 45 min - 1 hour total |
 | Alpha Beta Gamer submission | 15 minutes |
+| itch.io Release Announcements post | 20-30 minutes |
 | Pitch emails at launch | 2-3 hours |
 | Reddit posts | 30 min - 1 hour |
 | **Total pre-launch work** | **~8-10 hours** |
 | Sharing Saturday posts (ongoing) | 15-30 min/week |
 | Roguelike Celebration proposal (optional, future) | 2-3 hours |
+| Flathub packaging (optional, post-1.0) | 3-5 hours |
 
 ---
 
@@ -526,21 +636,51 @@ The goal isn't one viral moment but consistent presence across multiple channels
 
 ## Quick Reference: What to List Where
 
-| Platform | Type | Beta OK? | AI OK? | Links to itch.io? |
-|----------|------|----------|--------|-------------------|
-| IndieDB | Database/Directory | ✓ | ✓ | ✓ Yes |
-| IGDB | Database (powers Twitch) | ✓ Alpha/Beta/EA | ✓ | ✓ Yes |
-| GamingOnLinux DB | Linux games database | ✓ | ✓ | ✓ Yes |
-| Lutris | Linux game manager | ✓ | ✓ | ✓ Yes |
-| RogueBasin | Roguelike wiki | ✓ | ✓ | ✓ Yes |
-| Alpha Beta Gamer | Editorial/YouTube | ✓ **Preferred!** | ✓ | ✓ Yes |
+| Platform | Type | Beta OK? | AI OK? | Links to itch.io? | Verified? |
+|----------|------|----------|--------|-------------------|-----------|
+| IndieDB | Database/Directory | ✓ | ✓ | ✓ Yes | ✓ Active |
+| IGDB | Database (powers Twitch) | ✓ Alpha/Beta/EA | ✓ | ✓ Yes | ✓ |
+| GamingOnLinux DB | Linux games database | ✓ | ✓ | ✓ Yes | ✓ Active |
+| Lutris | Linux game manager | ✓ | ✓ | ✓ Yes | ✓ |
+| RogueBasin | Roguelike wiki | ✓ | ✓ | ✓ Yes | ✓ |
+| Alpha Beta Gamer | Editorial/YouTube | ✓ **Preferred!** | ✓ | ✓ Yes | ✓ Active |
+| Free Game Planet | Editorial | 1.0 preferred | ✓ | ✓ Yes | ✓ |
+| itch.io Release Board | Community | ✓ | ✓ | N/A | ✓ Active |
+| Flathub | Distribution | 1.0 preferred | ⚠️ No AI submissions | N/A | ✓ |
 
 ---
 
-## Priority Actions (Top 3 Right Now)
+## Priority Actions (Top 5 Right Now)
 
 1. **Submit to Alpha Beta Gamer** - They specifically cover free betas, your game fits perfectly
 2. **Verify all database listings are complete** (IndieDB, IGDB, GamingOnLinux DB, Lutris)
 3. **Start posting to r/roguelikedev Sharing Saturday** - Build name recognition before 1.0
+4. **Prepare polished itch.io Release Announcements post** for 1.0 (with GIF, screenshots, good description)
+5. **Email GamingOnLinux at 1.0** - They cover itch.io Linux games
 
 Everything else can wait for 1.0 or is ongoing/future opportunity.
+
+---
+
+## What Was Removed/Corrected
+
+### ❌ Boiling Steam Weekly Roundups
+- **Why removed:** Their "New Steam Games with Native Linux Clients" feature is **Steam-specific**
+- **Reality:** Since you're not on Steam, you won't appear in their automated weekly roundups
+- **Alternative:** They might do editorial coverage if pitched, but don't count on automatic inclusion
+
+### ✅ r/SteamDeck - KEPT (was almost removed)
+- **Initially thought awkward** because you're not on Steam
+- **But:** You have AppImage working on Deck NOW, which is a strong angle
+- **Sideloading is common** in that community
+
+### ✅ Added: itch.io Release Announcements Board
+- Official itch.io promotion channel
+- Staff review these posts for potential featuring
+
+### ✅ Added: Flathub
+- Real distribution channel for Linux
+- Gets your game in front of millions of Flatpak users
+
+### ✅ Added: bobeff/open-source-games GitHub list
+- Another curated list to submit to when eligible
