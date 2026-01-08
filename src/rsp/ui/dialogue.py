@@ -673,11 +673,22 @@ def create_prologue_completion_dialogue() -> DialogueBox:
     )
 
 
-def create_prologue_death_dialogue(cause: str) -> DialogueBox:
-    """Create prologue death dialogue (restarts training)."""
+def create_prologue_death_dialogue(cause: str, hint: str | None = None) -> DialogueBox:
+    """Create prologue death dialogue (restarts training).
+
+    Args:
+        cause: Death cause message
+        hint: Optional contextual hint for first death in a section
+    """
+    # Build message with optional hint
+    if hint:
+        message = f"{cause}\n\n{hint}\n\nRe-establishing uplink... I know more now."
+    else:
+        message = f"{cause}\n\nRe-establishing uplink... I know more now."
+
     return DialogueBox(
         title="CONNECTION LOST",
-        message=f"{cause}\n\nRe-establishing uplink... I know more now.",
+        message=message,
         options=["[ENTER] Retry"],
         valid_keys=[tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.YELLOW,

@@ -226,3 +226,8 @@ def get_intro_messages() -> dict[str, dict[str, str]]:
 def get_prologue_thoughts() -> dict[str, str]:
     """Get prologue tutorial thoughts (reactive internal voice)."""
     return DataLoader._load_json_file("narrative_content.json", "prologue_thoughts")
+
+
+def get_prologue_death_hints() -> dict[str, str]:
+    """Get prologue death hints (section-specific and heat-based)."""
+    return DataLoader._load_json_file("narrative_content.json", "prologue_death_hints")

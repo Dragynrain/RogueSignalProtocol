@@ -90,6 +90,8 @@ class GameEngine:
         self.prologue_completed_pending = False  # Flag for dialogue handler
         self.prologue_restart_pending = False  # Flag for dialogue handler
         self.prologue_spotted_in_blind_spot = False  # Visibility feedback flag
+        self.prologue_death_count = 0  # Track deaths for hint system
+        self.last_death_section = 0  # Track which section player died in
 
         # Initialize ascension system
         self.ascension_level = ascension_level
@@ -498,6 +500,14 @@ class GameEngine:
 
                     show_prologue_thought("diagonal_discover", self)
 
+                # Prologue: Stealth choice thought (Section 5 left path)
+                if getattr(self, "prologue_mode", False):
+                    px, py = self.player.position.x, self.player.position.y
+                    if px <= 5 and py >= 22:
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("stealth_choice", self)
+
                 # Track metrics
                 from rsp.systems.metrics import track
 
@@ -551,6 +561,7 @@ class GameEngine:
             else:
                 # Movement blocked - don't process turn
                 self.message_log.add_message("Wall blocks movement")
+
                 # Reset analog stick gating so player can immediately try another direction
                 if (
                     hasattr(self, "input_handler")

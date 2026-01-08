@@ -121,6 +121,12 @@ class StatusBarRenderer:
             vis_x = GameConfig.GAME_AREA_WIDTH() - len(vis_text) - 2
             if vis_x > x_pos:
                 render_char_safe(console, vis_x, 0, vis_text, fg=vis_color, bg=Colors.UI_BG)
+            # Play TOO CLOSE audio cue when spotted in blind spot
+            if getattr(game, "prologue_spotted_in_blind_spot", False):
+                try:
+                    game.sound_manager.play_sound("alert", volume=0.5)
+                except Exception:
+                    pass  # Audio failure is non-critical
             # Reset the flash flag after rendering
             if hasattr(game, "prologue_spotted_in_blind_spot"):
                 game.prologue_spotted_in_blind_spot = False

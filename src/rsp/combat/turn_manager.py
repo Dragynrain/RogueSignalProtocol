@@ -416,6 +416,17 @@ class GameTurnManager:
 
                 show_prologue_thought("blindspot_observe", self.game_engine)
 
+                # Hint at ranged exploits when concealed with visible enemy at range
+                # Teaches: "attack from the shadows" without exposing yourself
+                for enemy in self.game_engine.enemies:
+                    distance = pp.grid_distance_to(enemy.position)
+                    # Range 2-5: too far for melee, within Code Injection range
+                    if 2 <= distance <= 5 and self.game_engine.game_map.has_line_of_sight(
+                        pp, enemy.position
+                    ):
+                        show_prologue_thought("exploit_observe", self.game_engine)
+                        break
+
             # Track turns in blind spots for Shadow Dancer achievement
             from rsp.systems.metrics import get_current_session
 

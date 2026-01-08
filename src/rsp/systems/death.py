@@ -253,14 +253,61 @@ class PlayerDeathHandler:
         else:
             death_message = cause.title()
 
-        # Show death dialogue with tutorial message
-        self.game.dialogue_state.show(create_prologue_death_dialogue(death_message))
+        # Track death for hint system
+        current_section = self._get_prologue_section()
+        self.game.prologue_death_count += 1
+        self.game.last_death_section = current_section
+
+        # Get contextual death hint (only on first death per section)
+        hint = self._get_death_hint(current_section)
+
+        # Show death dialogue with tutorial message and optional hint
+        self.game.dialogue_state.show(create_prologue_death_dialogue(death_message, hint))
 
         # Set flag for dialogue handler to trigger restart
         self.game.prologue_restart_pending = True
 
         # NOTE: Do NOT set game_over = True
         # NOTE: Do NOT delete save or finalize metrics
+
+    def _get_prologue_section(self) -> int:
+        """Determine which prologue section the player is in based on position."""
+        py = self.game.player.position.y
+        # Section boundaries based on layout rows:
+        # Section 1: rows 0-5, Section 2: rows 6-12, Section 3: rows 13-17
+        # Section 4: rows 18-21, Section 5: rows 22-23
+        if py <= 5:
+            return 1
+        elif py <= 12:
+            return 2
+        elif py <= 17:
+            return 3
+        elif py <= 21:
+            return 4
+        else:
+            return 5
+
+    def _get_death_hint(self, section: int) -> str | None:
+        """Get contextual death hint based on section and heat.
+
+        Returns hint only on first death - subsequent deaths in same section
+        don't repeat the hint.
+        """
+        from rsp.core.data_loading import get_prologue_death_hints
+
+        hints = get_prologue_death_hints()
+        if not hints:
+            return None
+
+        # Heat-specific hint takes priority (heat > 60 = exploit overuse)
+        if self.game.player.heat > 60:
+            return hints.get("heat_death")
+
+        # Section-specific hint only on first death in that section
+        if self.game.prologue_death_count == 1:
+            return hints.get(f"section_{section}")
+
+        return None
 
     def reset(self):
         """Reset handler state for a new game."""
