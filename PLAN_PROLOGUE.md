@@ -94,7 +94,8 @@
 - `S` = Scanner (STATIC - Section 2: blind spot trap, can't chase so safe to fail against)
 - `s` = Blind spots (hide at range > 1 ONLY - adjacent enemies see through!)
 - `c/r/g` = Nodes (real items)
-- `e` = Exploit pickup (Code Injection in Section 1, Threat Scan in Section 3)
+- `e` = Exploit pickup (Code Injection in Section 1)
+- `E` = Exploit pickup (Threat Scan in Section 3 - utility, not combat)
 - `d` = Code hack (Section 3 - reward after alert escape, teaches color discovery)
 - Diagonal corridor segment (Section 1 - teaches 8-directional movement)
 - Continuous CONCEALED/EXPOSED/TOO CLOSE status indicator (prologue-only UI, 1.5s flash duration)
@@ -108,7 +109,7 @@
 - Section 2: Blind spots work at RANGE ONLY (Blind spot trap forces adjacent failure, TOO CLOSE feedback)
 - Section 3: Alert grace period + FOV bidirectionality (Patrol crosses path - guaranteed encounter)
 - Section 3: Code hack discovery (colored code hack as reward - teaches effect = color pattern)
-- Section 3: Utility exploit variety (Threat Scan pickup - not all exploits are weapons)
+- Section 3: Utility exploit variety (Threat Scan pickup - not all exploits are combat)
 - Section 3: Ranged exploit practice (Damaged Scanner across gap - low stakes practice)
 - Section 4: Ranged combat + Heat (Patrol across gap, 2 Code Injection uses, Cooling Node)
 - Section 5: Synthesis (Patrol, multiple paths - tests all learned mechanics)
@@ -129,7 +130,7 @@
 13. New thoughts: `melee_success`, `fov_bidirectional`, `heat_high` (Fourth Review)
 14. Death restart message: "Re-establishing uplink... I know more now." (Fifth Review - improved)
 15. Second Damaged Scanner in Section 3 for ranged exploit practice (Fifth Review)
-16. Threat Scan exploit pickup in Section 3 (Fifth Review)
+16. Threat Scan exploit pickup ('E' character) in Section 3 escape area (teaches exploit variety)
 17. Code hack (`d`) in Section 3 escape area (Sixth Review - relocated from Section 2)
 18. New thoughts: `exploit_ranged_practice`, `utility_pickup`, `code_hack_discovery`, `intent_observe` (Fifth Review)
 19. TOO CLOSE audio cue (reuse alert sound, lower volume) (Fifth Review)
@@ -232,29 +233,29 @@ Add a new `"0"` entry to `network_configs` (place BEFORE the `"1"` entry):
   "blind_spot_coverage": 0.15,
   "name": "First Infiltration",
   "background_trace": 0,
-  "trace_alert_to_hostile": 0,
+  "trace_alert_to_hostile": 5,
   "trace_continuous_hostile": 0,
   "cooling_nodes": 1,
   "cpu_nodes": 1,
   "ghost_nodes": 1,
   "code_hacks": 2,
-  "exploit_pickups": 2,
+  "exploit_pickups": 3,
   "permanent_upgrades": 0,
   "is_prologue": true,
   "fixed_layout": true
 }
 ```
 
-**IMPORTANT**: These counts are IGNORED for fixed layouts - they're only here for API compatibility. The fixed layout defines exact positions for all entities.
+**IMPORTANT**: These counts are IGNORED for fixed layouts - they're only here for API compatibility. The fixed layout defines exact positions for all entities. (Note: `exploit_pickups: 3` for Code Injection + Threat Scan + one more if needed)
 
 Key differences from normal levels:
-- `background_trace: 0` - No passive trace gain
-- `trace_alert_to_hostile: 0` - No trace penalty when spotted (learn trace in real game)
-- `trace_continuous_hostile: 0` - No continuous trace from combat (focus on movement/combat basics)
+- `background_trace: 0` - No passive trace gain (don't punish slow play)
+- `trace_alert_to_hostile: 5` - Small trace penalty when spotted (teaches trace EXISTS)
+- `trace_continuous_hostile: 0` - No continuous trace from combat (keeps it simple)
 - `is_prologue: true` - Flag for special handling (death behavior, skip logic)
 - `fixed_layout: true` - Use hand-designed layout instead of procedural generation
 
-**Design philosophy**: Trace is ZERO in prologue. Players learn movement, blind spots, and combat without the additional complexity of trace management. They'll experience trace pressure in Level 1 where the stakes are real and the mechanic has meaning.
+**Design philosophy**: Minimal trace in prologue (5% per alert). Players see the Trace indicator increase when spotted, teaching them that detection has consequences beyond immediate danger. They won't hit 100% in a normal playthrough, but they'll understand trace matters before Level 1.
 
 **NOTE**: The `is_prologue` and `fixed_layout` flags must be checked in:
 - `generator.py:generate_level()` - to skip procedural generation
@@ -295,11 +296,11 @@ Add new entries:
   "gateway_spotted": "The gateway. I can see it from here..."
 },
 "prologue_death_hints": {
-  "section_1": "Tip: Press '.' to wait. Let the patrol pass before moving.",
-  "section_2": "Tip: Blind spots only hide you at range. Stay 2+ tiles from enemies.",
-  "section_3": "Tip: When spotted, break line of sight quickly to avoid pursuit.",
-  "section_4": "Tip: Press 1-5 to use exploits. They work at range.",
-  "section_5": "Tip: Time your movement with patrol patterns. Patience wins."
+  "section_1": "Next time, wait for an opening...",
+  "section_2": "Distance matters. Too close and they see through everything.",
+  "section_3": "Need to break their line of sight faster.",
+  "section_4": "There must be a way to reach them from here...",
+  "section_5": "Patience. Watch the pattern."
 }
 ```
 
@@ -321,8 +322,10 @@ Add new entries:
 
 **New elements added (Sixth Review):**
 - `diagonal_discover`: Teaches 8-directional movement when player first moves diagonally
-- `prologue_death_hints`: Section-specific tips shown after first death in each section
+- `prologue_death_hints`: Section-specific reflections shown after death (implicit, not explicit tips)
 - Code hack relocated from Section 2 to Section 3 (cleaner lesson separation)
+
+**Death hints philosophy**: Death hints are phrased as internal reflections ("Next time, wait for an opening...") rather than explicit instructions ("Tip: Press '.' to wait"). This maintains the show-don't-tell approach even when providing post-death guidance.
 
 **What was removed**: 8 external hint messages (movement, shadow, stealth attack, exploit, node, code hack, gateway). These are replaced by sparse internal thoughts triggered by specific situations.
 
@@ -389,7 +392,8 @@ from rsp.entities.base import Position
 # 'X' = Damaged Scanner (5 HP, 0 damage - melee teaching)
 # 'S' = Scanner enemy (STATIC, vision 5)
 # 'P' = Patrol enemy (PATROL routes) - used for all mobile enemies in prologue
-# 'e' = Exploit pickup (always Code Injection in prologue)
+# 'e' = Exploit pickup (Code Injection - ranged combat)
+# 'E' = Exploit pickup (Threat Scan - utility, not combat)
 # 'd' = Code hack (data code)
 # '+' = Door/passage marker (floor tile, visual only)
 
@@ -434,23 +438,23 @@ PROLOGUE_LAYOUT = """
 #...#.....#...............#
 ####+#####################
 #....+....................#
-#sss.#....................#
-#sss.#....................#
-#sss.+...........S........#
+#....#.....sssssS.........#
 #....#....................#
-#....#.........sss........#
+#....#..sss...............#
+#....#..sss...............#
+#....#....................#
 ####+#########+###########
 #....+.........+....sss...#
 #....#....P....#....sss...#
-#....#....+....#...drss...#
+#....#....+....#..Edrss...#
 #....#....+....+....sss...#
 ################....###+###
 #....#..c..############...#
 #....#.....####P####......#
 #....+.....####.####......#
-####+########.....#######+#
-#....+.....g.......#.sss..#
-#....#.........P...#.sss.>#
+####+########.....##..+.###
+#sss.+.....g.......#....+>#
+#sss.#.........P...#..sss.#
 ############################
 """
 ```
@@ -463,6 +467,13 @@ PROLOGUE_LAYOUT = """
 3. **Diagonal corridor added (Section 1)**: L-shaped path from spawn - walls create corner where diagonal cuts through (2 moves diagonal vs 3 orthogonal). Player at (1,1) can reach (3,3) diagonally or go around.
 4. **Code hack relocated (Section 2 → 3)**: Moved `d` from Section 2 blind spots to Section 3 escape area (row 15, near `r` CPU node). Section 2 now focuses purely on blind spot range mechanics.
 
+**Layout changes from Seventh Review (2026-01-07):**
+5. **Section 2 blind spot trap FIXED**: Blind spot trail (`sssssS`) now leads directly TO Scanner. Old layout had blind spots on wrong side of room.
+6. **Threat Scan in Section 3**: Added `E` character for Threat Scan in Section 3 escape area (with code hack and CPU node). Teaches that not all exploits are combat-focused.
+7. **Section 5 branching added**: Two distinct paths to gateway (LEFT=stealth with ghost node, RIGHT=combat/direct). Creates meaningful player choice.
+8. **Minimal trace added**: Changed `trace_alert_to_hostile` from 0 to 5. Players see trace increase when spotted (teaches mechanic exists).
+9. **Death hints simplified**: Removed explicit key instructions ("Press '.' to wait"), replaced with implicit reflections ("Next time, wait for an opening...").
+
 **ALL elements are real game mechanics (from game_content.json):**
 - `X` = Damaged Scanner (STATIC - 5 HP, vision 5, 0 damage - teaches melee combat safely)
 - `P` = Patrol (PATROL movement - follows routes, damage 10) - used in Sections 1, 3, 4, 5
@@ -470,6 +481,7 @@ PROLOGUE_LAYOUT = """
 - `s` = Blind spot (hides player at range > 1 ONLY - adjacent enemies see through!)
 - `c/r/g` = Nodes (real items)
 - `e` = Code Injection exploit (guaranteed ranged for Section 4)
+- `E` = Threat Scan exploit (utility - Section 3 escape reward, teaches exploit variety)
 - `d` = Code hack (Section 3 - reward after alert escape)
 
 **Enemy usage reasoning:**
@@ -518,10 +530,10 @@ class FixedLevelGenerator:
     """
 
     # Character to tile type mapping (ALL REAL GAME ELEMENTS)
-    FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'X', 'S', 'P', 'e', 'd', '+', 's'}
+    FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'X', 'S', 'P', 'e', 'E', 'd', '+', 's'}
     ENEMY_CHARS = {'X': 'scanner', 'S': 'scanner', 'P': 'patrol'}  # X = damaged scanner
     NODE_CHARS = {'c': 'cooling', 'r': 'cpu', 'g': 'ghost'}
-    ITEM_CHARS = {'e': 'exploit', 'd': 'code_hack'}
+    ITEM_CHARS = {'e': 'exploit', 'E': 'threat_scan', 'd': 'code_hack'}
     # Special enemy HP overrides (X = damaged scanner, Section 4 patrol needs 2 exploits)
     ENEMY_HP_OVERRIDES = {'X': 5}  # Damaged Scanner has 5 HP (one-shot with melee)
 
@@ -662,6 +674,11 @@ class FixedLevelGenerator:
                 exploit_key = "code_injection"  # Range 5, ensures player can hit Patrol across gap
             else:
                 exploit_key = random.choice(list(GameData.EXPLOITS.keys()))
+            exploit_def = GameData.EXPLOITS[exploit_key]
+            self.game_map.exploit_pickups[(x, y)] = ExploitItem(exploit_key, exploit_def)
+        elif item_type == 'threat_scan':
+            # Always place Threat Scan - utility exploit that reveals enemy vision
+            exploit_key = "threat_scan"
             exploit_def = GameData.EXPLOITS[exploit_key]
             self.game_map.exploit_pickups[(x, y)] = ExploitItem(exploit_key, exploit_def)
         elif item_type == 'code_hack':
@@ -849,13 +866,15 @@ SECTION 4: The Gap (teaches ranged exploits)
 - Cooling node for heat recovery after combat
 - Thought: "Can't reach them from here... but my exploit might."
 
-SECTION 5: Final Approach (player choice - synthesis)
-- Patrol between player and gateway
-- Multiple valid approaches:
-  a) Fight: Use remaining exploits (costs heat/resources)
-  b) Stealth: Time patrol pattern, use blind spots at range
-  c) Mixed: Partial stealth, finish with combat
-- Ghost node on stealth path rewards that approach
+SECTION 5: Final Approach (player choice - branching synthesis)
+- TWO distinct paths to gateway (LEFT and RIGHT)
+- LEFT path: Stealth approach with blind spots + ghost node reward
+- RIGHT path: More exposed but direct to gateway
+- Patrol guards the center area between paths
+- Multiple valid strategies:
+  a) Left stealth: Time patrol, use blind spots, collect ghost node
+  b) Right combat: Fight through, accept trace/resource cost
+  c) Mixed: Start one path, adapt based on patrol position
 - Gateway clearly visible - player owns their strategy
 - This section tests everything learned, doesn't teach new mechanics
 ```
@@ -875,7 +894,8 @@ Legend:
 r = CPU recovery   g = Ghost node     S = Scanner (STATIC, vision 5)
 X = Damaged Scanner (STATIC, 5 HP, 0 damage - melee teaching)
 P = Patrol (PATROL routes)
-e = Exploit pickup (always Code Injection in prologue)
+e = Exploit pickup (Code Injection - ranged combat)
+E = Exploit pickup (Threat Scan - utility, not combat)
 d = Code hack (teaches color = effect discovery)
 + = Doorway
 
@@ -886,24 +906,24 @@ d = Code hack (teaches color = effect discovery)
 #...#.....#...............#     X blocks exit - teaches bump-to-attack
 ####+#####################  <- SECTION 1b: THE CHOKEPOINT
 #....+....................#     Door leads to corridor - time the Patrol
-#sss.#....................#  <- SECTION 2: THE BLIND SPOT TRAP
-#sss.#....................#     Blind spots line the OBVIOUS direct path
-#sss.+...........S........#     Walking through blind spots feels safe...
-#....#....................#     But adjacent to Scanner = SPOTTED! (TOO CLOSE!)
-#....#.........sss........#     Alternate path: blind spots at RANGE work
+#....#.....sssssS.........#  <- SECTION 2: THE BLIND SPOT TRAP
+#....#....................#     Blind spots lead TO Scanner - feels safe...
+#....#..sss...............#     At range 1 (adjacent): SPOTTED! (TOO CLOSE!)
+#....#..sss...............#     SAFE blind spots at range 5+ from Scanner
+#....#....................#     Learn: blind spots only work at DISTANCE
 ####+#########+###########
 #....+.........+....sss...#  <- SECTION 3: THE PATROL ROUTE
 #....#....P....#....sss...#     Patrol route CROSSES player entry
-#....#....+....#...drss...#     WILL be spotted - FOV is bidirectional!
+#....#....+....#..Edrss...#     Escape rewards: Threat Scan (E), code hack (d), CPU (r)
 #....#....+....+....sss...#     Flee to blind spots, code hack + CPU node reward
 ################....###+###
 #....#..c..############...#  <- SECTION 4: THE GAP
 #....#.....####P####......#     Patrol across gap - needs ranged exploit
 #....+.....####.####......#     Walls constrain movement, Cooling Node nearby
-####+########.....#######+#
-#....+.....g.......#.sss..#  <- SECTION 5: FINAL APPROACH
-#....#.........P...#.sss.>#     Patrol guards gateway - player choice
-############################     Ghost node rewards stealth path
+####+########.....##..+.###  <- SECTION 5: FINAL APPROACH (BRANCHING)
+#sss.+.....g.......#....+>#     LEFT: Stealth path (blind spots + ghost node)
+#sss.#.........P...#..sss.#     RIGHT: Combat/direct path to gateway
+############################     Player chooses strategy - synthesis of all mechanics
 ```
 
 **How each section teaches mechanics:**
@@ -914,23 +934,26 @@ d = Code hack (teaches color = effect discovery)
 | 1a | Turn-based observation | Patrol visible from spawn row | Player sees "it moves when I move" BEFORE any risk |
 | 1a | Melee combat | Damaged Scanner blocks exit | MUST bump to attack - safe first combat (0 damage enemy) |
 | 1b | WAIT action | Patrol blocks corridor access | MUST time entry - active learning after observation |
-| 2 | Blind spots at RANGE | Blind spot trap leads adjacent to Scanner | Forces failure state + TOO CLOSE feedback |
+| 2 | Blind spots at RANGE | Blind spot trail leads TO Scanner | Forces failure when adjacent + TOO CLOSE feedback |
 | 3 | Alert + FOV bidirectionality | Patrol route crosses entry | Guaranteed encounter - "If I see them, they see me" |
+| 3 | Non-combat exploit (Threat Scan) | Threat Scan in escape area | Teaches not all exploits are weapons |
 | 3 | Code hack discovery | Code hack near CPU node in escape area | Reward after escaping - teaches color = effect |
 | 4 | Ranged exploits + Heat | Patrol across gap (constrained), Code Injection guaranteed | Predictable target, Cooling Node teaches recovery |
-| 5 | Synthesis | Multiple paths | Tests all learned mechanics - player choice |
+| 5 | Synthesis + Branching | LEFT stealth path vs RIGHT combat path | Player chooses strategy - meaningful decision |
 
 **Critical layout requirements:**
 - Section 1a: L-shaped wall creates diagonal shortcut opportunity (optional but faster)
 - Section 1a: Damaged Scanner blocks ONLY exit - player must learn melee to proceed
 - Section 1b: Patrol blocks ONLY path - player cannot proceed without waiting
-- Section 2: Obvious blind spot path leads ADJACENT to Scanner - failure is the lesson
-- Section 2: Alternate blind spot path at range 3-4 - success after learning the rule
+- Section 2: Blind spot trail (`sssssS`) leads directly TO Scanner - trap triggers when adjacent
+- Section 2: Safe blind spots at range 5+ from Scanner (alternate path after learning trap)
 - Section 3: Patrol route MUST cross player entry point - guaranteed spotting
-- Section 3: Code hack placed near CPU node - reward for successful escape, not during Section 2 lesson
+- Section 3: Escape area rewards: Threat Scan (utility exploit), code hack, CPU node
 - Section 3: Blind spots at FAR side - player must flee TO them, not start in them
 - Section 4: Wall gap wide enough that melee is clearly impossible
-- Section 5: Both combat and stealth paths viable - neither forced
+- Section 5: TWO distinct paths to gateway (LEFT=stealth, RIGHT=combat)
+- Section 5: Left path has blind spots + ghost node (rewards stealth)
+- Section 5: Right path more exposed but direct (combat viable)
 
 ### 3.3 Enemy Configuration
 
@@ -962,22 +985,28 @@ d = Code hack (teaches color = effect discovery)
 3. Scanner in Section 2 can't chase - if player is spotted, they just get alert (safe failure)
 4. Section 4 uses Patrol (not Bot) - predictable movement stays in range for ranged combat lesson
 5. Section 4 Patrol has 40 HP (default) - requires 2 Code Injection uses (25 damage each), teaches heat
-6. Trace is set to zero in prologue - being spotted doesn't hurt progression
+6. Trace has minimal penalty (5% per alert) - teaches trace EXISTS without harsh punishment
 
 ### 3.4 Item Placement
 
 | Item | Section | Position Purpose |
 |------|---------|-----------------|
-| Code Injection (e) | Section 1 | Always this exploit (range 5) - guarantees Section 4 works |
-| CPU Recovery (r) | Section 3 blind spots | Reward for fleeing to blind spots after Patrol spots them |
+| Code Injection (e) | Section 1 | Ranged exploit (range 5) - guarantees Section 4 works |
+| Threat Scan (E) | Section 3 escape | Utility exploit - teaches not all exploits are weapons |
+| CPU Recovery (r) | Section 3 escape | Reward for fleeing to blind spots after Patrol spots them |
+| Code Hack (d) | Section 3 escape | Teaches color = effect pattern |
 | Cooling Node (c) | Section 4 | Available after exploit use (teaches heat management naturally) |
-| Ghost Node (g) | Section 5 | Rewards stealth approach to final area |
+| Ghost Node (g) | Section 5 LEFT path | Rewards stealth approach to final area |
 
 **Placement philosophy**: Items are positioned as rewards/tools for the situation they're in, not randomly scattered. Player learns what items do by USING them in context.
 
-**Key timing**: Code Injection is picked up in Section 1 but not NEEDED until Section 4. This gives player time to notice they have it, wonder what it does, maybe even try pressing 1-5 experimentally before they MUST use it.
+**Key timing**:
+- Code Injection is picked up in Section 1 but not NEEDED until Section 4. Player has time to notice it.
+- Threat Scan, code hack, and CPU recovery are all in the Section 3 escape area - rewards for surviving the patrol encounter.
 
 **Why Code Injection is guaranteed**: Section 4 requires ranged combat across a gap. If the player only had melee exploits (Buffer Overflow), they'd be stuck. Code Injection (range 5, 25 damage) ensures the lesson works.
+
+**Why Threat Scan is in Section 3**: Teaches that exploits aren't just weapons. Player gets a utility exploit as a reward for escaping the patrol, demonstrating variety before Level 1.
 
 ### 3.5 Tutorial Triggers - REMOVED
 
@@ -2001,11 +2030,11 @@ self.prologue_restart_pending = False
 
 However, `generate_procedural_level()` doesn't call auto_save - only `progress_to_next_level()` does. So the plan is correct.
 
-### GAP 7: Missing `+` Character in FLOOR_CHARS
+### GAP 7: Missing `+` and `E` Characters in FLOOR_CHARS
 
-**Problem**: The ASCII layout uses `+` for doorways, but `FLOOR_CHARS` in fixed_generator.py might not include it.
+**Problem**: The ASCII layout uses `+` for doorways and `E` for Threat Scan exploit, but `FLOOR_CHARS` in fixed_generator.py might not include them.
 
-**Fix**: Already included in plan - `FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'S', 'B', 'P', 'e', 'd', '+', 's'}` includes `+`. **Verified correct.**
+**Fix**: Already included in plan - `FLOOR_CHARS = {'.', '@', '>', 'c', 'r', 'g', 'X', 'S', 'P', 'e', 'E', 'd', '+', 's'}` includes both `+` and `E`. **Verified correct.**
 
 ### GAP 8: Enemy Constructor Signature
 
