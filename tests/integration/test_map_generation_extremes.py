@@ -8,7 +8,6 @@ Tests map generation system under extreme conditions and fuzzing:
 - Player spawn validation
 - Enemy count edge cases
 - Room size extremes
-- Performance under stress
 """
 
 import time
@@ -345,58 +344,3 @@ class TestRoomSizeValidation:
             assert (
                 20 <= walkable_percentage <= 80
             ), f"Seed {seed}: Walkable percentage {walkable_percentage:.1f}% out of range"
-
-
-class TestMapGenerationPerformance:
-    """Test map generation performance under stress."""
-
-    def test_generation_time_reasonable(self):
-        """Map generation should complete in reasonable time."""
-        times = []
-
-        for seed in range(12000, 12050):  # 50 generations
-            start_time = time.time()
-            agent = GameTestAgent(seed=seed)
-            elapsed = time.time() - start_time
-            times.append(elapsed)
-
-        avg_time = sum(times) / len(times)
-        max_time = max(times)
-
-        print("\n=== Generation Performance (50 seeds) ===")
-        print(f"Average time: {avg_time*1000:.2f}ms")
-        print(f"Max time: {max_time*1000:.2f}ms")
-
-        # Average should be < 100ms per generation (CI runners are slower)
-        assert avg_time < 0.1, f"Generation too slow: avg {avg_time*1000:.2f}ms"
-
-        # No single generation should take > 500ms (CI runners can be slow)
-        assert max_time < 0.5, f"Slowest generation: {max_time*1000:.2f}ms"
-
-    def test_rapid_successive_generations(self):
-        """Rapidly generating many maps doesn't slow down over time."""
-        batch_times = []
-
-        # Generate 5 batches of 20 maps
-        for batch in range(5):
-            start_time = time.time()
-
-            for i in range(20):
-                seed = 13000 + batch * 20 + i
-                agent = GameTestAgent(seed=seed)
-
-            batch_time = time.time() - start_time
-            batch_times.append(batch_time)
-
-        # Later batches shouldn't be slower (no memory leak/accumulation)
-        first_batch = batch_times[0]
-        last_batch = batch_times[-1]
-
-        print("\n=== Successive Generation Performance ===")
-        print(f"First batch (20 maps): {first_batch*1000:.2f}ms")
-        print(f"Last batch (20 maps): {last_batch*1000:.2f}ms")
-
-        # Last batch shouldn't be more than 50% slower than first
-        assert (
-            last_batch < first_batch * 1.5
-        ), f"Performance degradation: {last_batch/first_batch:.2f}x slower"

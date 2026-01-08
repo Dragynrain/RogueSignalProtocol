@@ -152,7 +152,7 @@ These are directory-style sites where you're adding an entry to a database. They
   - Update page when 1.0 releases
   - Consider entering Indie of the Year when eligible
 
-### IGDB (Internet Game Database) ✓ VERIFIED
+### IGDB (Internet Game Database) ✓ VERIFIED & ACTIVE
 - **Status:** Already listed ✓
 - **URL:** https://www.igdb.com/ → "Add a Game"
 - **Type:** Comprehensive game database (powers Twitch)
@@ -182,7 +182,8 @@ These are directory-style sites where you're adding an entry to a database. They
   - Good to list here BEFORE pitching editorial team at 1.0
   - GamingOnLinux does cover itch.io games editorially
 
-### Lutris Database ✓ VERIFIED
+### Lutris Database ✓ VERIFIED & Active
+- **Status:** Already listed ✓
 - **URL:** https://lutris.net/games → Submit new game
 - **Type:** Linux game manager database
 - **Why:** Popular tool for managing games on Linux; being in their database helps Linux users discover and install your game
@@ -684,3 +685,236 @@ Everything else can wait for 1.0 or is ongoing/future opportunity.
 
 ### ✅ Added: bobeff/open-source-games GitHub list
 - Another curated list to submit to when eligible
+
+---
+
+## Part 11: Additional Opportunities (Deep Research Findings)
+
+Based on deeper research into the indie/roguelike/open source ecosystem, here are additional promotion channels that are particularly relevant to your game.
+
+### YouTube Content Creators Specializing in Roguelikes/Indies
+
+These creators actively cover smaller indie games and are known for discovering hidden gems:
+
+#### Tier 1 - Roguelike Specialists (Most Relevant)
+| Creator | Why | Notes |
+|---------|-----|-------|
+| **Nookrium** | Hidden gem focus, family-friendly | Has giveaway channel, dev-friendly Discord |
+| **RhapsodyPlays** | Roguelike/deckbuilder specialist | Plays early access titles |
+| **Retromation** | Roguelikes, colony sims | Switches games frequently |
+| **Wanderbots** | Indie variety, roguelikes | Has dev lounge in Discord |
+| **Splattercat** | Different indie game EVERY DAY | Very broad coverage, approachable |
+| **Northernlion** | Veteran roguelike streamer | Built career on Isaac, plays lots of roguelikes |
+
+#### Tier 2 - Broader Indie Coverage
+| Creator | Why | Notes |
+|---------|-----|-------|
+| **Alpha Beta Gamer** | Already verified - covers FREE BETAS | Has dev-friendly Discord, active community |
+| **Best Indie Games** | Curates quality indie games | Website + YouTube |
+| **I Dream of Indie** | "Bringing a voice to the voiceless" | Covers wide spectrum |
+| **Christopher Odd** | Turn-based focus | Good for tactical games |
+| **SkillUp** | Indie Spotlight series, Next Fest highlights | Larger audience, harder to reach |
+
+#### How to Approach YouTubers
+From research on how YouTubers find games:
+1. **Make your game stand out visually** - First impression matters for whether they click
+2. **Have a hook** - "Cyberpunk stealth roguelike with ASCII mode" is distinctive
+3. **Be discoverable** - Many check itch.io, Steam Next Fest, Sharing Saturday threads
+4. **Don't spam** - One polite email with key links, then move on if no response
+5. **Key insight from Cogmind dev:** "YouTubers were the biggest driver of traffic" - bigger than press sites
+
+### Discord Communities for Dev Self-Promotion
+
+From itch.io community research on dev-friendly Discords:
+
+| Server | Self-Promo Channel | Notes |
+|--------|-------------------|-------|
+| Splattercat's Discord | Check rules | Very active community |
+| Alpha Beta Gamer | #show-your-games | Forum format, dev-friendly |
+| Nookrium's Discord | #share-your-stuff | Has giveaway opportunities |
+| Wanderbots (Henchbots) | #arts-crafts-creations | Dev-friendly |
+| Best Indie Games | #giveaways | Can do small giveaways |
+| Roguelikes Discord | Check channels | Where roguelike community hangs out |
+
+### Open Source Game Lists & Wikis
+
+Your game qualifies for ALL of these due to being open source:
+
+#### Primary (Most Important)
+| Resource | URL | How to Submit |
+|----------|-----|---------------|
+| **LibreGameWiki** | libregamewiki.org | Create wiki article, follow editorial policy |
+| **bobeff/open-source-games** | github.com/bobeff/open-source-games | Pull request |
+| **awesome-open-source-games** | github.com/michelpereira/awesome-open-source-games | PR, needs 40+ GitHub stars |
+| **leereilly/games** | github.com/leereilly/games | Archived but highly-starred reference |
+| **Open Source Game List (OSGL)** | trilarion.github.io/opensourcegames | Based on GitHub collection |
+
+#### Secondary
+| Resource | URL | Notes |
+|----------|-----|-------|
+| **OSGameClones** | osgameclones.com | For remakes/clones, may not fit |
+| **FreeGameDev Forums** | freegamedev.net | Open source game dev community |
+| **Wikipedia list of open-source games** | Check if notable enough | High bar for inclusion |
+
+### Tech/Developer Communities
+
+Since your game is open source and has interesting technical aspects:
+
+#### Hacker News (Show HN)
+- **URL:** news.ycombinator.com
+- **Why:** Tech audience appreciates open source, interesting projects
+- **How:** Post as "Show HN: [Your Game] - A cyberpunk stealth roguelike (open source)"
+- **Best for:** Launch day or significant milestone
+- **From research:** Can validate interest, drive traffic, but retention varies
+- **Note:** Works best if you have a technical angle (interesting architecture, novel approach)
+
+#### TIGSource Forums
+- **URL:** forums.tigsource.com
+- **What:** Long-running indie game dev community
+- **How:** Create devlog thread, participate in community
+- **Note:** Has official Discord too
+
+### Linux-Specific Additional Channels
+
+#### Arch Wiki List of Games
+- **URL:** wiki.archlinux.org/title/List_of_games
+- **Why:** Since you're on AUR, you could be listed here
+- **How:** Check if roguelike section exists, follow wiki editing guidelines
+
+#### Linux Gaming Central
+- **URL:** linuxgamingcentral.com
+- **What:** Linux gaming news site
+- **How:** Pitch via contact form
+
+#### Steam Deck HQ
+- **URL:** steamdeckhq.com
+- **What:** Steam Deck focused site
+- **Note:** May be Steam-centric, but covers non-Steam games that work well on Deck
+
+### Conference/Event Opportunities
+
+#### Roguelike Celebration (already noted)
+- CFP opens ~May, closes ~July
+- Consider proposing a talk about your game or a design topic
+
+#### GitHub Game Off
+- **URL:** github.blog/open-source/gaming/
+- **What:** Annual November game jam, but they also feature open source games year-round
+- **Note:** Their "Game Bytes" series covers open source gaming news
+
+### Additional Database Opportunities
+
+#### PCGamingWiki
+- **URL:** pcgamingwiki.com
+- **What:** Technical wiki for PC games
+- **Why:** Good for documenting Linux compatibility, fixes, technical details
+- **Note:** Usually better for released games with known issues to document
+
+---
+
+## Part 12: Content Creator Outreach Strategy
+
+Based on research into how YouTubers find games:
+
+### What YouTubers Look For
+1. **Visual hook** - Something that stands out in a thumbnail
+2. **Fresh content** - They want to show viewers something new
+3. **Good "content potential"** - Does it make for entertaining video?
+4. **Roguelikes are popular** - Replayable content = multiple videos
+
+### Your Angles for Outreach
+- "Cyberpunk stealth roguelike" - combines trending themes
+- ASCII + graphical modes - visual variety
+- Free and open source - no barrier to try
+- Native Linux + Steam Deck - differentiator
+
+### Outreach Template for YouTubers
+
+```
+Subject: Free Cyberpunk Stealth Roguelike - Rogue Signal Protocol
+
+Hi [Name],
+
+I've been developing a free cyberpunk stealth roguelike called Rogue Signal Protocol 
+that I thought might interest you. It features tactical turn-based stealth gameplay 
+with procedurally generated missions.
+
+Some things that might catch your eye:
+- Dual display modes (ASCII and graphical)
+- Native Linux/Steam Deck support
+- Free and open source
+
+itch.io: https://dragynrain.itch.io/rogue-signal-protocol
+Trailer: [your trailer URL]
+
+Thanks for your time,
+[Your name]
+```
+
+### Who to Contact (Priority Order)
+1. Roguelike-focused YouTubers (Nookrium, RhapsodyPlays, Retromation)
+2. "Hidden gem" hunters (Splattercat, Best Indie Games)
+3. Linux gaming channels (LinuxGameCast if they're still active)
+4. Broader indie channels only if #1-3 don't respond
+
+### When to Contact
+- After 1.0 release (stable game)
+- Or if a YouTuber specifically covers betas/early access
+- Best: Email on Tuesday-Thursday morning (higher open rates)
+
+---
+
+## Updated Effort Summary
+
+| Task | Time | Priority |
+|------|------|----------|
+| Press kit creation | 1-2 hours | HIGH |
+| Trailer creation | 2-3 hours | HIGH |
+| Database listings (IndieDB, IGDB, GamingOnLinux, Lutris) | 45 min - 1 hour | HIGH |
+| Alpha Beta Gamer submission | 15 minutes | HIGH |
+| itch.io Release Announcements post | 20-30 minutes | HIGH |
+| LibreGameWiki article | 30-45 minutes | MEDIUM |
+| Open source GitHub lists (PRs) | 30 minutes | MEDIUM |
+| Pitch emails to press at launch | 2-3 hours | HIGH |
+| YouTuber outreach emails | 1-2 hours | MEDIUM |
+| Reddit posts | 30 min - 1 hour | HIGH |
+| Hacker News Show HN post | 15 minutes | LOW-MEDIUM |
+| **Total pre-launch work** | **~10-14 hours** | - |
+| Sharing Saturday posts (ongoing) | 15-30 min/week | HIGH |
+| Discord community engagement | 15-30 min/week | MEDIUM |
+| Roguelike Celebration proposal | 2-3 hours | FUTURE |
+| Flathub packaging | 3-5 hours | FUTURE |
+
+---
+
+## Master Priority List (Updated)
+
+### Before 1.0 (Do Now)
+1. ✅ Submit to **Alpha Beta Gamer** - They prefer betas
+2. ✅ Verify database listings (IndieDB, IGDB, GamingOnLinux DB, Lutris)
+3. ✅ Start **r/roguelikedev Sharing Saturday** posts
+4. Create press kit with screenshots and trailer
+5. Prepare itch.io Release Announcements post (draft)
+
+### At 1.0 Launch
+1. Post to **itch.io Release Announcements** (polished, with GIF)
+2. Email **GamingOnLinux**
+3. Email **Alpha Beta Gamer** (if not already covered)
+4. Post to all relevant subreddits (r/roguelikes, r/linux_gaming, r/SteamDeck, r/playmygame, r/opensourcegames)
+5. Update all database listings to 1.0
+6. Post to **Hacker News Show HN** (if you have a good technical angle)
+
+### After 1.0 Launch
+1. Submit to **LibreGameWiki**
+2. Submit PRs to GitHub open source game lists
+3. Email roguelike-focused YouTubers
+4. Join and engage in relevant Discord communities
+5. Consider **Flathub** submission
+6. Continue Sharing Saturday participation
+7. Prepare Roguelike Celebration talk proposal (if CFP opens)
+
+### Ongoing
+- r/roguelikedev Sharing Saturday (weekly)
+- Community engagement in Discord servers
+- Respond to any press/YouTuber coverage
+- Update listings when significant updates happen
