@@ -71,9 +71,16 @@ class GameLevelCoordinator:
 
         # Get network configuration for current level from game state manager
         config = self.game_engine.game_state.get_current_network_config()
+        is_fixed_layout = config.get("fixed_layout", False)
+        is_prologue = getattr(self.game_engine, "prologue_mode", False)
 
         # Play appropriate background music for the level (loops infinitely)
-        if self.game_engine.level == 1:
+        # Prologue check FIRST in the chain
+        if is_prologue:
+            self.game_engine.sound_manager.play_music(
+                "level1_stealth.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME
+            )
+        elif self.game_engine.level == 1:
             self.game_engine.sound_manager.play_music(
                 "level1_stealth.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME
             )
@@ -86,36 +93,56 @@ class GameLevelCoordinator:
                 "level3_core.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME
             )
 
-        # Use the new LevelGenerator system
-        self.game_engine.level_generator.generate_level(
-            self.game_engine.level,
-            self.game_engine.game_state.dungeon_seed,
-            self.game_engine.ascension_modifiers,
-        )
+        # CRITICAL: Fixed layout check BEFORE procedural generation
+        if is_fixed_layout:
+            from rsp.level.fixed_generator import FixedLevelGenerator
+            from rsp.level.fixed_levels import get_prologue_layout
 
-        # Generate additional game elements not handled by LevelGenerator
-        # A11+: Apply code reduction per floor (min 3 codes)
-        mods = self.game_engine.ascension_modifiers
-        code_count = config["code_hacks"]
-        if mods.code_reduction_per_floor > 0:
-            code_count = max(mods.code_minimum, code_count - mods.code_reduction_per_floor)
-        self._place_code_hacks(code_count)
+            fixed_gen = FixedLevelGenerator(self.game_engine.game_map, self.game_engine)
+            layout = get_prologue_layout()
+            spawn_pos, enemies = fixed_gen.generate_from_layout(
+                layout, self.game_engine.level
+            )
 
-        self._place_exploit_pickups(config["exploit_pickups"])
-        self._place_story_fragment()  # Add story fragment placement
+            # Add enemies to enemy_manager
+            for enemy in enemies:
+                self.game_engine.enemy_manager.enemies.append(enemy)
 
-        # A18+: Apply upgrade reduction per floor (min 0 upgrades)
-        upgrade_count = config["permanent_upgrades"]
-        if mods.upgrade_reduction_per_floor > 0:
-            upgrade_count = max(0, upgrade_count - mods.upgrade_reduction_per_floor)
-        self._place_permanent_upgrades(upgrade_count)
-        self._place_enemies(config["enemies"])
+            # Set player spawn position
+            self.game_engine.player.x = spawn_pos.x
+            self.game_engine.player.y = spawn_pos.y
 
-        # Reset player position to spawn location and adjust stats for new level
-        # Find a valid spawn position (open floor tile)
-        spawn_pos = self._find_valid_spawn_position()
-        self.game_engine.player.x = spawn_pos.x
-        self.game_engine.player.y = spawn_pos.y
+        else:
+            # Use the new LevelGenerator system (procedural generation)
+            self.game_engine.level_generator.generate_level(
+                self.game_engine.level,
+                self.game_engine.game_state.dungeon_seed,
+                self.game_engine.ascension_modifiers,
+            )
+
+            # Generate additional game elements not handled by LevelGenerator
+            # A11+: Apply code reduction per floor (min 3 codes)
+            mods = self.game_engine.ascension_modifiers
+            code_count = config["code_hacks"]
+            if mods.code_reduction_per_floor > 0:
+                code_count = max(mods.code_minimum, code_count - mods.code_reduction_per_floor)
+            self._place_code_hacks(code_count)
+
+            self._place_exploit_pickups(config["exploit_pickups"])
+            self._place_story_fragment()  # Add story fragment placement
+
+            # A18+: Apply upgrade reduction per floor (min 0 upgrades)
+            upgrade_count = config["permanent_upgrades"]
+            if mods.upgrade_reduction_per_floor > 0:
+                upgrade_count = max(0, upgrade_count - mods.upgrade_reduction_per_floor)
+            self._place_permanent_upgrades(upgrade_count)
+            self._place_enemies(config["enemies"])
+
+            # Reset player position to spawn location and adjust stats for new level
+            # Find a valid spawn position (open floor tile)
+            spawn_pos = self._find_valid_spawn_position()
+            self.game_engine.player.x = spawn_pos.x
+            self.game_engine.player.y = spawn_pos.y
 
         # Stat changes for level transition:
         # - CPU: Preserved (carries over)
@@ -171,6 +198,22 @@ class GameLevelCoordinator:
         # Don't progress if game is already over
         if self.game_engine.game_over:
             logging.debug("Session: Level progression blocked - game already over")
+            return
+
+        # Handle prologue completion - return to menu, no level progression
+        if getattr(self.game_engine, "prologue_mode", False):
+            # Mark prologue completed (for achievements/tracking)
+            self.game_engine.settings.prologue_completed = True
+            self.game_engine.settings.save_settings()
+
+            # Show completion dialogue
+            from rsp.ui.dialogue import create_prologue_completion_dialogue
+
+            self.game_engine.dialogue_state.show(create_prologue_completion_dialogue())
+
+            # Set flag for dialogue handler (though completion dialogue returns to menu anyway)
+            self.game_engine.prologue_completed_pending = True
+            logging.info("Prologue completed - returning to main menu")
             return
 
         old_level = self.game_engine.level
@@ -286,8 +329,9 @@ class GameLevelCoordinator:
                 logging.debug(f"Session: Generating level {self.game_engine.level}")
                 # Skip level_start message if we already showed a richer transition message
                 self.generate_procedural_level(skip_level_start_message=showed_transition)
-                # Auto-save after successful level generation
-                self.game_engine.auto_save()
+                # Auto-save after successful level generation (skip in prologue)
+                if not getattr(self.game_engine, "prologue_mode", False):
+                    self.game_engine.auto_save()
                 logging.debug(
                     f"Session: Level {self.game_engine.level} generation and auto-save complete"
                 )

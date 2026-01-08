@@ -630,6 +630,65 @@ def create_victory_dialogue(input_mapper=None) -> DialogueBox:
     )
 
 
+def create_prologue_intro_dialogue() -> DialogueBox:
+    """Create prologue introduction dialogue (shown when prologue starts)."""
+    return DialogueBox(
+        title="FIRST INFILTRATION",
+        message=(
+            "Remote uplink active.\n"
+            "Reach the gateway.\n"
+            "\n"
+            "Arrow keys to move. Period (.) to wait. 1-5 for exploits.\n"
+            "Press ? anytime for help."
+        ),
+        options=["[ENTER] Begin"],
+        valid_keys=[tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
+        title_color=Colors.CYAN,
+        message_color=Colors.WHITE,
+        border_color=Colors.CYAN,
+        bg_color=(20, 30, 40),
+        format_data={},
+        priority=5,
+    )
+
+
+def create_prologue_completion_dialogue() -> DialogueBox:
+    """Create prologue completion dialogue (returns to main menu)."""
+    return DialogueBox(
+        title="UPLINK ESTABLISHED",
+        message=(
+            "Gateway reached. You are ready.\n"
+            "\n"
+            "The real networks won't be this forgiving. "
+            "Stay too long, and something worse than guards will find you."
+        ),
+        options=["[ENTER] Continue"],
+        valid_keys=[tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
+        title_color=Colors.GREEN,
+        message_color=Colors.WHITE,
+        border_color=Colors.GREEN,
+        bg_color=(20, 30, 40),
+        format_data={},
+        priority=5,
+    )
+
+
+def create_prologue_death_dialogue(cause: str) -> DialogueBox:
+    """Create prologue death dialogue (restarts training)."""
+    return DialogueBox(
+        title="CONNECTION LOST",
+        message=f"{cause}\n\nRe-establishing uplink... I know more now.",
+        options=["[ENTER] Retry"],
+        valid_keys=[tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
+        title_color=Colors.YELLOW,
+        message_color=Colors.WHITE,
+        border_color=Colors.YELLOW,
+        bg_color=(40, 30, 20),
+        format_data={},
+        priority=10,
+    )
+
+
 def create_overclock_warning_dialogue(
     exploit_name: str,
     overheat_amount: int,

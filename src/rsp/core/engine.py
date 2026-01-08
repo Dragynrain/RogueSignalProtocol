@@ -63,6 +63,7 @@ class GameEngine:
         settings: GameSettings | None = None,
         headless: bool = False,
         ascension_level: int = 0,
+        prologue_mode: bool = False,
     ) -> None:
         """
         Initialize the game engine with dependency injection.
@@ -79,9 +80,16 @@ class GameEngine:
             settings: Game settings instance, creates default if None
             headless: Run in headless mode (no rendering/audio, for testing)
             ascension_level: Ascension difficulty level (0-20, default 0)
+            prologue_mode: If True, run tutorial prologue (level 0, no permadeath)
         """
         # Store headless mode flag
         self.headless = headless
+
+        # Store prologue mode flag and related state
+        self.prologue_mode = prologue_mode
+        self.prologue_completed_pending = False  # Flag for dialogue handler
+        self.prologue_restart_pending = False  # Flag for dialogue handler
+        self.prologue_spotted_in_blind_spot = False  # Visibility feedback flag
 
         # Initialize ascension system
         self.ascension_level = ascension_level
@@ -248,17 +256,27 @@ class GameEngine:
                 )
         else:
             self._randomize_code_hacks()
-            self.game_session.generate_procedural_level()
-            # Show intro messages for new games
-            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "success")
-            self.message_log.add_message_typed(
-                "The simulation is failing. They're coming for you.", "critical"
-            )
-            self.message_log.add_message("Find the gateway - escape before De-Resolution.")
-            # Show intro dialogue
-            from rsp.ui.dialogue import create_intro_dialogue
 
-            self.dialogue_state.show(create_intro_dialogue())
+            if prologue_mode:
+                # Prologue-specific initialization
+                self.ascension_level = 0  # Force base difficulty for tutorial
+                self.ascension_modifiers = calculate_ascension_modifiers(0)
+                self.game_state.level = 0  # Level 0 = prologue
+                self.game_session.generate_procedural_level()
+                self._show_prologue_intro()
+            else:
+                # Normal new game initialization
+                self.game_session.generate_procedural_level()
+                # Show intro messages for new games
+                self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "success")
+                self.message_log.add_message_typed(
+                    "The simulation is failing. They're coming for you.", "critical"
+                )
+                self.message_log.add_message("Find the gateway - escape before De-Resolution.")
+                # Show intro dialogue
+                from rsp.ui.dialogue import create_intro_dialogue
+
+                self.dialogue_state.show(create_intro_dialogue())
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
         if input_handler is None:
             self.input_handler = InputHandler(self)
@@ -394,6 +412,12 @@ class GameEngine:
     def visible_tiles(self):
         """Get cached set of visible tiles for the current turn."""
         return self.visibility_manager.get_player_visible_tiles(self.player, self.game_state.turn)
+
+    def _show_prologue_intro(self):
+        """Show prologue introduction dialogue."""
+        from rsp.ui.dialogue import create_prologue_intro_dialogue
+
+        self.dialogue_state.show(create_prologue_intro_dialogue())
 
     def _randomize_code_hacks(self):
         """
@@ -618,6 +642,11 @@ class GameEngine:
                 was_stealth=(target_enemy.state == EnemyState.UNAWARE),
                 from_blind_spot=self.game_map.is_blind_spot(self.player.position),
             )
+            # Prologue: First melee kill thought
+            if getattr(self, "prologue_mode", False):
+                from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                show_prologue_thought("melee_success", self)
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(

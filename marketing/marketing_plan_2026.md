@@ -194,22 +194,15 @@ These are directory-style sites where you're adding an entry to a database. They
   - Contributions go through moderation
   - Lutris doesn't sell games - it's a library manager
 
-### RogueBasin ✓ VERIFIED
+### RogueBasin ✓ VERIFIED & Active
 - **Status:** Already listed ✓
 - **URL:** https://roguebasin.com/
 - **Type:** Roguelike wiki/database
 - **Why:** Primary wiki for traditional roguelikes, referenced by roguelike community
 - **Action:** Update entry at 1.0
 
-### itch.io Page Optimization
-- **Status:** Already exists ✓
-- **Action:** Ensure these are set:
-  - Linux clearly listed as supported platform
-  - Tags include: Cyberpunk, Hacking, Roguelike, Stealth, Tactical, Turn-based, Retro, Linux, Open Source
-  - Both ASCII and graphical screenshots visible
-  - Continue posting devlog updates
-
-### itch.io Release Announcements Board ✓ VERIFIED (NEW)
+### itch.io Release Announcements Board ✓ VERIFIED & Active
+- **Status:** Already listed ✓
 - **URL:** https://itch.io/board/10022/release-announcements
 - **Type:** Official itch.io forum for game announcements
 - **Why:** 
@@ -223,14 +216,6 @@ These are directory-style sites where you're adding an entry to a database. They
 - **Notes:**
   - No NSFW content
   - Don't try to game the vote system
-
-### GitHub Awesome Lists - WAIT
-- **URL:** https://github.com/michelpereira/awesome-open-source-games
-- **Why:** Curated list of open source games
-- **REQUIREMENT:** Must have 40+ stars on your GitHub repo before PR will be accepted
-- **Status:** Track your star count; submit PR once you hit 40 stars
-- **Section:** Native → RPG
-- **Effort:** 10-15 minutes (once eligible)
 
 ### GitHub Open Source Games List (NEW)
 - **URL:** https://github.com/bobeff/open-source-games
@@ -409,6 +394,15 @@ These are editorial sites or communities where you get one shot at their attenti
 #### Rogue Temple Forums
 - **Status:** Already posted ✓
 - **Action:** Update thread at 1.0
+
+### GitHub Awesome Lists - WAIT
+- **URL:** https://github.com/michelpereira/awesome-open-source-games
+- **Why:** Curated list of open source games
+- **REQUIREMENT:** Must have 40+ stars on your GitHub repo before PR will be accepted
+- **Status:** Track your star count; submit PR once you hit 40 stars
+- **Section:** Native → RPG
+- **Effort:** 10-15 minutes (once eligible)
+
 
 ---
 

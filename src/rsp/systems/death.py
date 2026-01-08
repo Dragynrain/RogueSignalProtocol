@@ -103,6 +103,11 @@ class PlayerDeathHandler:
             logging.debug("Death handler: Skipping death - victory already achieved")
             return True  # Player is "dead" but we don't handle it (victory wins)
 
+        # Prologue death is handled differently - no permadeath
+        if getattr(self.game, "prologue_mode", False):
+            self._handle_prologue_death(cause, source)
+            return True  # Player died, but we restart instead of game over
+
         # Build death event with full context
         player = self.game.player
         event = DeathEvent(
@@ -228,6 +233,34 @@ class PlayerDeathHandler:
                 self.game.message_log.add_message("Save data purged")
             except OSError as e:
                 logging.error(f"Failed to delete save on death: {e}")
+
+    def _handle_prologue_death(self, cause: str, source: str | None = None):
+        """Handle death in prologue - restart without penalty."""
+        from rsp.ui.dialogue import create_prologue_death_dialogue
+
+        # Mark as handled to prevent re-entry during restart
+        self._handled = True
+
+        # Play death sounds (still want audio feedback)
+        try:
+            self.game.sound_manager.play_sound("player_death", priority=10)
+        except Exception:
+            pass
+
+        # Build death message from cause and source
+        if source:
+            death_message = f"{cause.title()} by {source}"
+        else:
+            death_message = cause.title()
+
+        # Show death dialogue with tutorial message
+        self.game.dialogue_state.show(create_prologue_death_dialogue(death_message))
+
+        # Set flag for dialogue handler to trigger restart
+        self.game.prologue_restart_pending = True
+
+        # NOTE: Do NOT set game_over = True
+        # NOTE: Do NOT delete save or finalize metrics
 
     def reset(self):
         """Reset handler state for a new game."""

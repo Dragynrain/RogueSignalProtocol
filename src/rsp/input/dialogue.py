@@ -270,6 +270,15 @@ class DialogueInputManager:
         elif "GATEWAY" in dialogue.title:
             # Player cancelled gateway
             self.game.message_log.add_message("Staying in current network")
+        elif "UPLINK ESTABLISHED" in dialogue.title:
+            # Prologue completion - return to menu
+            self.game.dialogue_state.close()
+            return False  # Exit to main menu
+        elif "CONNECTION LOST" in dialogue.title:
+            # Prologue death - restart level
+            self._restart_prologue()
+            self.game.dialogue_state.close()
+            return True  # Continue game loop (with restarted level)
         elif (
             "PURGED" in dialogue.title
             or "BREAKTHROUGH" in dialogue.title
@@ -282,6 +291,43 @@ class DialogueInputManager:
         # Close dialogue
         self.game.dialogue_state.close()
         return True  # Continue game
+
+    def _restart_prologue(self):
+        """Restart the prologue level after death."""
+        from rsp.entities.base import Colors
+        from rsp.systems.prologue_thoughts import reset_prologue_thoughts
+
+        game = self.game
+
+        # Reset death handler state
+        game.death_handler.reset()
+        game.pending_death_dialogue = False
+        game.prologue_restart_pending = False
+
+        # Reset prologue thoughts so player can learn again
+        reset_prologue_thoughts()
+
+        # Reset player stats
+        game.player.cpu = game.player.max_cpu
+        game.player.heat = 0
+        game.player.trace_level = 0
+
+        # Clear temporary effects
+        game.player.temporary_effects.clear()
+
+        # Clear enemies
+        game.enemy_manager.enemies.clear()
+
+        # Regenerate the level (call coordinator directly to pass skip_level_start_message)
+        game.game_session.level_coordinator.generate_procedural_level(
+            skip_level_start_message=True
+        )
+
+        # Invalidate FOV cache
+        game.visibility_manager.invalidate_cache()
+
+        # Show restart message
+        game.message_log.add_message("Uplink re-established", Colors.CYAN)
 
     def handle_dont_show_again(self) -> None:
         """Handle 'don't show this again' option (user pressed D)."""

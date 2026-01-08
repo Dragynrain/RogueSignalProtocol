@@ -360,10 +360,13 @@ class TestLevelGenerationErrorHandling:
         # Test with level 1 (should work) - smoke test
         self.level_generator.generate_level(1, 12345)
 
+        # Test with level 0 (prologue) - should work now
+        self.level_generator.generate_level(0, 12345)
+
         # Test negative level - this may crash, which is acceptable behavior
         # since the game doesn't expect negative levels
         with pytest.raises(KeyError):
-            self.level_generator.generate_level(0, 12345)  # Level 0 should fail
+            self.level_generator.generate_level(-1, 12345)  # Level -1 should fail
 
         # Test very high level - this may also crash, which is acceptable
         with pytest.raises(KeyError):

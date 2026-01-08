@@ -538,6 +538,15 @@ def _process_menu_action(
         game = GameEngine(settings=settings, ascension_level=ascension_level)
         return current_menu, (game, False)
 
+    elif action == "tutorial":
+        menu_sound_manager.stop_music(fade_out_ms=1000)
+        from rsp.systems.achievements import AchievementManager
+
+        AchievementManager.clear_pending_popups()
+        # Start in prologue mode - no ascension modifiers in tutorial
+        game = GameEngine(settings=settings, prologue_mode=True)
+        return current_menu, (game, False)
+
     return current_menu, None
 
 

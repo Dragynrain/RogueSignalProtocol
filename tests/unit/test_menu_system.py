@@ -44,10 +44,11 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert any(opt.startswith("Continue") for opt in menu.options)
             assert "New Game" in menu.options
+            assert "Tutorial" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            # Base: Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (9)
+            # Base: Continue, New, Tutorial, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (10)
             # Plus Ascension if unlocked (settings loaded from user_settings.json)
-            base_count = 9
+            base_count = 10
             if settings.get_highest_ascension_unlocked() > 0:
                 base_count += 1  # Ascension option added
             assert len(menu.options) == base_count
@@ -74,10 +75,11 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert not any(opt.startswith("Continue") for opt in menu.options)
             assert "New Game" in menu.options
+            assert "Tutorial" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            # Base: New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (8)
+            # Base: New, Tutorial, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (9)
             # Plus Ascension if unlocked
-            base_count = 8
+            base_count = 9
             if settings.get_highest_ascension_unlocked() > 0:
                 base_count += 1  # Ascension option added
             assert len(menu.options) == base_count

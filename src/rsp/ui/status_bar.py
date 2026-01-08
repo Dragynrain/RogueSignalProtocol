@@ -114,6 +114,17 @@ class StatusBarRenderer:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
 
+        # Prologue mode: Show visibility status (CONCEALED/EXPOSED/TOO CLOSE!)
+        if getattr(game, "prologue_mode", False):
+            vis_text, vis_color = self._get_visibility_status(game)
+            # Render at right side of status bar
+            vis_x = GameConfig.GAME_AREA_WIDTH() - len(vis_text) - 2
+            if vis_x > x_pos:
+                render_char_safe(console, vis_x, 0, vis_text, fg=vis_color, bg=Colors.UI_BG)
+            # Reset the flash flag after rendering
+            if hasattr(game, "prologue_spotted_in_blind_spot"):
+                game.prologue_spotted_in_blind_spot = False
+
         # Bottom border of status bar (row 1) - horizontal line with UI color
         # Use T-piece where it meets the vertical log border
         for x in range(GameConfig.SCREEN_WIDTH):
@@ -430,3 +441,31 @@ class StatusBarRenderer:
                 return color_map.get(color_name, fallback_color)
 
         return fallback_color
+
+    def _get_visibility_status(self, game) -> tuple[str, tuple[int, int, int]]:
+        """
+        Get visibility status text and color for prologue mode.
+
+        Three states:
+        - CONCEALED (purple): In blind spot, hidden from enemies at range
+        - EXPOSED (dim white): Not in blind spot, visible to enemies with LOS
+        - TOO CLOSE! (red): In blind spot but spotted anyway (adjacent enemy)
+
+        Args:
+            game: GameEngine with player position and game_map
+
+        Returns:
+            Tuple of (status_text, color)
+        """
+        player_pos = game.player.position
+        in_blind_spot = (player_pos.x, player_pos.y) in game.game_map.blind_spots
+
+        # Check for TOO CLOSE! flash (spotted while in blind spot at adjacency)
+        spotted_in_blind_spot = getattr(game, "prologue_spotted_in_blind_spot", False)
+        if spotted_in_blind_spot and in_blind_spot:
+            return "TOO CLOSE!", Colors.ALERT
+
+        if in_blind_spot:
+            return "CONCEALED", Colors.ELECTRIC_PURPLE
+        else:
+            return "EXPOSED", Colors.DIMMED

@@ -78,6 +78,8 @@ class GameSettings:
         # Steam Deck / handheld optimizations
         "ui_scale": "auto",  # "auto", "compact", "normal" - compact shows more tiles at smaller size
         "music_boost": None,  # None = auto (ON for Linux, OFF for Windows), True/False = manual override
+        # Prologue tracking
+        "prologue_completed": False,  # Track if player has finished tutorial
         # Ascension system (progressive difficulty)
         "ascension": {
             "current_level": 0,

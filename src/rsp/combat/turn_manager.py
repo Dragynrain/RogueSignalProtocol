@@ -590,6 +590,20 @@ class GameTurnManager:
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
                 self.game_engine.sound_manager.play_sound("enemy_alert")
 
+                # Prologue: Set flag if player was spotted while in blind spot (adjacent)
+                # This triggers the "TOO CLOSE!" feedback in the status bar
+                if getattr(self.game_engine, "prologue_mode", False):
+                    from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                    player_in_blind_spot = (player_pos.x, player_pos.y) in self.game_engine.game_map.blind_spots
+                    distance = enemy.position.grid_distance_to(player_pos)
+                    if player_in_blind_spot and distance <= 1:
+                        self.game_engine.prologue_spotted_in_blind_spot = True
+                        show_prologue_thought("blindspot_adjacent_fail", self.game_engine)
+                    else:
+                        # First time spotted - FOV is bidirectional
+                        show_prologue_thought("fov_bidirectional", self.game_engine)
+
                 # Track detection for Ghost Protocol achievement
                 # Also reset stealth streak for Silent Assassin
                 from rsp.systems.metrics import get_current_session
@@ -621,6 +635,11 @@ class GameTurnManager:
                     self.game_engine.message_log.add_message(
                         f"{enemy.type_data.name} lost interest"
                     )
+                    # Prologue: Escaped from alert successfully
+                    if getattr(self.game_engine, "prologue_mode", False):
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("alert_escape_success", self.game_engine)
 
             elif enemy.state == EnemyState.HOSTILE:
                 if random.random() < 0.15:

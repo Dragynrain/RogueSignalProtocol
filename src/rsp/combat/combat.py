@@ -500,6 +500,11 @@ class ExploitSystem:
                 was_stealth=(enemy.state == EnemyState.UNAWARE),
                 from_blind_spot=self.game.game_map.is_blind_spot(self.game.player.position),
             )
+            # Prologue: First exploit kill thought
+            if getattr(self.game, "prologue_mode", False):
+                from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                show_prologue_thought("exploit_success", self.game)
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             enemy.make_hostile(self.game.player.position)

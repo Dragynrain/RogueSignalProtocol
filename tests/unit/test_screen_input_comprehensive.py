@@ -119,10 +119,10 @@ class TestMainMenuInputSupport:
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
-            menu.selected_option = 1  # Settings
+            menu.selected_option = 1  # Tutorial (New, Tutorial, Settings, ...)
 
             result = menu.handle_input(make_key_event(tcod.event.KeySym.RETURN))
-            assert result == "settings"
+            assert result == "tutorial"
 
     def test_gamepad_confirm(self, settings):
         """MainMenu responds to A button."""
@@ -131,10 +131,10 @@ class TestMainMenuInputSupport:
 
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
-            menu.selected_option = 1  # Settings
+            menu.selected_option = 1  # Tutorial (New, Tutorial, Settings, ...)
 
             result = menu.handle_input(make_button_event(tcod.sdl.joystick.ControllerButton.A))
-            assert result == "settings"
+            assert result == "tutorial"
 
 
 # =============================================================================

@@ -277,6 +277,22 @@
     }
   },
   "network_configs": {
+    "0": {
+      "enemies": 3,
+      "blind_spot_coverage": 0.15,
+      "name": "First Infiltration",
+      "background_trace": 0,
+      "trace_alert_to_hostile": 5,
+      "trace_continuous_hostile": 0,
+      "cooling_nodes": 1,
+      "cpu_nodes": 1,
+      "ghost_nodes": 1,
+      "code_hacks": 2,
+      "exploit_pickups": 3,
+      "permanent_upgrades": 0,
+      "is_prologue": true,
+      "fixed_layout": true
+    },
     "1": {
       "enemies": 19,
       "blind_spot_coverage": 0.08,

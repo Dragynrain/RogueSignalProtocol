@@ -221,3 +221,8 @@ def get_level_transition_messages() -> dict[str, str]:
 def get_intro_messages() -> dict[str, dict[str, str]]:
     """Get tiered intro messages based on fragment discovery."""
     return DataLoader._load_json_file("narrative_content.json", "intro_messages")
+
+
+def get_prologue_thoughts() -> dict[str, str]:
+    """Get prologue tutorial thoughts (reactive internal voice)."""
+    return DataLoader._load_json_file("narrative_content.json", "prologue_thoughts")

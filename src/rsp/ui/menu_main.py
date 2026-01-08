@@ -91,6 +91,7 @@ class MainMenu(BaseMenu):
 
         base_options = [
             "New Game",
+            "Tutorial",
         ]
 
         # Only show Ascension option if A1+ is unlocked
@@ -154,6 +155,7 @@ class MainMenu(BaseMenu):
         # Build base options
         base_options = [
             "New Game",
+            "Tutorial",
         ]
 
         # Only show Ascension option if A1+ is unlocked
@@ -565,6 +567,8 @@ class MainMenu(BaseMenu):
                 return ""
             else:
                 return "new_game"
+        elif option == "Tutorial":
+            return "tutorial"
         elif option.startswith("Ascension"):
             self.last_action = "ascension"
             return "ascension"
