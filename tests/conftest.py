@@ -63,7 +63,7 @@ import pytest
 # Add project root and src directory to Python path for rsp package imports
 _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _project_root)
-sys.path.insert(0, os.path.join(_project_root, 'src'))
+sys.path.insert(0, os.path.join(_project_root, "src"))
 
 from rsp.core.config import GameSettings  # noqa: E402
 from rsp.entities.base import Position  # noqa: E402

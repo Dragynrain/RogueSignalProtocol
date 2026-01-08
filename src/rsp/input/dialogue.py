@@ -319,9 +319,7 @@ class DialogueInputManager:
         game.enemy_manager.enemies.clear()
 
         # Regenerate the level (call coordinator directly to pass skip_level_start_message)
-        game.game_session.level_coordinator.generate_procedural_level(
-            skip_level_start_message=True
-        )
+        game.game_session.level_coordinator.generate_procedural_level(skip_level_start_message=True)
 
         # Invalidate FOV cache
         game.visibility_manager.invalidate_cache()

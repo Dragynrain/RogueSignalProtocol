@@ -97,7 +97,9 @@ class TileManager:
                         "Graphics mode requires graphics_tiles.json to function."
                     )
                 # In glyph mode, missing config is fine - just log and return
-                logging.debug(f"Tile mapping file not found: {mapping_file} (not needed in glyph mode)")
+                logging.debug(
+                    f"Tile mapping file not found: {mapping_file} (not needed in glyph mode)"
+                )
                 return
 
             with open(mapping_file, encoding="utf-8") as f:

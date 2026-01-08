@@ -228,7 +228,9 @@ class TestCompleteEnemyLifecycle:
                 break
             basic_game_engine.process_turn()
 
-        assert test_enemy.state == EnemyState.HOSTILE, f"Enemy should be HOSTILE, got {test_enemy.state}"
+        assert (
+            test_enemy.state == EnemyState.HOSTILE
+        ), f"Enemy should be HOSTILE, got {test_enemy.state}"
 
         # Enemy should know where player was
         assert test_enemy.last_seen_player is not None, "Enemy should have recorded player position"
@@ -251,7 +253,9 @@ class TestCompleteEnemyLifecycle:
         assert distance == 1, f"Enemy should be adjacent (distance 1), got {distance}"
 
         # Verify enemy has damage
-        assert test_enemy.type_data.damage > 0, f"Enemy should have damage, got {test_enemy.type_data.damage}"
+        assert (
+            test_enemy.type_data.damage > 0
+        ), f"Enemy should have damage, got {test_enemy.type_data.damage}"
 
         # Enemy should be able to attack
         assert test_enemy.can_attack_player(

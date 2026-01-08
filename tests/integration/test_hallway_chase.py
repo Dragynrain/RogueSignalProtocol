@@ -128,8 +128,9 @@ class TestHorizontalHallwayChase:
 
         # Original behavior: target IS the player position
         assert target is not None
-        assert target == engine.player.position, \
-            f"Target should be player position {engine.player.position}, got {target}"
+        assert (
+            target == engine.player.position
+        ), f"Target should be player position {engine.player.position}, got {target}"
 
     def test_enemy_from_right_targets_player(self):
         """Enemy to the right of player should target player position."""
@@ -143,14 +144,13 @@ class TestHorizontalHallwayChase:
         enemy = create_hostile_enemy_at(19, 15, engine)  # 4 tiles to the right
 
         can_see = enemy.can_see_player(engine.player, engine.game_map)
-        assert can_see, f"Enemy should see player"
+        assert can_see, "Enemy should see player"
 
         target = enemy._get_current_target(engine.player, engine.game_map)
 
         # Original behavior: target IS the player position
         assert target is not None
-        assert target == engine.player.position, \
-            f"Target should be player position, got {target}"
+        assert target == engine.player.position, f"Target should be player position, got {target}"
 
     def test_pathfinding_works_in_hallway(self):
         """Debug: Verify pathfinding returns a valid path in hallway."""
@@ -166,12 +166,12 @@ class TestHorizontalHallwayChase:
 
         # Check walkability map is correct for hallway
         walkability = engine.game_map.get_walkability_map()
-        assert walkability[15, 16], f"Enemy position (16,15) should be walkable"
-        assert walkability[15, 17], f"Position (17,15) should be walkable"
-        assert walkability[15, 18], f"Position (18,15) should be walkable"
-        assert walkability[15, 19], f"Position (19,15) should be walkable"
-        assert not walkability[14, 16], f"Position (16,14) should be a wall"
-        assert not walkability[16, 16], f"Position (16,16) should be a wall"
+        assert walkability[15, 16], "Enemy position (16,15) should be walkable"
+        assert walkability[15, 17], "Position (17,15) should be walkable"
+        assert walkability[15, 18], "Position (18,15) should be walkable"
+        assert walkability[15, 19], "Position (19,15) should be walkable"
+        assert not walkability[14, 16], "Position (16,14) should be a wall"
+        assert not walkability[16, 16], "Position (16,16) should be a wall"
 
         # Calculate path directly
         start = Position(16, 15)
@@ -184,8 +184,7 @@ class TestHorizontalHallwayChase:
             moving_enemy=enemy,
         )
 
-        assert path is not None, \
-            f"Path from {start} to {goal} should exist in hallway"
+        assert path is not None, f"Path from {start} to {goal} should exist in hallway"
         assert len(path) > 1, f"Path should have at least 2 points, got {len(path)}"
 
     def test_enemy_chase_moves_toward_player(self):
@@ -201,21 +200,22 @@ class TestHorizontalHallwayChase:
         initial_x = enemy.x
 
         # Verify enemy can see player initially
-        assert enemy.can_see_player(engine.player, engine.game_map), \
-            f"Enemy at {enemy.position} should see player at {engine.player.position}"
+        assert enemy.can_see_player(
+            engine.player, engine.game_map
+        ), f"Enemy at {enemy.position} should see player at {engine.player.position}"
 
         # Fill the queue and verify moves are queued
         enemy._ensure_queue_full(engine.game_map, engine.player, engine)
-        assert len(enemy.move_queue) > 0, \
-            f"Enemy at {enemy.position} should have moves queued"
+        assert len(enemy.move_queue) > 0, f"Enemy at {enemy.position} should have moves queued"
 
         # Simulate several movement turns
         for i in range(3):
             if enemy.move_queue:
                 next_pos = enemy.move_queue.pop(0)
                 # Verify move is toward player (x increases)
-                assert next_pos.x >= enemy.x, \
-                    f"Move {i+1}: Enemy should move right, but moved from x={enemy.x} to x={next_pos.x}"
+                assert (
+                    next_pos.x >= enemy.x
+                ), f"Move {i+1}: Enemy should move right, but moved from x={enemy.x} to x={next_pos.x}"
                 enemy.position = next_pos
 
                 # Refill queue for next iteration
@@ -223,8 +223,9 @@ class TestHorizontalHallwayChase:
                     enemy._ensure_queue_full(engine.game_map, engine.player, engine)
 
         # Enemy should have moved closer
-        assert enemy.x > initial_x, \
-            f"Enemy should have moved right, started at x={initial_x}, ended at x={enemy.x}"
+        assert (
+            enemy.x > initial_x
+        ), f"Enemy should have moved right, started at x={initial_x}, ended at x={enemy.x}"
 
 
 class TestVerticalHallwayChase:
@@ -245,20 +246,21 @@ class TestVerticalHallwayChase:
 
         # Debug: check vision range and distance
         distance = enemy.position.distance_to(engine.player.position)
-        assert distance <= enemy.vision_range, \
-            f"Distance {distance} exceeds vision range {enemy.vision_range}"
+        assert (
+            distance <= enemy.vision_range
+        ), f"Distance {distance} exceeds vision range {enemy.vision_range}"
 
         # Debug: check line of sight via map
         has_los = engine.game_map.has_line_of_sight(enemy.position, engine.player.position)
-        assert has_los, \
-            f"No line of sight from {enemy.position} to {engine.player.position}"
+        assert has_los, f"No line of sight from {enemy.position} to {engine.player.position}"
 
         # Debug: check FOV via can_see_position
         can_see_pos = engine.game_map.can_see_position(
             enemy.position, engine.player.position, enemy.vision_range
         )
-        assert can_see_pos, \
-            f"can_see_position failed: {enemy.position} -> {engine.player.position}, range {enemy.vision_range}"
+        assert (
+            can_see_pos
+        ), f"can_see_position failed: {enemy.position} -> {engine.player.position}, range {enemy.vision_range}"
 
         # Debug: check if player is in blind spot
         is_blind = engine.game_map.is_blind_spot(engine.player.position)
@@ -276,8 +278,9 @@ class TestVerticalHallwayChase:
 
         # Original behavior: target IS the player position
         assert target is not None
-        assert target == engine.player.position, \
-            f"Target should be player position {engine.player.position}, got {target}"
+        assert (
+            target == engine.player.position
+        ), f"Target should be player position {engine.player.position}, got {target}"
 
 
 class TestTJunctionChase:
@@ -308,8 +311,9 @@ class TestTJunctionChase:
 
         # First move should be DOWN toward player at junction (y increases)
         first_move = enemy.move_queue[0]
-        assert first_move.y > enemy.y, \
-            f"Enemy should move down toward junction, but y went from {enemy.y} to {first_move.y}"
+        assert (
+            first_move.y > enemy.y
+        ), f"Enemy should move down toward junction, but y went from {enemy.y} to {first_move.y}"
 
 
 class TestMultipleEnemiesInHallway:
@@ -333,7 +337,9 @@ class TestMultipleEnemiesInHallway:
         # Verify all enemies can see player
         for i, enemy in enumerate([enemy1, enemy2, enemy3]):
             can_see = enemy.can_see_player(engine.player, engine.game_map)
-            assert can_see, f"Enemy {i+1} at {enemy.position} should see player at {engine.player.position}"
+            assert (
+                can_see
+            ), f"Enemy {i+1} at {enemy.position} should see player at {engine.player.position}"
 
         # Each enemy should get a valid target
         for i, enemy in enumerate([enemy1, enemy2, enemy3]):
@@ -368,8 +374,9 @@ class TestInhibitorSpecificChase:
 
         # Move should be toward player
         first_move = enemy.move_queue[0]
-        assert first_move.x > enemy.x, \
-            f"Inhibitor should move toward player (right), but x went from {enemy.x} to {first_move.x}"
+        assert (
+            first_move.x > enemy.x
+        ), f"Inhibitor should move toward player (right), but x went from {enemy.x} to {first_move.x}"
 
 
 class TestVaryingDistances:
@@ -412,8 +419,9 @@ class TestVaryingDistances:
 
         # Enemy should target player position directly
         target = enemy._get_current_target(engine.player, engine.game_map)
-        assert target == engine.player.position, \
-            f"Expected player position {engine.player.position}, got {target}"
+        assert (
+            target == engine.player.position
+        ), f"Expected player position {engine.player.position}, got {target}"
 
         # Enemy should be able to move toward player
         enemy._ensure_queue_full(engine.game_map, engine.player, engine)
@@ -421,8 +429,7 @@ class TestVaryingDistances:
 
         # First move should be toward player (x increases)
         first_move = enemy.move_queue[0]
-        assert first_move.x > enemy.x, \
-            f"Enemy should move toward player (right), got {first_move}"
+        assert first_move.x > enemy.x, f"Enemy should move toward player (right), got {first_move}"
 
 
 class TestStackedEnemies:
@@ -445,8 +452,9 @@ class TestStackedEnemies:
         # Verify all can see player
         for i, enemy in enumerate([enemy1, enemy2, enemy3]):
             can_see = enemy.can_see_player(engine.player, engine.game_map)
-            assert can_see, \
-                f"Enemy {i+1} at {enemy.position} should see player at {engine.player.position}"
+            assert (
+                can_see
+            ), f"Enemy {i+1} at {enemy.position} should see player at {engine.player.position}"
 
         # Each should be able to get a target
         target1 = enemy1._get_current_target(engine.player, engine.game_map)
@@ -662,7 +670,6 @@ class TestEdgeCaseBugs:
         If direct distance is small but actual path is much longer (winding),
         max_length = direct_distance * 3 might be too restrictive.
         """
-        from rsp.level.pathfinding import PathfindingHelper
 
         engine = create_basic_game_environment()
         engine.enemies.clear()
@@ -839,13 +846,11 @@ class TestNoPathThroughPlayer:
 
         # NO queued move should be the player's position
         for move in enemy.move_queue:
-            assert move != engine.player.position, \
-                f"Enemy queued player's position {move}"
+            assert move != engine.player.position, f"Enemy queued player's position {move}"
 
         # NO queued move should be past the player (x > 15)
         for move in enemy.move_queue:
-            assert move.x <= 15, \
-                f"Enemy queued position past player: {move}"
+            assert move.x <= 15, f"Enemy queued position past player: {move}"
 
     def test_enemy_stops_adjacent_to_player(self):
         """Enemy should stop queuing moves once adjacent to player."""
@@ -866,8 +871,7 @@ class TestNoPathThroughPlayer:
         if enemy.move_queue:
             last_move = enemy.move_queue[-1]
             distance = last_move.grid_distance_to(engine.player.position)
-            assert distance >= 1, \
-                f"Last move {last_move} is ON player at {engine.player.position}"
+            assert distance >= 1, f"Last move {last_move} is ON player at {engine.player.position}"
 
     def test_multiple_enemies_surround_player_no_overlap(self):
         """Multiple enemies surrounding player should not queue overlapping moves."""
@@ -894,8 +898,7 @@ class TestNoPathThroughPlayer:
         # No enemy should queue the player's position
         for i, enemy in enumerate(enemies):
             for move in enemy.move_queue:
-                assert move != engine.player.position, \
-                    f"Enemy {i} queued player position {move}"
+                assert move != engine.player.position, f"Enemy {i} queued player position {move}"
 
     def test_eight_enemies_converge_on_player(self):
         """8 enemies converging on player from all directions."""
@@ -931,21 +934,20 @@ class TestNoPathThroughPlayer:
         # Verify constraints
         for i, enemy in enumerate(enemies):
             # Should have moves (not stuck)
-            assert len(enemy.move_queue) > 0, \
-                f"Enemy {i} at {enemy.position} has no moves"
+            assert len(enemy.move_queue) > 0, f"Enemy {i} at {enemy.position} has no moves"
 
             # No move should be player's position
             for move in enemy.move_queue:
-                assert move != engine.player.position, \
-                    f"Enemy {i} queued player position"
+                assert move != engine.player.position, f"Enemy {i} queued player position"
 
             # All moves should be closer to player than starting position
             start_dist = enemy.position.grid_distance_to(engine.player.position)
             for move in enemy.move_queue:
                 # Move should be toward player or same distance (blocked by others)
                 move_dist = move.grid_distance_to(engine.player.position)
-                assert move_dist < start_dist or move_dist == start_dist, \
-                    f"Enemy {i} moved away from player: {move_dist} vs {start_dist}"
+                assert (
+                    move_dist < start_dist or move_dist == start_dist
+                ), f"Enemy {i} moved away from player: {move_dist} vs {start_dist}"
 
     def test_enemy_with_target_behind_player_in_hallway(self):
         """Enemy in narrow hallway with target behind player stops at player."""
@@ -999,8 +1001,7 @@ class TestNoPathThroughPlayer:
 
         # Still should not path through player
         for move in enemy.move_queue:
-            assert move != engine.player.position, \
-                f"Enemy queued new player position {move}"
+            assert move != engine.player.position, f"Enemy queued new player position {move}"
 
     def test_diagonal_approach_stops_adjacent(self):
         """Enemy approaching diagonally should stop adjacent, not on player."""
@@ -1022,10 +1023,10 @@ class TestNoPathThroughPlayer:
 
         # Last move should be adjacent, not on player
         last_move = enemy.move_queue[-1]
-        assert last_move != engine.player.position, \
-            f"Last move is player position"
-        assert last_move.grid_distance_to(engine.player.position) >= 1, \
-            f"Last move {last_move} is on player"
+        assert last_move != engine.player.position, "Last move is player position"
+        assert (
+            last_move.grid_distance_to(engine.player.position) >= 1
+        ), f"Last move {last_move} is on player"
 
     def test_hostile_inhibitor_stops_at_player(self):
         """Hostile Inhibitor (RANDOM movement) should still stop at player."""
@@ -1109,8 +1110,7 @@ class TestNoPathThroughPlayer:
         # The important test: NO enemy should queue player position
         for i, enemy in enumerate(enemies):
             for move in enemy.move_queue:
-                assert move != engine.player.position, \
-                    f"Enemy {i} queued player position"
+                assert move != engine.player.position, f"Enemy {i} queued player position"
 
 
 if __name__ == "__main__":

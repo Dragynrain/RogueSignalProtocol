@@ -660,9 +660,7 @@ class GraphicsMapRenderer(MapRendererBase):
                             continue
 
                     if self._is_in_viewport(world_x, world_y, camera_offset):
-                        screen_x, screen_y = self._world_to_console(
-                            world_x, world_y, camera_offset
-                        )
+                        screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                         # Render semi-transparent overlay using SDL rectangles
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -695,9 +693,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     world_y = center.y + dy
 
                     if self._is_in_viewport(world_x, world_y, camera_offset):
-                        screen_x, screen_y = self._world_to_console(
-                            world_x, world_y, camera_offset
-                        )
+                        screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                         # Render brighter semi-transparent overlay
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -956,9 +952,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     continue
 
                 if self._is_in_viewport(world_x, world_y, camera_offset):
-                    screen_x, screen_y = self._world_to_console(
-                        world_x, world_y, camera_offset
-                    )
+                    screen_x, screen_y = self._world_to_console(world_x, world_y, camera_offset)
 
                     # Fill tile with semi-transparent color overlay (configurable alpha)
                     tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -997,9 +991,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         continue
 
                     if self._is_in_viewport(point.x, point.y, camera_offset):
-                        screen_x, screen_y = self._world_to_console(
-                            point.x, point.y, camera_offset
-                        )
+                        screen_x, screen_y = self._world_to_console(point.x, point.y, camera_offset)
 
                         # Get directional arrow sprite (tintable)
                         texture = self.tile_manager.get_tile("arrow")

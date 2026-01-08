@@ -242,9 +242,7 @@ class ExploitSystem:
                 # Trigger immediate achievement check for payload_deployed
                 from rsp.systems.achievements import AchievementManager
 
-                AchievementManager.check_immediate_achievements_and_notify(
-                    session, self.game
-                )
+                AchievementManager.check_immediate_achievements_and_notify(session, self.game)
 
             # Apply heat and overheat damage if exceeding max
             # Uses shared helper for consistent behavior
@@ -267,6 +265,12 @@ class ExploitSystem:
             from rsp.systems.metrics import track_highest_heat
 
             track_highest_heat(self.game.player.heat, game=self.game)
+
+            # Prologue: Heat high warning thought
+            if getattr(self.game, "prologue_mode", False) and self.game.player.heat >= 40:
+                from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                show_prologue_thought("heat_high", self.game)
 
         if success:
             self.game.targeting_mode = False
@@ -505,6 +509,11 @@ class ExploitSystem:
                 from rsp.systems.prologue_thoughts import show_prologue_thought
 
                 show_prologue_thought("exploit_success", self.game)
+
+                # Also show ranged practice thought if enemy was at range > 1
+                distance = self.game.player.position.grid_distance_to(enemy.position)
+                if distance > 1:
+                    show_prologue_thought("exploit_ranged_practice", self.game)
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             enemy.make_hostile(self.game.player.position)

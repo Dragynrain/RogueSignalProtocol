@@ -825,9 +825,9 @@ class TestEnemyFleeBehavior(TestEnemyAIBehavior):
 
         # Verify health is below threshold
         health_percent = enemy.cpu / enemy.max_cpu
-        assert health_percent < flee_threshold, (
-            f"Health {health_percent:.2f} should be below threshold {flee_threshold}"
-        )
+        assert (
+            health_percent < flee_threshold
+        ), f"Health {health_percent:.2f} should be below threshold {flee_threshold}"
 
         # This should return True since enemy is damaged below threshold
         # Bug: returned False because type_data.max_cpu threw AttributeError

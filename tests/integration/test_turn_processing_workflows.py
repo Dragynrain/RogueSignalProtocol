@@ -632,9 +632,7 @@ class TestVirusEffectTurnProcessing:
         basic_game_engine.process_turn()
 
         # Virus should expire
-        assert (
-            basic_game_engine.player.temporary_effects["virus_turns"] == 0
-        ), "Virus should expire"
+        assert basic_game_engine.player.temporary_effects["virus_turns"] == 0, "Virus should expire"
 
 
 class TestMultipleSystemsTurnIntegration:

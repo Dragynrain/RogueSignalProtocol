@@ -171,8 +171,7 @@ class TestNoRelativeDataPaths:
                     pattern = rf'Path\s*\(\s*["\']{data_dir}["\']'
                     if re.search(pattern, line):
                         violations.append(
-                            f"{py_file.name}:{line_num}: "
-                            f"Path() with relative path '{data_dir}'"
+                            f"{py_file.name}:{line_num}: " f"Path() with relative path '{data_dir}'"
                         )
 
         assert not violations, (

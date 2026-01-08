@@ -408,10 +408,12 @@ class TestInputMapperFailFast:
         # Create minimal valid JSON
         valid_json = tmp_path / "valid_bindings.json"
         valid_json.write_text(
-            json.dumps({
-                "keyboard": {"W": "MOVE_NORTH"},
-                "gamepad": {"buttons": {}, "axes": {}},
-            }),
+            json.dumps(
+                {
+                    "keyboard": {"W": "MOVE_NORTH"},
+                    "gamepad": {"buttons": {}, "axes": {}},
+                }
+            ),
             encoding="utf-8",
         )
 

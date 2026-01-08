@@ -89,6 +89,15 @@ class InfoProvider:
                 if is_visible or is_explored:
                     # Get entity at position using existing inspector
                     entity_info = EntityInspector.get_entity_at_position(game, position)
+
+                    # Prologue: Trigger intent_observe when inspecting enemy in look mode
+                    if entity_info["entity_type"] == "enemy" and getattr(
+                        game, "prologue_mode", False
+                    ):
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("intent_observe", game)
+
                     # Format for info panel display
                     return InfoProvider._format_entity_info(game, entity_info)
 

@@ -10,7 +10,6 @@ all procedural generation.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from rsp.entities.base import Position
 
@@ -36,10 +35,10 @@ from rsp.entities.base import Position
 class FixedLevelData:
     """Container for fixed level layout data."""
 
-    layout: List[str]  # ASCII map rows (y=0 is top)
+    layout: list[str]  # ASCII map rows (y=0 is top)
     name: str = "Fixed Level"  # Display name
-    tutorial_triggers: Dict[str, Position] = field(default_factory=dict)
-    enemy_overrides: Dict[str, Dict] = field(default_factory=dict)
+    tutorial_triggers: dict[str, Position] = field(default_factory=dict)
+    enemy_overrides: dict[str, dict] = field(default_factory=dict)
 
     @property
     def width(self) -> int:

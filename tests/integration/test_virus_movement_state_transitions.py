@@ -72,7 +72,8 @@ class TestVirusStaticMovement:
             },
         ):
             with patch(
-                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
+                mock_pathfinding_cost_map,
             ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
@@ -110,7 +111,8 @@ class TestVirusStaticMovement:
             },
         ):
             with patch(
-                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
+                mock_pathfinding_cost_map,
             ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
@@ -151,7 +153,8 @@ class TestVirusMovementTypeTransitions:
             },
         ):
             with patch(
-                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
+                mock_pathfinding_cost_map,
             ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.RANDOM
@@ -188,7 +191,8 @@ class TestVirusMovementTypeTransitions:
             },
         ):
             with patch(
-                "rsp.entities.characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+                "rsp.entities.characters.PathfindingHelper._create_cost_map",
+                mock_pathfinding_cost_map,
             ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.PATROL

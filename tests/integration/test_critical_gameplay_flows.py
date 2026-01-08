@@ -47,7 +47,8 @@ class TestDeathHandlerExceptionResilience:
 
         # Mock metrics to fail - patch in game_metrics where it's imported from
         with patch(
-            "rsp.systems.metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
+            "rsp.systems.metrics.finalize_and_save_session",
+            side_effect=Exception("Metrics failure"),
         ):
             # Trigger death check
             result = engine.death_handler.check_death("virus")
@@ -134,7 +135,8 @@ class TestDeathHandlerExceptionResilience:
 
         # Mock metrics to fail - patch in game_metrics where it's imported from
         with patch(
-            "rsp.systems.metrics.finalize_and_save_session", side_effect=Exception("Metrics failure")
+            "rsp.systems.metrics.finalize_and_save_session",
+            side_effect=Exception("Metrics failure"),
         ):
             engine.death_handler.check_death("combat", source="TestEnemy")
 

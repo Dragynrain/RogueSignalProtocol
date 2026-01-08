@@ -492,6 +492,12 @@ class GameEngine:
             if self.player.move(dx, dy, self.game_map):
                 self.sound_manager.play_sound("player_move")
 
+                # Prologue: Diagonal movement discovery thought
+                if getattr(self, "prologue_mode", False) and dx != 0 and dy != 0:
+                    from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                    show_prologue_thought("diagonal_discover", self)
+
                 # Track metrics
                 from rsp.systems.metrics import track
 
@@ -503,6 +509,12 @@ class GameEngine:
                     and self.player.position.grid_distance_to(self.game_map.gateway) == 0
                 ):
                     self.sound_manager.play_sound("ui_menu_open")
+
+                    # Prologue: Gateway spotted thought
+                    if getattr(self, "prologue_mode", False):
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("gateway_spotted", self)
 
                     # Trigger gateway approach narrative
                     gateway_msg = self.narrative_manager.trigger_gateway_approach()
@@ -522,7 +534,20 @@ class GameEngine:
                     return
 
                 # Handle speed boost and turn processing only if move was successful
+                # Prologue: Track wait outcomes
+                is_wait_action = dx == 0 and dy == 0
+                cpu_before_wait = self.player.cpu if is_wait_action else 0
+
                 self.maybe_process_turn()
+
+                # Prologue: Wait outcome thoughts
+                if is_wait_action and getattr(self, "prologue_mode", False):
+                    from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                    if self.player.cpu < cpu_before_wait:
+                        show_prologue_thought("wait_fail", self)
+                    else:
+                        show_prologue_thought("wait_success", self)
             else:
                 # Movement blocked - don't process turn
                 self.message_log.add_message("Wall blocks movement")

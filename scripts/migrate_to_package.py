@@ -37,7 +37,6 @@ FILE_MAPPINGS = {
     "game_version.py": ("core", "version.py"),
     "game_loop.py": ("core", "loop.py"),
     "data_loading.py": ("core", "data_loading.py"),
-
     # Entities - position, player, enemies, characters
     "game_position.py": ("entities", "position.py"),
     "game_entities.py": ("entities", "base.py"),
@@ -45,12 +44,10 @@ FILE_MAPPINGS = {
     "game_characters.py": ("entities", "characters.py"),
     "game_enemies.py": ("entities", "enemies.py"),
     "game_entity_enums.py": ("entities", "enums.py"),
-
     # Combat - combat system, turns, inventory
     "game_combat.py": ("combat", "combat.py"),
     "game_turn_manager.py": ("combat", "turn_manager.py"),
     "game_inventory.py": ("combat", "inventory.py"),
-
     # Level - map, generation, pathfinding
     "game_map.py": ("level", "map.py"),
     "game_level.py": ("level", "generator.py"),
@@ -61,7 +58,6 @@ FILE_MAPPINGS = {
     "game_level_tactical.py": ("level", "tactical.py"),
     "game_pathfinding.py": ("level", "pathfinding.py"),
     "game_visibility_manager.py": ("level", "visibility.py"),
-
     # Input - all input handling
     "game_input.py": ("input", "handler.py"),
     "game_input_actions.py": ("input", "actions.py"),
@@ -74,7 +70,6 @@ FILE_MAPPINGS = {
     "game_input_gameplay.py": ("input", "gameplay.py"),
     "game_input_mappings.py": ("input", "mappings.py"),
     "game_input_modals.py": ("input", "modals.py"),
-
     # Rendering - all rendering code
     "game_rendering_base.py": ("rendering", "base.py"),
     "game_rendering_core.py": ("rendering", "core.py"),
@@ -87,7 +82,6 @@ FILE_MAPPINGS = {
     "game_tile_dimension_calculator.py": ("rendering", "dimensions.py"),
     "font_loader_freetype.py": ("rendering", "font_loader.py"),
     "game_particle_system.py": ("rendering", "particles.py"),
-
     # UI - menus, dialogs, screens
     "game_menus.py": ("ui", "menus.py"),
     "game_menu_base.py": ("ui", "menu_base.py"),
@@ -111,7 +105,6 @@ FILE_MAPPINGS = {
     "game_ui.py": ("ui", "common.py"),
     "game_help_content.py": ("ui", "help_content.py"),
     "game_help_hints.py": ("ui", "help_hints.py"),
-
     # Systems - audio, achievements, metrics, save
     "game_audio.py": ("systems", "audio.py"),
     "game_achievements.py": ("systems", "achievements.py"),
@@ -121,7 +114,6 @@ FILE_MAPPINGS = {
     "game_state_persistence.py": ("systems", "persistence.py"),
     "game_ascension.py": ("systems", "ascension.py"),
     "game_death_handler.py": ("systems", "death.py"),
-
     # Utils - misc utilities
     "game_unicode_chars.py": ("utils", "unicode.py"),
     "game_color_manager.py": ("utils", "colors.py"),
@@ -242,7 +234,9 @@ def move_files(dry_run: bool = True, update_imports: bool = True) -> list[tuple[
     return moves
 
 
-def update_imports_in_file(filepath: Path, import_mapping: dict[str, str], dry_run: bool = True) -> int:
+def update_imports_in_file(
+    filepath: Path, import_mapping: dict[str, str], dry_run: bool = True
+) -> int:
     """Update imports in a single file. Returns count of changes."""
     try:
         content = filepath.read_text(encoding="utf-8")
@@ -305,18 +299,20 @@ def update_conftest_path(dry_run: bool = True) -> None:
     original = content
 
     # The current path setup line
-    old_path_line = 'sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))'
+    old_path_line = (
+        "sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))"
+    )
 
     # New path setup that also adds src
-    new_path_setup = '''# Add project root and src directory to Python path for rsp package imports
+    new_path_setup = """# Add project root and src directory to Python path for rsp package imports
 _project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _project_root)
-sys.path.insert(0, os.path.join(_project_root, 'src'))'''
+sys.path.insert(0, os.path.join(_project_root, 'src'))"""
 
     if old_path_line in content:
         content = content.replace(
             f"# Add the project root to Python path so we can import game modules\n{old_path_line}",
-            new_path_setup
+            new_path_setup,
         )
 
     if content != original:
@@ -372,22 +368,19 @@ def update_entry_point(dry_run: bool = True) -> None:
     original = content
 
     # Add sys.path manipulation after the initial imports
-    path_setup = '''
+    path_setup = """
 # Add src directory to path for rsp package imports
 import sys as _sys
 from pathlib import Path as _Path
 _src_dir = _Path(__file__).parent / "src"
 _sys.path.insert(0, str(_src_dir))
 del _sys, _Path, _src_dir
-'''
+"""
 
     # Insert path setup after the first block of standard imports
     # Look for the pattern where tcod is imported
     if "import tcod" in content and "# Add src directory" not in content:
-        content = content.replace(
-            "import tcod\n",
-            f"import tcod\n{path_setup}\n"
-        )
+        content = content.replace("import tcod\n", f"import tcod\n{path_setup}\n")
 
     # Update imports using the same logic as other files
     for old_module, new_import in import_mapping.items():
@@ -428,8 +421,9 @@ def main():
     parser = argparse.ArgumentParser(description="Migrate to src/rsp/ package structure")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without executing")
     parser.add_argument("--show-mapping", action="store_true", help="Show import mapping and exit")
-    parser.add_argument("--step", choices=["dirs", "move", "imports", "entry", "cleanup"],
-                        help="Run only one step")
+    parser.add_argument(
+        "--step", choices=["dirs", "move", "imports", "entry", "cleanup"], help="Run only one step"
+    )
     parser.add_argument("--no-cleanup", action="store_true", help="Skip deleting old files")
     args = parser.parse_args()
 
@@ -472,10 +466,10 @@ def main():
         print()
 
     if dry_run:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("This was a DRY RUN. No changes were made.")
         print("Run without --dry-run to execute the migration.")
-        print("="*60)
+        print("=" * 60)
 
 
 if __name__ == "__main__":

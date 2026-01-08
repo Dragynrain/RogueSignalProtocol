@@ -273,16 +273,18 @@ class GameplayInputHandler(BaseInputHandler):
             return True
 
     # Actions that don't cancel auto-walk (UI toggles that overlay gameplay)
-    _NO_CANCEL_AUTOWALK_ACTIONS = frozenset({
-        InputAction.TOGGLE_HELP,
-        InputAction.TOGGLE_INVENTORY,
-        InputAction.TOGGLE_LOOK_MODE,
-        InputAction.TOGGLE_LORE_VIEWER,
-        InputAction.TOGGLE_ACHIEVEMENTS,
-        InputAction.TOGGLE_ASCENSION,
-        InputAction.CANCEL,
-        InputAction.DEBUG_EXPORT,
-    })
+    _NO_CANCEL_AUTOWALK_ACTIONS = frozenset(
+        {
+            InputAction.TOGGLE_HELP,
+            InputAction.TOGGLE_INVENTORY,
+            InputAction.TOGGLE_LOOK_MODE,
+            InputAction.TOGGLE_LORE_VIEWER,
+            InputAction.TOGGLE_ACHIEVEMENTS,
+            InputAction.TOGGLE_ASCENSION,
+            InputAction.CANCEL,
+            InputAction.DEBUG_EXPORT,
+        }
+    )
 
     def execute_action(self, action: InputAction) -> bool:
         """

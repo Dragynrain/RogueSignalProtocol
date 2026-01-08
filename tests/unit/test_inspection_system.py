@@ -740,7 +740,9 @@ class TestTerrainDescriptionLoading:
         """Test that terrain descriptions are cached after first load."""
         mock_config = {"terrain_descriptions": {"test": {"name": "Test"}}}
 
-        with patch("rsp.utils.inspection.DataLoader.load_config", return_value=mock_config) as mock_load:
+        with patch(
+            "rsp.utils.inspection.DataLoader.load_config", return_value=mock_config
+        ) as mock_load:
             # Reset cache
             EntityInspector._terrain_descriptions = None
 

@@ -13,7 +13,6 @@ This ensures fixed layout content is used without random placement interference.
 
 import logging
 import random
-from typing import List, Tuple
 
 from rsp.combat.inventory import CodeHack, ExploitItem
 from rsp.core.data import GameData
@@ -46,7 +45,7 @@ class FixedLevelGenerator:
 
     def generate_from_layout(
         self, layout_data: FixedLevelData, level: int = 0
-    ) -> Tuple[Position, List[Enemy]]:
+    ) -> tuple[Position, list[Enemy]]:
         """
         Generate map from fixed layout, populating game_map directly.
 

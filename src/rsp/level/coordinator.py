@@ -100,9 +100,7 @@ class GameLevelCoordinator:
 
             fixed_gen = FixedLevelGenerator(self.game_engine.game_map, self.game_engine)
             layout = get_prologue_layout()
-            spawn_pos, enemies = fixed_gen.generate_from_layout(
-                layout, self.game_engine.level
-            )
+            spawn_pos, enemies = fixed_gen.generate_from_layout(layout, self.game_engine.level)
 
             # Add enemies to enemy_manager
             for enemy in enemies:

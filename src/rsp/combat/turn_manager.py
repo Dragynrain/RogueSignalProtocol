@@ -229,6 +229,12 @@ class GameTurnManager:
 
                         track("restoration_nodes_used", game=self.game_engine)
 
+                        # Prologue: Cooling node tutorial thought
+                        if getattr(self.game_engine, "prologue_mode", False):
+                            from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                            show_prologue_thought("cooling_node_use", self.game_engine)
+
         # CPU recovery node (with A13+ capacity support)
         if self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
             node = self.game_engine.game_map.cpu_recovery_nodes.get(player_pos)
@@ -254,6 +260,12 @@ class GameTurnManager:
 
                         track("restoration_nodes_used", game=self.game_engine)
 
+                        # Prologue: CPU node tutorial thought
+                        if getattr(self.game_engine, "prologue_mode", False):
+                            from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                            show_prologue_thought("cpu_node_use", self.game_engine)
+
         # Ghost node (trace level reduction with A13+ capacity support)
         if self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
             node = self.game_engine.game_map.ghost_nodes.get(player_pos)
@@ -274,6 +286,12 @@ class GameTurnManager:
 
                         track("restoration_nodes_used", game=self.game_engine)
 
+                        # Prologue: Ghost node tutorial thought
+                        if getattr(self.game_engine, "prologue_mode", False):
+                            from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                            show_prologue_thought("ghost_node_use", self.game_engine)
+
         # Code hack
         if player_pos in self.game_engine.game_map.code_hacks:
             patch = self.game_engine.game_map.code_hacks[player_pos]
@@ -285,6 +303,12 @@ class GameTurnManager:
             )
             del self.game_engine.game_map.code_hacks[player_pos]
 
+            # Prologue: Code hack discovery thought
+            if getattr(self.game_engine, "prologue_mode", False):
+                from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                show_prologue_thought("code_hack_discovery", self.game_engine)
+
         # Exploit pickup
         if player_pos in self.game_engine.game_map.exploit_pickups:
             exploit_item = self.game_engine.game_map.exploit_pickups[player_pos]
@@ -295,6 +319,13 @@ class GameTurnManager:
                 f"[PICKUP] Exploit: {exploit_item.name} ({exploit_item.exploit_key}) at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}"
             )
             del self.game_engine.game_map.exploit_pickups[player_pos]
+
+            # Prologue: Utility pickup thought (Threat Scan)
+            if getattr(self.game_engine, "prologue_mode", False):
+                if "threat" in exploit_item.name.lower() or "scan" in exploit_item.name.lower():
+                    from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                    show_prologue_thought("utility_pickup", self.game_engine)
 
         # Permanent upgrade pickup (auto-equip)
         if player_pos in self.game_engine.game_map.permanent_upgrades:
@@ -378,6 +409,12 @@ class GameTurnManager:
             blind_spot_msg = self.game_engine.narrative_manager.trigger_first_blind_spot()
             if blind_spot_msg:
                 self.game_engine.message_log.add_message(blind_spot_msg)
+
+            # Prologue: Blind spot observation thought
+            if getattr(self.game_engine, "prologue_mode", False):
+                from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                show_prologue_thought("blindspot_observe", self.game_engine)
 
             # Track turns in blind spots for Shadow Dancer achievement
             from rsp.systems.metrics import get_current_session
@@ -508,7 +545,15 @@ class GameTurnManager:
 
             else:
                 # Enemy is not adjacent - move toward player
+                old_pos = enemy.position
                 enemy.move(self.game_engine.game_map, self.game_engine.player, self.game_engine)
+
+                # Prologue: Turn-based observation thought (first time seeing enemy move)
+                if getattr(self.game_engine, "prologue_mode", False):
+                    if enemy.position != old_pos:  # Enemy actually moved
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("turn_based_observe", self.game_engine)
 
         # Show inventory attack warning dialogue if player was attacked while in inventory
         if player_attacked_in_inventory:
@@ -554,6 +599,17 @@ class GameTurnManager:
             else:
                 can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
 
+                # Prologue: Blind spot at range protected player from detection
+                if not can_see and getattr(self.game_engine, "prologue_mode", False):
+                    player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
+                    distance = enemy.position.grid_distance_to(player_pos)
+                    in_blind_spot = self.game_engine.game_map.is_blind_spot(player_pos)
+                    in_vision_range = enemy.position.distance_to(player_pos) <= enemy.vision_range
+                    if in_blind_spot and distance > 1 and in_vision_range:
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("blindspot_range_success", self.game_engine)
+
             # Admin Avatar has perfect tracking (but can still be blinded)
             if enemy.type == "admin":
                 if enemy.blinded_turns <= 0:  # Only track if not blinded
@@ -595,7 +651,10 @@ class GameTurnManager:
                 if getattr(self.game_engine, "prologue_mode", False):
                     from rsp.systems.prologue_thoughts import show_prologue_thought
 
-                    player_in_blind_spot = (player_pos.x, player_pos.y) in self.game_engine.game_map.blind_spots
+                    player_in_blind_spot = (
+                        player_pos.x,
+                        player_pos.y,
+                    ) in self.game_engine.game_map.blind_spots
                     distance = enemy.position.grid_distance_to(player_pos)
                     if player_in_blind_spot and distance <= 1:
                         self.game_engine.prologue_spotted_in_blind_spot = True
@@ -617,6 +676,12 @@ class GameTurnManager:
                 enemy.last_seen_player = player_pos
                 enemy.alert_timer -= 1  # Decrement timer each turn they see player
                 if enemy.alert_timer <= 0:
+                    # Prologue: Player failed to escape alert in time
+                    if getattr(self.game_engine, "prologue_mode", False):
+                        from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                        show_prologue_thought("alert_to_hostile_fail", self.game_engine)
+
                     self._transition_to_hostile(enemy)
 
             elif enemy.state == EnemyState.HOSTILE:

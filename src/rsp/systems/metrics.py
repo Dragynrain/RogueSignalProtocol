@@ -538,9 +538,7 @@ def track_enemy_kill(
             AchievementManager.check_immediate_achievements_and_notify(session, game)
 
 
-def track(
-    metric_name: str, category: str | None = None, amount: int = 1, game: Any = None
-) -> None:
+def track(metric_name: str, category: str | None = None, amount: int = 1, game: Any = None) -> None:
     """
     Track a gameplay event.
 
