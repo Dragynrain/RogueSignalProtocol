@@ -355,7 +355,8 @@ def init_session_metrics() -> SessionMetrics:
     """Initialize a new session metrics tracker."""
     global _current_session, _session_finalized
 
-    session_id = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    # Include microseconds for uniqueness in parallel test execution
+    session_id = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
     _current_session = SessionMetrics(session_id=session_id, timestamp_start=time.time())
     _session_finalized = False  # Reset finalization guard for new session
 

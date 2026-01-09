@@ -12,7 +12,9 @@
 
 2. **NO AUTO-COMMITS**: Always ask before committing. Exception: user says "commit this"
 
-3. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated"
+3. **FIX ALL TEST FAILURES**: Never use `--no-verify` to skip failing tests
+   - Don't dismiss failures as "unrelated" - investigate and fix them
+   - If a test is flaky, fix the flakiness, don't skip it
 
 4. **BRUTAL HONESTY**: Never claim "done" or "tested" without actual passing tests
 
