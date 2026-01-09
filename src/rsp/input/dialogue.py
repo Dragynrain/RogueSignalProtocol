@@ -225,7 +225,11 @@ class DialogueInputManager:
             # Player confirmed gateway - proceed to next level
             self.game.sound_manager.play_sound("level_complete")
             self.game.message_log.add_message("Gateway reached! Next network...")
+            # Close gateway dialogue BEFORE calling next_level(), since prologue mode
+            # will show a new dialogue (completion dialogue) that shouldn't be closed
+            self.game.dialogue_state.close()
             self.game.next_level()
+            return  # Don't close again - prologue shows its own completion dialogue
 
         # Close dialogue
         self.game.dialogue_state.close()

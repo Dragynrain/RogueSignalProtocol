@@ -65,10 +65,13 @@ class FixedLevelData:
 #   - P patrols corridor player must cross after X - forces wait/timing
 # Section 2: Blind spot range trap (rows 6-12)
 #   - Wall at (5,6) blocks quick bypass - player MUST try blind spots
-#   - Blind spots at (1-3,6) adjacent to S - triggers TOO CLOSE lesson
-#   - Safe blind spots at (3-4,9-10) range 3+ for successful hiding
+#   - Scanner S at (4,6) with vision 5 - blind spots to west:
+#     - (3,6) is ADJACENT (distance 1) - triggers TOO CLOSE lesson!
+#     - (2,6) and (1,6) are safe (distance 2-3) but tempting wrong path
+#   - Safe blind spots at (3-4,9-10) distance 3+ for successful hiding
 # Section 3: Alert grace period + escape (rows 13-17)
-#   - Rewards (r,d) moved to main escape corridor for visibility
+#   - Rewards (r,d) on west side, Code Injection (e) on main path at (6,13)
+#   - Player picks up ranged exploit BEFORE Section 4 where they need it
 # Section 4: Ranged combat + Heat (rows 18-21)
 #   - P visible from corridor at range 5 - encourages Code Injection use
 #   - Wall at x=11 creates longer walking path, hinting at ranged option
@@ -76,7 +79,7 @@ class FixedLevelData:
 # Section 5: Synthesis - choice of paths (rows 22-23)
 PROLOGUE_LAYOUT_RAW = """
 ############################
-#@..##....+.e.............#
+#@..##....+...............#
 #..X##....#...............#
 #.#.+..P..#...............#
 #..##.....#...............#
@@ -88,7 +91,7 @@ PROLOGUE_LAYOUT_RAW = """
 #..ss#....................#
 #....+....................#
 ####+#########+###########
-#..r.+.........+....sss...#
+#..r.+e........+....sss...#
 #.d..#....P....#....sss...#
 #....#....+....#..XE.ss...#
 #....#....+....+....sss...#
