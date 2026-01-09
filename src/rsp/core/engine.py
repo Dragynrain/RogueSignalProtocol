@@ -500,10 +500,10 @@ class GameEngine:
 
                     show_prologue_thought("diagonal_discover", self)
 
-                # Prologue: Stealth choice thought (Section 5 left path)
+                # Prologue: Stealth choice thought (Section 6 left path)
                 if getattr(self, "prologue_mode", False):
                     px, py = self.player.position.x, self.player.position.y
-                    if px <= 5 and py >= 22:
+                    if px <= 5 and py >= 21:
                         from rsp.systems.prologue_thoughts import show_prologue_thought
 
                         show_prologue_thought("stealth_choice", self)

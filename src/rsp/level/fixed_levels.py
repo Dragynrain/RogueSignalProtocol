@@ -59,49 +59,42 @@ class FixedLevelData:
         return "#"
 
 
-# Prologue layout: 28x24 tiles
-# Section 1: Turn-based + Wait + Movement queue (rows 0-5)
-#   - X blocks ONLY path to door (walls at (2,3) and (3,4) force melee)
-#   - P patrols corridor player must cross after X - forces wait/timing
-# Section 2: Blind spot range trap (rows 6-12)
-#   - Wall at (5,6) blocks quick bypass - player MUST try blind spots
-#   - Scanner S at (4,6) with vision 5 - blind spots to west:
-#     - (3,6) is ADJACENT (distance 1) - triggers TOO CLOSE lesson!
-#     - (2,6) and (1,6) are safe (distance 2-3) but tempting wrong path
-#   - Safe blind spots at (3-4,9-10) distance 3+ for successful hiding
-# Section 3: Alert grace period + escape (rows 13-17)
-#   - Rewards (r,d) on west side, Code Injection (e) on main path at (6,13)
-#   - Player picks up ranged exploit BEFORE Section 4 where they need it
-# Section 4: Ranged combat + Heat (rows 18-21)
-#   - P visible from corridor at range 5 - encourages Code Injection use
-#   - Wall at x=11 creates longer walking path, hinting at ranged option
-#   - Cooling node on left side accessible via door
-# Section 5: Synthesis - choice of paths (rows 22-23)
+# Prologue layout: 28x24 tiles - Linear tutorial with clear teaching sections
+#
+# DESIGN: Each section teaches 1-2 mechanics before player moves on.
+# Linear flow (railroaded) ensures lessons happen in order.
+#
+# Section 1 (rows 1-3): MELEE - X blocks only exit, must bump-attack
+# Section 2 (rows 4-7): TURN-BASED + WAIT - vertical patrol, time crossing
+# Section 3 (rows 8-11): BLIND SPOTS - reachable via side path, not through Scanner
+# Section 4 (rows 12-15): ALERT + ESCAPE - get spotted, learn to run
+# Section 5 (rows 16-20): EXPLOITS + HEAT - ranged combat, cooling node
+# Section 6 (rows 21-22): SYNTHESIS - choose stealth or combat path to gateway
+#
 PROLOGUE_LAYOUT_RAW = """
 ############################
-#@..##....+...............#
-#..X##....#...............#
-#.#.+..P..#...............#
-#..##.....#...............#
-####+#####################
-#sssS#....................#
-#....#....................#
-#....#....................#
-#..ss#....................#
-#..ss#....................#
-#....+....................#
-####+#########+###########
-#..r.+e........+....sss...#
-#.d..#....P....#....sss...#
-#....#....+....#..XE.ss...#
-#....#....+....+....sss...#
-################....###+###
-#..c.+.....#..............#
-#....#.....#......P.......#
-#....+.....+..............#
-####+######+..........+.###
-#sss.+.....g.......#....+>#
-#sss.#.........P...#..sss.#
+#@..+#.....................#
+#..X##.....................#
+#...+#.....................#
+####+#######################
+#....#.....................#
+#..P.+.....................#
+#....#.....................#
+####+#######################
+#....+.....S...............#
+#sss.#.....................#
+#sss.+.....................#
+####+#######################
+#....+.......P.............#
+#....#.....................#
+#..r.+.....................#
+####+#######################
+#..c.+..e.....#............#
+#....#........#............#
+#....+........+.....P......#
+####+##########+.......#+###
+#sss.+........g........+..>#
+#sss.#........P........#sss#
 ############################
 """.strip()
 
@@ -109,25 +102,29 @@ PROLOGUE_LAYOUT_RAW = """
 def get_prologue_layout() -> FixedLevelData:
     """Get the prologue level layout data.
 
-    Defines fixed patrol routes to guarantee teaching moments:
-    - Section 1 P: Blocks corridor after X - player must wait/time passage
-    - Section 3 P: Crosses entry path - guaranteed encounter
-    - Section 4 P: Visible at range 5 from corridor - ranged combat target
-    - Section 5 P: Guards center - player chooses path around
+    Linear tutorial with clear teaching sections:
+    - Section 2 P at (3,6): VERTICAL patrol - player times horizontal crossing
+    - Section 4 P at (13,13): HORIZONTAL patrol - triggers alert lesson
+    - Section 5 P at (20,19): Stationary ranged target for exploit practice
+    - Section 6 P at (14,22): Guards center - player chooses stealth or combat
     """
     lines = PROLOGUE_LAYOUT_RAW.split("\n")
 
-    # Fixed patrol routes for deterministic behavior
+    # Fixed patrol routes for deterministic teaching
     # Key: spawn position (x,y), Value: list of patrol waypoints
     patrol_routes = {
-        # Section 1: P at (7,3) patrols corridor player must cross
-        (7, 3): [Position(5, 3), Position(9, 3)],
-        # Section 3: P at (10,14) crosses entry - east-west patrol
-        (10, 14): [Position(6, 14), Position(13, 14)],
-        # Section 4: P at (18,19) patrols open area - visible from corridor
-        (18, 19): [Position(17, 19), Position(20, 19)],
-        # Section 5: P at (15,23) guards center between paths
-        (15, 23): [Position(12, 23), Position(18, 23)],
+        # Section 2: P at (3,6) patrols VERTICALLY (perpendicular to player path)
+        # Player enters from north (door at 4,4), needs to cross east through door (5,6)
+        # Vertical patrol creates timing window for horizontal crossing
+        (3, 6): [Position(3, 5), Position(3, 7)],
+        # Section 4: P at (13,13) patrols HORIZONTALLY across player's path
+        # Likely to spot player - teaches alert escape mechanic
+        (13, 13): [Position(11, 13), Position(15, 13)],
+        # Section 5: P at (20,19) - minimal movement, ranged target
+        # Wall at x=14 creates gap - encourages using exploit at range
+        (20, 19): [Position(19, 19), Position(21, 19)],
+        # Section 6: P at (14,22) guards center between stealth/combat paths
+        (14, 22): [Position(12, 22), Position(16, 22)],
     }
 
     return FixedLevelData(

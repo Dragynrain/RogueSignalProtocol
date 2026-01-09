@@ -340,7 +340,7 @@ class MainMenu(BaseMenu):
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu options."""
         # Position depends on layout - graphics mode needs options higher to avoid help text overlap
-        start_y = 19 if box["use_background_layout"] else 21
+        start_y = 17 if box["use_background_layout"] else 21
         for i, option in enumerate(self.options):
             # Ascension option gets special color to stand out
             if option.startswith("Ascension"):
@@ -370,7 +370,7 @@ class MainMenu(BaseMenu):
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
                 # Match menu options start_y
-                start_y = 19 if box["use_background_layout"] else 21
+                start_y = 17 if box["use_background_layout"] else 21
                 if box["use_background_layout"]:
                     # Background mode - position within narrow box
                     # Cap save info position to avoid overlapping controls at y=45

@@ -173,11 +173,11 @@ class TestPrologueLayout:
         assert exploit_count > 0, "Prologue must have exploit pickups for teaching"
 
     def test_prologue_dimensions(self):
-        """Prologue layout has expected dimensions (28x25)."""
+        """Prologue layout has expected dimensions (28x24)."""
         layout = get_prologue_layout()
 
         assert layout.width == 28, f"Expected width 28, got {layout.width}"
-        assert layout.height == 25, f"Expected height 25, got {layout.height}"
+        assert layout.height == 24, f"Expected height 24, got {layout.height}"
 
     def test_prologue_spawn_position(self):
         """Player spawn is at expected position (1,1)."""
