@@ -81,9 +81,9 @@ PROLOGUE_LAYOUT_RAW = """
 #...P.......################
 #...........################
 ###+########################
-#...S.......################
+#ss.S.......################
 #sss........################
-###+########################
+#sss########################
 #...P.r.....################
 ###+########################
 #c.e........################
@@ -114,15 +114,20 @@ def get_prologue_layout() -> FixedLevelData:
 
     # Fixed patrol routes for deterministic teaching
     # Key: spawn position (x,y), Value: list of patrol waypoints
+    #
+    # IMPORTANT: Routes avoid door positions (x=3) to create safe crossing windows.
+    # Patrols start from x=5+ so player can cross at x=1-3 when patrol is right.
     patrol_routes = {
-        # Section 2: P at (4,6) patrols horizontally in corridor
-        (4, 6): [Position(2, 6), Position(9, 6)],
-        # Section 4: P at (4,12) patrols in section with recovery node
-        (4, 12): [Position(2, 12), Position(9, 12)],
+        # Section 2: P at (4,6) patrols RIGHT side of corridor (x=5-11)
+        # Player crosses on LEFT (x=1-2) when patrol is far right
+        (4, 6): [Position(5, 6), Position(11, 6)],
+        # Section 4: P at (4,12) patrols RIGHT side, avoiding door at x=3
+        # Recovery node at (6,12) is still reachable
+        (4, 12): [Position(5, 12), Position(11, 12)],
         # Section 5: P at (6,15) behind wall - player must use ranged
         (6, 15): [Position(6, 15), Position(11, 15)],
-        # Section 6: P at (5,21) guards long corridor to gateway
-        (5, 21): [Position(5, 21), Position(14, 21)],
+        # Section 6: P at (5,21) patrols further right to create safe window
+        (5, 21): [Position(6, 21), Position(14, 21)],
     }
 
     return FixedLevelData(
