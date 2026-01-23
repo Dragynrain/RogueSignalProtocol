@@ -418,6 +418,7 @@ class GameConfig:
     LANDMARK_CORNER_SIZE_ADJUST = 20  # Size adjustment for landmark corner calculation
     ARENA_EDGE_BUFFER = 15  # Minimum distance from map edge for arena placement
     ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER = 25  # Max placement attempts = enemy_count * this value
+    CENTRAL_HUB_MAX_DISTANCE = 15  # Max Manhattan distance from center for central hub gateway
     DEFAULT_FADE_TIME = 2000
     MESSAGE_CENTER_OFFSET_LARGE = 15
     MESSAGE_CENTER_OFFSET_MEDIUM = 12

@@ -477,7 +477,7 @@ class TilePlacementGenerator:
             distance_to_center = abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y)
             distance_from_spawn = spawn.distance_to(Position(pos[0], pos[1]))
 
-            if distance_to_center < 15 and distance_from_spawn > min_distance:
+            if distance_to_center < GameConfig.CENTRAL_HUB_MAX_DISTANCE and distance_from_spawn > min_distance:
                 central_positions.append(pos)
 
         if central_positions:
