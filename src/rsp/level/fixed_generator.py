@@ -18,7 +18,7 @@ from rsp.combat.inventory import CodeHack, ExploitItem
 from rsp.core.data import GameData
 from rsp.entities.base import Position
 from rsp.entities.characters import Enemy
-from rsp.level.fixed_levels import FixedLevelData
+from rsp.level.fixed_levels import PrologueLayoutData
 
 
 class FixedLevelGenerator:
@@ -44,8 +44,8 @@ class FixedLevelGenerator:
         self.game_engine = game_engine  # Needed for code_hack_effects
 
     def generate_from_layout(
-        self, layout_data: FixedLevelData, level: int = 0
-    ) -> tuple[Position, list[Enemy], FixedLevelData]:
+        self, layout_data: PrologueLayoutData, level: int = 0
+    ) -> tuple[Position, list[Enemy], PrologueLayoutData]:
         """
         Generate map from fixed layout, populating game_map directly.
 
@@ -53,7 +53,7 @@ class FixedLevelGenerator:
         nodes, items, and enemies. The coordinator MUST NOT run its placement methods.
 
         Args:
-            layout_data: FixedLevelData with ASCII layout
+            layout_data: PrologueLayoutData with ASCII layout
             level: Level number (0 for prologue)
 
         Returns:
@@ -98,11 +98,15 @@ class FixedLevelGenerator:
                     self._place_item(x, y, self.ITEM_CHARS[char], level)
 
         if spawn_pos is None:
-            logging.error("Fixed level has no player spawn (@)! Using (1,1)")
-            spawn_pos = Position(1, 1)
+            logging.error("Fixed level has no player spawn (@)! Finding fallback...")
+            spawn_pos = self._find_valid_spawn_fallback()
 
         # Invalidate caches
         self.game_map.invalidate_transparency_cache()
+
+        # Validate gateway reachability from spawn
+        if self.game_map.gateway:
+            self._validate_gateway_reachable(spawn_pos)
 
         logging.info(
             f"Fixed level generated: {layout_data.width}x{layout_data.height}, "
@@ -110,6 +114,65 @@ class FixedLevelGenerator:
         )
 
         return spawn_pos, enemies, layout_data
+
+    def _find_valid_spawn_fallback(self) -> Position:
+        """Find a valid walkable spawn position when @ is missing.
+
+        Searches for first walkable tile, prioritizing interior positions.
+        """
+        # Try common interior positions first
+        for pos in [Position(1, 1), Position(2, 2), Position(3, 3)]:
+            if self._is_walkable(pos):
+                logging.warning(f"Using fallback spawn position: {pos}")
+                return pos
+
+        # Search entire map for any walkable position
+        for y in range(1, self.game_map.height - 1):
+            for x in range(1, self.game_map.width - 1):
+                pos = Position(x, y)
+                if self._is_walkable(pos):
+                    logging.warning(f"Using fallback spawn position: {pos}")
+                    return pos
+
+        # Last resort - this should never happen with a valid layout
+        logging.error("No walkable spawn position found! Level may be broken.")
+        return Position(1, 1)
+
+    def _is_walkable(self, pos: Position) -> bool:
+        """Check if position is walkable (not a wall)."""
+        return (pos.x, pos.y) not in self.game_map.walls
+
+    def _validate_gateway_reachable(self, spawn: Position) -> bool:
+        """Validate that gateway is reachable from spawn using pathfinding.
+
+        Logs a warning if gateway is unreachable - doesn't fail since
+        enemies might need to be killed first to open the path.
+        """
+        import numpy as np
+        import tcod
+
+        # Build walkability array
+        walkability = np.ones((self.game_map.height, self.game_map.width), dtype=np.int8)
+        for wall in self.game_map.walls:
+            walkability[wall[1], wall[0]] = 0
+
+        # Try to find path
+        graph = tcod.path.SimpleGraph(cost=walkability, cardinal=2, diagonal=3)
+        pathfinder = tcod.path.Pathfinder(graph)
+        pathfinder.add_root((spawn.y, spawn.x))
+
+        gateway = self.game_map.gateway
+        path = pathfinder.path_to((gateway.y, gateway.x)).tolist()
+
+        if len(path) <= 1:
+            logging.warning(
+                f"PROLOGUE WARNING: Gateway at {gateway} may not be directly reachable "
+                f"from spawn at {spawn}. Path requires killing enemies or layout issue."
+            )
+            return False
+
+        logging.debug(f"Gateway reachability validated: {len(path)} steps from spawn")
+        return True
 
     def _clear_map_data(self):
         """Clear all existing map data before generating."""
@@ -142,7 +205,7 @@ class FixedLevelGenerator:
         x: int,
         y: int,
         enemy_type: str,
-        layout_data: FixedLevelData,
+        layout_data: PrologueLayoutData,
         layout_char: str = None,
     ) -> Enemy:
         """Create enemy with optional tutorial HP overrides.

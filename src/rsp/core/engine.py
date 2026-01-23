@@ -90,8 +90,8 @@ class GameEngine:
         self.prologue_completed_pending = False  # Flag for dialogue handler
         self.prologue_restart_pending = False  # Flag for dialogue handler
         self.prologue_spotted_in_blind_spot = False  # Visibility feedback flag
-        self.prologue_death_count = 0  # Track deaths for hint system
-        self.last_death_section = 0  # Track which section player died in
+        self.prologue_death_count = 0  # Track total deaths for analytics
+        self.prologue_section_deaths: dict[int, int] = {}  # Track death count per section (for escalating hints)
 
         # Initialize ascension system
         self.ascension_level = ascension_level
@@ -264,6 +264,27 @@ class GameEngine:
                 self.ascension_level = 0  # Force base difficulty for tutorial
                 self.ascension_modifiers = calculate_ascension_modifiers(0)
                 self.game_state.level = 0  # Level 0 = prologue
+
+                # Reset prologue thought tracking for fresh start
+                # (handles case where player played prologue before, returned to menu,
+                # and started a new prologue session)
+                from rsp.systems.prologue_thoughts import (
+                    reset_prologue_thoughts,
+                    validate_thought_keys,
+                )
+
+                reset_prologue_thoughts()
+
+                # Validate thought keys match narrative_content.json (fail-fast on config error)
+                missing_keys = validate_thought_keys()
+                if missing_keys:
+                    logging.error(
+                        f"PROLOGUE CONFIG ERROR: Missing thought keys in narrative_content.json: {missing_keys}"
+                    )
+                    raise KeyError(
+                        f"Missing prologue thought keys in narrative_content.json: {missing_keys}"
+                    )
+
                 self.game_session.generate_procedural_level()
                 self._show_prologue_intro()
             else:
@@ -402,7 +423,15 @@ class GameEngine:
         return None
 
     def auto_save(self) -> None:
-        """Auto-save the current game state."""
+        """Auto-save the current game state.
+
+        Skips saving in prologue mode (tutorial doesn't persist) and when game is over.
+        """
+        # Skip saving in prologue mode - tutorial doesn't persist
+        if getattr(self, "prologue_mode", False):
+            logging.debug("Auto-save skipped: prologue mode")
+            return
+
         if not self.game_over:  # Don't auto-save if game is over
             success = SaveGameManager.save_game(self)
             if success:
@@ -513,18 +542,24 @@ class GameEngine:
 
                 track("steps_taken")
 
+                # Prologue: Gateway spotted thought - fires when gateway enters FOV
+                if (
+                    getattr(self, "prologue_mode", False)
+                    and self.game_map.gateway
+                    and self.game_map.has_line_of_sight(
+                        self.player.position, self.game_map.gateway
+                    )
+                ):
+                    from rsp.systems.prologue_thoughts import show_prologue_thought
+
+                    show_prologue_thought("gateway_spotted", self)
+
                 # Check for gateway - show dialogue for user confirmation
                 if (
                     self.game_map.gateway
                     and self.player.position.grid_distance_to(self.game_map.gateway) == 0
                 ):
                     self.sound_manager.play_sound("ui_menu_open")
-
-                    # Prologue: Gateway spotted thought
-                    if getattr(self, "prologue_mode", False):
-                        from rsp.systems.prologue_thoughts import show_prologue_thought
-
-                        show_prologue_thought("gateway_spotted", self)
 
                     # Trigger gateway approach narrative
                     gateway_msg = self.narrative_manager.trigger_gateway_approach()
@@ -548,6 +583,14 @@ class GameEngine:
                 is_wait_action = dx == 0 and dy == 0
                 cpu_before_wait = self.player.cpu if is_wait_action else 0
 
+                # Check for nearby enemies before processing turn (for wait_success)
+                had_nearby_enemy = False
+                if is_wait_action and getattr(self, "prologue_mode", False):
+                    for enemy in self.enemies:
+                        if enemy.position.grid_distance_to(self.player.position) <= 6:
+                            had_nearby_enemy = True
+                            break
+
                 self.maybe_process_turn()
 
                 # Prologue: Wait outcome thoughts
@@ -555,8 +598,10 @@ class GameEngine:
                     from rsp.systems.prologue_thoughts import show_prologue_thought
 
                     if self.player.cpu < cpu_before_wait:
+                        # Waited but still got attacked - wrong position
                         show_prologue_thought("wait_fail", self)
-                    else:
+                    elif had_nearby_enemy:
+                        # Waited with enemy nearby and survived - good timing
                         show_prologue_thought("wait_success", self)
             else:
                 # Movement blocked - don't process turn

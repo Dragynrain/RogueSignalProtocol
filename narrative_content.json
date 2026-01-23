@@ -259,7 +259,7 @@
     "diagonal_discover": "Diagonal movement... that's faster.",
     "melee_success": "Walking into them... that works.",
     "turn_based_observe": "It moves when I move...",
-    "wait_fail": "Should have waited for it to pass.",
+    "wait_fail": "Still in their path. Need to find a safer spot to wait.",
     "wait_success": "Timing. That's the key.",
     "fov_bidirectional": "If I can see them, they can see me.",
     "blindspot_observe": "A blind spot... they might not see me here.",
@@ -281,12 +281,18 @@
     "gateway_spotted": "The gateway. Almost there."
   },
   "prologue_death_hints": {
-    "section_1": "Next time, wait for an opening...",
-    "section_2": "Distance matters. Too close and they see through everything.",
-    "section_3": "Need to break their line of sight faster.",
+    "section_1": "Walk into them to attack. That one looked weak.",
+    "section_1_escalate": "Bump into the enemy to attack. It only has 5 HP.",
+    "section_2": "Next time, wait for an opening...",
+    "section_2_escalate": "Press period (.) to wait. Watch the patrol pattern.",
+    "section_3": "Distance matters. Too close and they see through everything.",
+    "section_3_escalate": "Blind spots only work at range. Stay at least 2 tiles away.",
     "section_4": "There must be a way to reach them from here...",
+    "section_4_escalate": "Use the exploit pickup (1-5 keys). It can hit from range.",
     "section_5": "Patience. Watch the pattern.",
-    "heat_death": "Overheated... those nodes might help next time."
+    "section_5_escalate": "The left path has more cover. Ghost nodes make you invisible.",
+    "heat_death": "Overheated... those nodes might help next time.",
+    "general_encouragement": "Keep trying. The pattern will become clear."
   },
   "metadata": {
     "total_fragments": 24,

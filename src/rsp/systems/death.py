@@ -152,11 +152,11 @@ class PlayerDeathHandler:
         # 1. Set game state - CRITICAL, must always succeed
         self.game.game_over = True
 
-        # 2. Force-close any active dialogues - death has highest priority
+        # 2. Force-close any active dialogues and clear queue - death has highest priority
         try:
-            if self.game.dialogue_state.is_active():
-                logging.warning(f"{event.cause.title()} death with dialogue active - force-closing")
-                self.game.dialogue_state.close()
+            if self.game.dialogue_state.is_active() or self.game.dialogue_state.dialogue_queue:
+                logging.warning(f"{event.cause.title()} death with dialogue active/queued - force-closing all")
+                self.game.dialogue_state.close_and_clear_queue()
         except Exception as e:
             logging.error(f"Death handler: Failed to close dialogue: {e}")
 
@@ -241,6 +241,10 @@ class PlayerDeathHandler:
         # Mark as handled to prevent re-entry during restart
         self._handled = True
 
+        # Clear any queued dialogues (like pending thoughts) before showing death dialogue
+        # This prevents confusing messages appearing after the death notification
+        self.game.dialogue_state.close_and_clear_queue()
+
         # Play death sounds (still want audio feedback)
         try:
             self.game.sound_manager.play_sound("player_death", priority=10)
@@ -253,13 +257,15 @@ class PlayerDeathHandler:
         else:
             death_message = cause.title()
 
-        # Track death for hint system
+        # Track death for hint system (per-section death count)
         current_section = self._get_prologue_section()
         self.game.prologue_death_count += 1
-        self.game.last_death_section = current_section
-
-        # Get contextual death hint (only on first death per section)
-        hint = self._get_death_hint(current_section)
+        # Get death count for this section BEFORE incrementing
+        section_deaths = self.game.prologue_section_deaths.get(current_section, 0)
+        # Get contextual death hint based on how many times died in this section
+        hint = self._get_death_hint(current_section, section_deaths)
+        # Now increment death count for this section
+        self.game.prologue_section_deaths[current_section] = section_deaths + 1
 
         # Show death dialogue with tutorial message and optional hint
         self.game.dialogue_state.show(create_prologue_death_dialogue(death_message, hint))
@@ -271,27 +277,29 @@ class PlayerDeathHandler:
         # NOTE: Do NOT delete save or finalize metrics
 
     def _get_prologue_section(self) -> int:
-        """Determine which prologue section the player is in based on position."""
-        py = self.game.player.position.y
-        # Section boundaries based on layout rows:
-        # Section 1: rows 0-5, Section 2: rows 6-12, Section 3: rows 13-17
-        # Section 4: rows 18-21, Section 5: rows 22-23
-        if py <= 5:
-            return 1
-        elif py <= 12:
-            return 2
-        elif py <= 17:
-            return 3
-        elif py <= 21:
-            return 4
-        else:
-            return 5
+        """Determine which prologue section the player is in based on position.
 
-    def _get_death_hint(self, section: int) -> str | None:
-        """Get contextual death hint based on section and heat.
+        Uses centralized section boundaries from fixed_levels.py to ensure
+        consistency with the actual layout.
+        """
+        from rsp.level.fixed_levels import get_prologue_section
 
-        Returns hint only on first death - subsequent deaths in same section
-        don't repeat the hint.
+        return get_prologue_section(self.game.player.position.y)
+
+    def _get_death_hint(self, section: int, deaths_in_section: int) -> str | None:
+        """Get contextual death hint based on section, death count, and heat.
+
+        Provides escalating hints:
+        - 1st death: Section-specific hint
+        - 2nd death: Escalating hint (more specific guidance)
+        - 3rd+ death: General encouragement or no hint
+
+        Args:
+            section: Current prologue section (1-5)
+            deaths_in_section: Number of previous deaths in this section
+
+        Returns:
+            Hint string or None
         """
         from rsp.core.data_loading import get_prologue_death_hints
 
@@ -303,10 +311,23 @@ class PlayerDeathHandler:
         if self.game.player.heat > 60:
             return hints.get("heat_death")
 
-        # Section-specific hint only on first death in that section
-        if self.game.prologue_death_count == 1:
+        # First death in section: section-specific hint
+        if deaths_in_section == 0:
             return hints.get(f"section_{section}")
 
+        # Second death in section: escalating hint (more specific)
+        if deaths_in_section == 1:
+            escalating = hints.get(f"section_{section}_escalate")
+            if escalating:
+                return escalating
+            # Fall back to general encouragement
+            return hints.get("general_encouragement")
+
+        # Third+ death: general encouragement only (don't spam hints)
+        if deaths_in_section == 2:
+            return hints.get("general_encouragement")
+
+        # After 3 deaths in same section, no more hints (player knows)
         return None
 
     def reset(self):

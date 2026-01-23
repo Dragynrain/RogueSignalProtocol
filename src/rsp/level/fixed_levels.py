@@ -32,8 +32,11 @@ from rsp.entities.base import Position
 
 
 @dataclass
-class FixedLevelData:
-    """Container for fixed level layout data."""
+class PrologueLayoutData:
+    """Container for prologue level layout data.
+
+    Named specifically for prologue to clarify this is not a generic fixed level system.
+    """
 
     layout: list[str]  # ASCII map rows (y=0 is top)
     name: str = "Fixed Level"  # Display name
@@ -58,18 +61,85 @@ class FixedLevelData:
             return self.layout[y][x]
         return "#"
 
+    def is_walkable(self, x: int, y: int) -> bool:
+        """Check if a position is walkable (not a wall)."""
+        char = self.get_char(x, y)
+        return char != "#"
+
+    def validate_patrol_routes(self) -> list[str]:
+        """Validate that all patrol route positions are walkable floor tiles.
+
+        Returns:
+            List of error messages (empty if all routes are valid)
+        """
+        errors = []
+        for spawn_pos, waypoints in self.patrol_routes.items():
+            spawn_x, spawn_y = spawn_pos
+            if not self.is_walkable(spawn_x, spawn_y):
+                errors.append(
+                    f"Patrol spawn at ({spawn_x},{spawn_y}) is not walkable"
+                )
+
+            for i, waypoint in enumerate(waypoints):
+                if not self.is_walkable(waypoint.x, waypoint.y):
+                    errors.append(
+                        f"Patrol waypoint {i} at ({waypoint.x},{waypoint.y}) "
+                        f"for spawn ({spawn_x},{spawn_y}) is not walkable"
+                    )
+
+        return errors
+
+
+# Backwards compatibility alias
+FixedLevelData = PrologueLayoutData
+
+
+# Prologue section boundaries (Y coordinate ranges for each teaching section)
+# These MUST stay in sync with the layout below and death hints in narrative_content.json.
+# Used by death handler to provide contextual hints.
+#
+# Layout structure (doors as natural section dividers):
+#   Rows 0-4:   Spawn + X enemy + door (melee teaching)
+#   Rows 5-8:   First patrol corridor + door (timing/wait teaching)
+#   Rows 9-12:  Scanner + blind spots + patrol + door (FOV/stealth teaching)
+#   Rows 13-16: Exploit pickup + wall + patrol behind + door (ranged combat)
+#   Rows 17-23: Ghost node + blind spots + final patrol + gateway (synthesis)
+#
+PROLOGUE_SECTION_BOUNDARIES = {
+    1: (0, 4),    # Section 1: rows 0-4 (melee - X enemy blocks first door)
+    2: (5, 8),    # Section 2: rows 5-8 (patrol timing - wait for opening)
+    3: (9, 12),   # Section 3: rows 9-12 (FOV + blindspots - distance matters)
+    4: (13, 16),  # Section 4: rows 13-16 (ranged combat - wall blocks melee)
+    5: (17, 23),  # Section 5: rows 17-23 (synthesis - final patrol + gateway)
+}
+
+
+def get_prologue_section(y: int) -> int:
+    """Get prologue section number for a given Y coordinate.
+
+    Args:
+        y: Player's Y coordinate
+
+    Returns:
+        Section number (1-5), or 5 if beyond last section
+    """
+    for section, (min_y, max_y) in PROLOGUE_SECTION_BOUNDARIES.items():
+        if min_y <= y <= max_y:
+            return section
+    return 5  # Default to last section if beyond boundaries
+
 
 # Prologue layout: 28x24 tiles - Linear tutorial with forced paths
 #
 # DESIGN: Right side is walled off - player MUST traverse left corridor.
 # Each section forces player through the teaching content, no bypassing.
+# Doors act as natural section dividers.
 #
-# Section 1 (rows 1-3): MELEE - X blocks the only door, must kill to pass
-# Section 2 (rows 4-8): TURN-BASED + WAIT - patrol in corridor, timing matters
-# Section 3 (rows 9-12): FOV + BLINDSPOTS - Scanner blocks path, use blindspots
-# Section 4 (rows 13-15): ALERT + ESCAPE - patrol, escape corridor to break LOS
-# Section 5 (rows 16-18): EXPLOITS + HEAT - wall blocks melee, ranged needed
-# Section 6 (rows 19-22): SYNTHESIS - stealth path via blindspots or fight
+# Section 1 (rows 0-4): MELEE - X blocks the first door, must bump-attack to pass
+# Section 2 (rows 5-8): TIMING - P patrols corridor, wait for opening to cross
+# Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision, blind spots at range > 1
+# Section 4 (rows 13-16): RANGED - Wall blocks melee, exploit required for P behind
+# Section 5 (rows 17-23): SYNTHESIS - Ghost node, stealth path, final P, gateway
 #
 PROLOGUE_LAYOUT_RAW = """
 ############################
@@ -130,10 +200,24 @@ def get_prologue_layout() -> FixedLevelData:
         (5, 21): [Position(6, 21), Position(14, 21)],
     }
 
-    return FixedLevelData(
+    layout_data = PrologueLayoutData(
         layout=lines,
         name="First Infiltration",
         tutorial_triggers={},
         enemy_overrides={},
         patrol_routes=patrol_routes,
     )
+
+    # Validate patrol routes at load time (fail-fast on config errors)
+    errors = layout_data.validate_patrol_routes()
+    if errors:
+        import logging
+
+        for error in errors:
+            logging.error(f"PROLOGUE LAYOUT ERROR: {error}")
+        raise ValueError(
+            f"Invalid patrol routes in prologue layout: {len(errors)} errors. "
+            "Check logs for details."
+        )
+
+    return layout_data

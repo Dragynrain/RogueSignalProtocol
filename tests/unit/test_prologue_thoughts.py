@@ -12,9 +12,12 @@ import pytest
 
 from rsp.systems.prologue_thoughts import (
     THOUGHT_KEYS,
+    THOUGHT_TRIGGER_REGISTRY,
+    get_trigger_location,
     has_shown_thought,
     reset_prologue_thoughts,
     show_prologue_thought,
+    validate_trigger_registry,
 )
 
 
@@ -198,6 +201,44 @@ class TestThoughtMessageColors:
         # Verify DIMMED color was used
         call_args = game.message_log.add_message.call_args
         assert call_args[0][1] == Colors.DIMMED
+
+
+class TestTriggerRegistry:
+    """Test the thought trigger registry for maintenance."""
+
+    def test_registry_covers_all_thought_keys(self):
+        """All THOUGHT_KEYS should have entries in THOUGHT_TRIGGER_REGISTRY."""
+        result = validate_trigger_registry()
+        assert result["missing_registry"] == [], (
+            f"THOUGHT_KEYS without registry entries: {result['missing_registry']}"
+        )
+
+    def test_registry_has_no_orphan_keys(self):
+        """THOUGHT_TRIGGER_REGISTRY should not have keys not in THOUGHT_KEYS."""
+        result = validate_trigger_registry()
+        assert result["missing_keys"] == [], (
+            f"Registry entries without THOUGHT_KEYS: {result['missing_keys']}"
+        )
+
+    def test_registry_entries_have_valid_format(self):
+        """Registry entries should be (file:function, condition) tuples."""
+        for key, entry in THOUGHT_TRIGGER_REGISTRY.items():
+            assert isinstance(entry, tuple), f"{key} entry is not a tuple"
+            assert len(entry) == 2, f"{key} entry should have 2 elements"
+            assert isinstance(entry[0], str), f"{key} location should be string"
+            assert isinstance(entry[1], str), f"{key} condition should be string"
+            assert ":" in entry[0], f"{key} location should be 'file:function' format"
+
+    def test_get_trigger_location_returns_info(self):
+        """get_trigger_location returns info for valid keys."""
+        result = get_trigger_location("melee_success")
+        assert result is not None
+        assert "engine.py" in result[0]
+
+    def test_get_trigger_location_returns_none_for_invalid(self):
+        """get_trigger_location returns None for invalid keys."""
+        result = get_trigger_location("invalid_key_12345")
+        assert result is None
 
 
 if __name__ == "__main__":
