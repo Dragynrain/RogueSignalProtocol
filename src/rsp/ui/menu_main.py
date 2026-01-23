@@ -89,9 +89,14 @@ class MainMenu(BaseMenu):
         story_manager = StoryFragmentManager()
         discovered, total = story_manager.get_fragment_count()
 
+        # Show checkmark if tutorial completed
+        tutorial_text = "Tutorial"
+        if self.settings and self.settings.prologue_completed:
+            tutorial_text = "Tutorial [Done]"
+
         base_options = [
             "New Game",
-            "Tutorial",
+            tutorial_text,
         ]
 
         # Only show Ascension option if A1+ is unlocked
@@ -152,10 +157,15 @@ class MainMenu(BaseMenu):
         story_manager = StoryFragmentManager()
         discovered, total = story_manager.get_fragment_count()
 
+        # Show checkmark if tutorial completed
+        tutorial_text = "Tutorial"
+        if self.settings and self.settings.prologue_completed:
+            tutorial_text = "Tutorial [Done]"
+
         # Build base options
         base_options = [
             "New Game",
-            "Tutorial",
+            tutorial_text,
         ]
 
         # Only show Ascension option if A1+ is unlocked
@@ -567,7 +577,7 @@ class MainMenu(BaseMenu):
                 return ""
             else:
                 return "new_game"
-        elif option == "Tutorial":
+        elif option.startswith("Tutorial"):
             return "tutorial"
         elif option.startswith("Ascension"):
             self.last_action = "ascension"

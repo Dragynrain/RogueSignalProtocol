@@ -275,7 +275,18 @@ class DialogueInputManager:
             # Player cancelled gateway
             self.game.message_log.add_message("Staying in current network")
         elif "UPLINK ESTABLISHED" in dialogue.title:
-            # Prologue completion - return to menu
+            # Prologue completion - mark as completed and return to menu
+            # Setting flag HERE (not in coordinator) prevents race condition:
+            # Flag is only set after user confirms the completion dialogue
+            self.game.settings.prologue_completed = True
+            self.game.settings.save_settings()
+
+            # Track prologue completion metrics
+            from rsp.systems.metrics import track
+
+            track("prologue_completed")
+            logging.info("Prologue completion confirmed - flag and metrics saved")
+
             self.game.dialogue_state.close()
             return False  # Exit to main menu
         elif "CONNECTION LOST" in dialogue.title:
@@ -307,6 +318,10 @@ class DialogueInputManager:
         game.death_handler.reset()
         game.pending_death_dialogue = False
         game.prologue_restart_pending = False
+
+        # Reset prologue death tracking (hints will show again)
+        game.prologue_death_count = 0
+        game.prologue_section_deaths.clear()
 
         # Reset prologue thoughts so player can learn again
         reset_prologue_thoughts()

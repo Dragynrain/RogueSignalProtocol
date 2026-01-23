@@ -170,6 +170,7 @@ def minimal_mock_game():
     mock_game.game_over = False
     mock_game.admin_spawned = False
     mock_game.ascension_level = 0
+    mock_game.prologue_mode = False  # Not in prologue mode, allow saving
 
     mock_player = Mock()
     mock_player.x = 5

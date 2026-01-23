@@ -477,21 +477,21 @@ class TestDeathDialogueQueuing:
         assert engine.dialogue_state.is_active()
 
         # Track if close was called
-        original_close = engine.dialogue_state.close
+        original_close_and_clear = engine.dialogue_state.close_and_clear_queue
         close_called = []
 
         def tracking_close():
             close_called.append(True)
-            original_close()
+            original_close_and_clear()
 
-        engine.dialogue_state.close = tracking_close
+        engine.dialogue_state.close_and_clear_queue = tracking_close
 
         # Kill player
         engine.player.cpu = 0
         engine.death_handler.check_death("combat")
 
-        # close() should have been called
-        assert len(close_called) > 0, "close() should be called on death with active dialogue"
+        # close_and_clear_queue() should have been called
+        assert len(close_called) > 0, "close_and_clear_queue() should be called on death with active dialogue"
 
         # After close(), dialog should be closed (queue was cleared)
         assert (

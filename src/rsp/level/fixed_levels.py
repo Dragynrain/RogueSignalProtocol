@@ -133,12 +133,12 @@ def get_prologue_section(y: int) -> int:
 #
 # DESIGN: Right side is walled off - player MUST traverse left corridor.
 # Each section forces player through the teaching content, no bypassing.
-# Doors act as natural section dividers.
+# Doors act as natural section dividers. Patrols cross door approaches to force timing.
 #
 # Section 1 (rows 0-4): MELEE - X blocks the first door, must bump-attack to pass
-# Section 2 (rows 5-8): TIMING - P patrols corridor, wait for opening to cross
-# Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision, blind spots at range > 1
-# Section 4 (rows 13-16): RANGED - Wall blocks melee, exploit required for P behind
+# Section 2 (rows 5-8): TIMING - P patrols ACROSS corridor (x=2-10), wait for opening
+# Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision, P patrols across, blind spots help
+# Section 4 (rows 13-16): RANGED - P blocks door approach, wall prevents flanking right
 # Section 5 (rows 17-23): SYNTHESIS - Ghost node, stealth path, final P, gateway
 #
 PROLOGUE_LAYOUT_RAW = """
@@ -157,7 +157,7 @@ PROLOGUE_LAYOUT_RAW = """
 #...P.r.....################
 ###+########################
 #c.e........################
-#...#.P.....################
+#..P#.......################
 ###+########################
 #sss........################
 #sss.g......################
@@ -174,30 +174,32 @@ def get_prologue_layout() -> FixedLevelData:
 
     Linear tutorial with forced path through left corridor:
     - X at (2,3): Damaged scanner blocks door - teaches melee
-    - P at (4,6): Patrol in corridor - teaches turn timing
+    - P at (4,6): Patrol crosses corridor (x=2-10) - teaches turn timing
     - S at (4,9): Scanner with blindspots at (1-3,10) - teaches FOV/stealth
-    - P at (4,12): Patrol + recovery at (6,12) - teaches alert/escape
-    - P at (6,15): Behind wall at (4,15) - teaches ranged combat
-    - P at (5,21): Guards gateway path - final challenge
+    - P at (4,12): Patrol crosses corridor + recovery at (6,12) - teaches alert/escape
+    - P at (3,15): Blocks door approach, wall at x=4 prevents flanking - teaches ranged
+    - P at (5,21): Guards gateway path (x=4-14) - final challenge
     """
     lines = PROLOGUE_LAYOUT_RAW.split("\n")
 
     # Fixed patrol routes for deterministic teaching
     # Key: spawn position (x,y), Value: list of patrol waypoints
     #
-    # IMPORTANT: Routes avoid door positions (x=3) to create safe crossing windows.
-    # Patrols start from x=5+ so player can cross at x=1-3 when patrol is right.
+    # DESIGN: Patrols threaten door approaches when close, but have far positions
+    # where player can safely wait/cross. Patrol vision is 4 tiles.
+    # Player must wait for patrol to be at far end, then cross quickly.
     patrol_routes = {
-        # Section 2: P at (4,6) patrols RIGHT side of corridor (x=5-11)
-        # Player crosses on LEFT (x=1-2) when patrol is far right
-        (4, 6): [Position(5, 6), Position(11, 6)],
-        # Section 4: P at (4,12) patrols RIGHT side, avoiding door at x=3
-        # Recovery node at (6,12) is still reachable
-        (4, 12): [Position(5, 12), Position(11, 12)],
-        # Section 5: P at (6,15) behind wall - player must use ranged
-        (6, 15): [Position(6, 15), Position(11, 15)],
-        # Section 6: P at (5,21) patrols further right to create safe window
-        (5, 21): [Position(6, 21), Position(14, 21)],
+        # Section 2: P at (4,6) patrols x=4-10. At x=8+, player can safely cross
+        # from door at (3,4) through corridor to door at (3,8).
+        # Vision 4 means: at x=4-6 patrol threatens corridor, at x=8-10 safe window
+        (4, 6): [Position(4, 6), Position(10, 6)],
+        # Section 3: P at (4,12) patrols x=4-10, same timing logic as Section 2
+        (4, 12): [Position(4, 12), Position(10, 12)],
+        # Section 4: P at (3,15) guards door approach with short patrol x=1-3
+        # Wall at x=4 blocks right side, forcing engagement or ranged attack
+        (3, 15): [Position(1, 15), Position(3, 15)],
+        # Section 5: P at (5,21) patrols x=5-14, guards corridor to gateway
+        (5, 21): [Position(5, 21), Position(14, 21)],
     }
 
     layout_data = PrologueLayoutData(

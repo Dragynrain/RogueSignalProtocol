@@ -206,18 +206,18 @@ class GameLevelCoordinator:
 
         # Handle prologue completion - return to menu, no level progression
         if getattr(self.game_engine, "prologue_mode", False):
-            # Mark prologue completed (for achievements/tracking)
-            self.game_engine.settings.prologue_completed = True
-            self.game_engine.settings.save_settings()
+            # NOTE: prologue_completed flag is set in dialogue.py handle_dismiss()
+            # AFTER the user confirms the completion dialogue. This prevents a race
+            # condition where the flag is set but user never sees the dialogue.
 
             # Show completion dialogue
             from rsp.ui.dialogue import create_prologue_completion_dialogue
 
             self.game_engine.dialogue_state.show(create_prologue_completion_dialogue())
 
-            # Set flag for dialogue handler (though completion dialogue returns to menu anyway)
+            # Set flag for dialogue handler (completion dialogue returns to menu)
             self.game_engine.prologue_completed_pending = True
-            logging.info("Prologue completed - returning to main menu")
+            logging.info("Prologue completed - showing completion dialogue")
             return
 
         old_level = self.game_engine.level

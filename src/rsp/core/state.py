@@ -224,9 +224,21 @@ class GameStateManager:
             del self.distraction_points[position]
 
     def get_current_network_config(self) -> dict[str, Any]:
-        """Get configuration for the current network level."""
+        """Get configuration for the current network level.
+
+        Raises:
+            KeyError: If network config for current level is missing from game_content.json
+        """
         network_configs = GameConfig.NETWORK_CONFIGS()
-        return network_configs.get(self.level, network_configs[1])
+        if self.level not in network_configs:
+            available_levels = list(network_configs.keys())
+            error_msg = (
+                f"CRITICAL CONFIG ERROR: Missing network_configs[{self.level}] in game_content.json. "
+                f"Available levels: {available_levels}"
+            )
+            logging.error(error_msg)
+            raise KeyError(error_msg)
+        return network_configs[self.level]
 
     def should_spawn_admin(self, trace_level: float) -> bool:
         """

@@ -160,6 +160,16 @@ class DialogueState:
             next_dialogue, _ = self.dialogue_queue.pop(0)
             self.active_dialogue = next_dialogue
 
+    def close_and_clear_queue(self) -> None:
+        """
+        Close active dialogue AND clear the queue.
+
+        Use this before showing critical dialogues (like death) to ensure
+        no other queued dialogues appear afterward.
+        """
+        self.active_dialogue = None
+        self.dialogue_queue.clear()
+
     def is_active(self) -> bool:
         """Check if a dialogue is currently active."""
         return self.active_dialogue is not None

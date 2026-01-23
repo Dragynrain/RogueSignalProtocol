@@ -176,13 +176,21 @@ class SaveGameManager:
 
     @classmethod
     def save_game(cls, game: "GameEngine") -> bool:
-        """Save complete game state to file with robust error handling."""
+        """Save complete game state to file with robust error handling.
+
+        Returns False without saving in prologue mode (tutorial doesn't persist).
+        """
         if game is None:
             logging.error("Cannot save: game object is None")
             return False
 
         if game.player is None:
             logging.error("Cannot save: player object is None")
+            return False
+
+        # Prevent saving in prologue mode - tutorial state doesn't persist
+        if getattr(game, "prologue_mode", False):
+            logging.debug("Save skipped: prologue mode")
             return False
 
         # Ensure saves directory exists
