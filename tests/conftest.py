@@ -66,7 +66,7 @@ sys.path.insert(0, _project_root)
 sys.path.insert(0, os.path.join(_project_root, "src"))
 
 from rsp.core.config import GameSettings  # noqa: E402
-from rsp.entities.base import Position  # noqa: E402
+from rsp.entities.base import EnemyState, Position  # noqa: E402
 from tests.fixtures.simple_fixtures import create_test_map, enemy, player  # noqa: E402
 from tests.fixtures.standard_patterns import (  # noqa: E402
     create_basic_game_environment,
@@ -457,6 +457,176 @@ def multi_enemy_engine():
     return create_multi_enemy_scenario()
 
 
+# ===== Deterministic GameTestAgent Fixtures =====
+# These fixtures create agents with guaranteed game state for reliable tests
+
+
+@pytest.fixture
+def agent_with_guaranteed_enemy():
+    """Create GameTestAgent with guaranteed adjacent enemy.
+
+    Returns (agent, enemy) tuple where:
+    - Agent has an enemy positioned adjacent to player
+    - Enemy is in UNAWARE state with full CPU
+    - Player has full CPU/heat cleared
+
+    Use this instead of: if not agent.enemies: pytest.skip("No enemies spawned")
+    """
+    from tests.fixtures.real_game_data import create_real_enemy
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Clear any randomly spawned enemies
+    agent.engine.enemies = []
+
+    # Create enemy adjacent to player (east)
+    enemy_pos = Position(agent.player.x + 1, agent.player.y)
+    enemy = create_real_enemy("scanner", enemy_pos)
+    enemy.state = EnemyState.UNAWARE
+    enemy.cpu = enemy.max_cpu  # Full health
+    agent.engine.enemies = [enemy]
+
+    # Ensure player is ready
+    agent.player.cpu = agent.player.max_cpu
+    agent.player.heat = 0
+
+    return agent, enemy
+
+
+@pytest.fixture
+def agent_with_executable_exploit():
+    """Create GameTestAgent ready to execute exploits on an adjacent enemy.
+
+    Returns (agent, enemy) tuple where:
+    - Enemy is adjacent and targetable
+    - Player has buffer_overflow equipped (basic damage exploit)
+    - Player has enough resources to execute
+
+    Use this for exploit execution tests that were skipping on "exploit did not execute".
+    """
+    from rsp.entities.base import EnemyState
+    from tests.fixtures.real_game_data import create_real_enemy
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Clear randomly spawned enemies
+    agent.engine.enemies = []
+
+    # Create adjacent enemy
+    enemy_pos = Position(agent.player.x + 1, agent.player.y)
+    enemy = create_real_enemy("scanner", enemy_pos)
+    enemy.state = EnemyState.UNAWARE
+    enemy.cpu = enemy.max_cpu
+    agent.engine.enemies = [enemy]
+
+    # Equip buffer_overflow (guaranteed to exist and deal damage)
+    agent.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
+    agent.engine.selected_exploit_index = 0
+
+    # Ensure player has resources
+    agent.player.cpu = agent.player.max_cpu
+    agent.player.heat = 0
+
+    return agent, enemy
+
+
+@pytest.fixture
+def agent_with_blind_spot():
+    """Create GameTestAgent with player in a blind spot.
+
+    Returns agent where:
+    - Player is standing in a blind spot
+    - Adjacent tiles include both blind spots and lit areas
+    - An enemy exists but cannot see the player
+
+    Use this for stealth/blind spot mechanic tests.
+    """
+    from rsp.entities.base import EnemyState
+    from tests.fixtures.real_game_data import create_real_enemy
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Clear enemies
+    agent.engine.enemies = []
+
+    # Create blind spot path around player
+    px, py = agent.player.x, agent.player.y
+    for dx in range(-2, 3):
+        agent.engine.game_map.blind_spots.add((px + dx, py))
+
+    # Create enemy outside blind spot (above the blind spot path)
+    enemy_pos = Position(px, py - 3)
+    enemy = create_real_enemy("scanner", enemy_pos)
+    enemy.state = EnemyState.UNAWARE
+    agent.engine.enemies = [enemy]
+
+    return agent
+
+
+@pytest.fixture
+def agent_with_undiscovered_fragments():
+    """Create GameTestAgent with undiscovered memory fragments.
+
+    Returns agent where:
+    - Player has not discovered any fragments yet
+    - The game_map has fragment locations set up
+    - Fragment discovery mechanics can be tested
+
+    Use this for fragment discovery tests.
+    """
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Clear any discovered fragments
+    agent.player.discovered_fragments = []
+
+    # Ensure the map has some fragment locations (level generation should provide these)
+    # If not present, the test should handle gracefully
+
+    return agent
+
+
+@pytest.fixture
+def agent_with_damage_dealing_enemy():
+    """Create GameTestAgent with a damage-dealing enemy adjacent to player.
+
+    Returns (agent, enemy) tuple where:
+    - Enemy is a "bot" type (guaranteed to deal damage, not virus/inhibitor)
+    - Enemy is adjacent to player and hostile
+    - Enemy is ready to attack (no cooldowns)
+
+    Use this instead of: find_damage_dealing_enemy() + pytest.skip()
+    """
+    from tests.fixtures.real_game_data import create_real_enemy
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Clear any randomly spawned enemies
+    agent.engine.enemies = []
+
+    # Create a bot enemy adjacent to player (bots deal damage)
+    enemy_pos = Position(agent.player.x + 1, agent.player.y)
+    enemy = create_real_enemy("bot", enemy_pos)
+    enemy.state = EnemyState.HOSTILE
+    enemy.last_seen_player = agent.player.position
+    enemy.cpu = enemy.max_cpu
+    enemy.disabled_turns = 0
+    enemy.blinded_turns = 0
+    enemy.move_cooldown = 0
+    agent.engine.enemies = [enemy]
+
+    # Ensure player is ready
+    agent.player.cpu = agent.player.max_cpu
+    agent.player.heat = 0
+
+    return agent, enemy
+
+
 # ===== Settings Fixtures =====
 
 
@@ -697,31 +867,8 @@ def agent_with_walkable_adjacent():
     return agent
 
 
-@pytest.fixture
-def agent_with_guaranteed_enemy():
-    """
-    Create a GameTestAgent with at least one enemy present.
-
-    This fixture spawns an enemy if none exist, eliminating the need for
-    runtime pytest.skip() when testing enemy-related functionality.
-
-    Returns:
-        GameTestAgent with at least one enemy
-    """
-    from tests.test_agent import GameTestAgent
-
-    agent = GameTestAgent(seed=42)
-
-    # Spawn enemy if none exist
-    if len(agent.enemies) == 0:
-        # Place enemy 3 tiles east of player (safe distance)
-        enemy_x = agent.player.x + 3
-        enemy_y = agent.player.y
-        # Ensure position is walkable
-        agent.game_map.walls.discard((enemy_x, enemy_y))
-        agent.spawn_enemy("bot", enemy_x, enemy_y)
-
-    return agent
+# NOTE: agent_with_guaranteed_enemy is defined earlier in this file (line ~465)
+# with the correct (agent, enemy) return signature
 
 
 @pytest.fixture

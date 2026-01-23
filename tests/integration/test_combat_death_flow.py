@@ -3,6 +3,8 @@ Integration tests for combat death handling flow.
 
 Tests that enemy attack -> death -> save deletion works correctly
 through the centralized death_handler.check_death() path.
+
+Uses agent_with_damage_dealing_enemy fixture for deterministic enemy placement.
 """
 
 import pytest
@@ -12,34 +14,13 @@ from rsp.systems.metrics import init_session_metrics
 from tests.test_agent import GameTestAgent
 
 
-def find_damage_dealing_enemy(enemies):
-    """Find an enemy that deals direct CPU damage (not virus/inhibitor)."""
-    for enemy in enemies:
-        if enemy.type not in ("virus", "inhibitor") and enemy.type_data.damage > 0:
-            return enemy
-    return None
-
-
 class TestCombatDeathFlow:
     """Tests for the combat death handling flow."""
 
-    def test_enemy_attack_death_triggers_game_over(self):
+    def test_enemy_attack_death_triggers_game_over(self, agent_with_damage_dealing_enemy):
         """Enemy attack killing player should set game_over flag."""
-        agent = GameTestAgent(seed=42)
+        agent, enemy = agent_with_damage_dealing_enemy
         init_session_metrics()
-
-        # Find a damage-dealing enemy (not virus/inhibitor)
-        enemy = find_damage_dealing_enemy(agent.enemies)
-        if enemy is None:
-            pytest.skip("No damage-dealing enemies spawned in test level")
-
-        # Put enemy adjacent to player and make hostile
-        enemy.position = Position(agent.engine.player.x + 1, agent.engine.player.y)
-        enemy.state = EnemyState.HOSTILE
-        enemy.last_seen_player = agent.engine.player.position
-        enemy.disabled_turns = 0
-        enemy.blinded_turns = 0
-        enemy.move_cooldown = 0
 
         # Reduce player HP so one attack will kill
         agent.engine.player.cpu = 1
@@ -51,9 +32,12 @@ class TestCombatDeathFlow:
         assert agent.engine.game_over is True
         assert agent.engine.pending_death_dialogue is True
 
-    def test_enemy_attack_death_deletes_save(self, tmp_path, monkeypatch):
+    def test_enemy_attack_death_deletes_save(self, agent_with_damage_dealing_enemy, tmp_path, monkeypatch):
         """Enemy attack death should delete save file via death_handler.check_death()."""
         from rsp.systems.save import SaveGameManager
+
+        agent, enemy = agent_with_damage_dealing_enemy
+        init_session_metrics()
 
         # Patch save path
         test_save = tmp_path / "test_save.json"
@@ -62,22 +46,6 @@ class TestCombatDeathFlow:
         # Create a save file
         test_save.write_text('{"test": "data"}')
         assert test_save.exists()
-
-        agent = GameTestAgent(seed=42)
-        init_session_metrics()
-
-        # Find a damage-dealing enemy
-        enemy = find_damage_dealing_enemy(agent.enemies)
-        if enemy is None:
-            pytest.skip("No damage-dealing enemies spawned in test level")
-
-        # Put enemy adjacent to player and make hostile
-        enemy.position = Position(agent.engine.player.x + 1, agent.engine.player.y)
-        enemy.state = EnemyState.HOSTILE
-        enemy.last_seen_player = agent.engine.player.position
-        enemy.disabled_turns = 0
-        enemy.blinded_turns = 0
-        enemy.move_cooldown = 0
 
         # Reduce player HP so attack will kill
         agent.engine.player.cpu = 1
@@ -88,19 +56,10 @@ class TestCombatDeathFlow:
         # Save should be deleted by death_handler.check_death()
         assert not test_save.exists()
 
-    def test_attack_player_returns_damage_only(self):
+    def test_attack_player_returns_damage_only(self, agent_with_damage_dealing_enemy):
         """attack_player should return damage and not directly handle death."""
-        agent = GameTestAgent(seed=42)
+        agent, enemy = agent_with_damage_dealing_enemy
         init_session_metrics()
-
-        # Find a damage-dealing enemy
-        enemy = find_damage_dealing_enemy(agent.enemies)
-        if enemy is None:
-            pytest.skip("No damage-dealing enemies spawned in test level")
-
-        # Put enemy adjacent to player and make hostile
-        enemy.position = Position(agent.engine.player.x + 1, agent.engine.player.y)
-        enemy.state = EnemyState.HOSTILE
 
         # Set CPU so player won't die from one attack
         original_cpu = 100
@@ -115,22 +74,22 @@ class TestCombatDeathFlow:
         # Player should have taken damage
         assert agent.engine.player.cpu == original_cpu - damage
 
-    def test_multiple_enemy_attacks_same_turn(self):
+    def test_multiple_enemy_attacks_same_turn(self, agent_with_damage_dealing_enemy):
         """Multiple enemies attacking same turn should cumulate damage."""
-        agent = GameTestAgent(seed=42)
+        from tests.fixtures.real_game_data import create_real_enemy
+
+        agent, enemy1 = agent_with_damage_dealing_enemy
         init_session_metrics()
 
-        # Find two damage-dealing enemies
-        damage_dealers = [
-            e
-            for e in agent.enemies
-            if e.type not in ("virus", "inhibitor") and e.type_data.damage > 0
-        ]
-        if len(damage_dealers) < 2:
-            pytest.skip("Need at least 2 damage-dealing enemies for this test")
-
-        enemy1 = damage_dealers[0]
-        enemy2 = damage_dealers[1]
+        # Create second damage-dealing enemy on other side of player
+        enemy2_pos = Position(agent.player.x - 1, agent.player.y)
+        enemy2 = create_real_enemy("bot", enemy2_pos)
+        enemy2.state = EnemyState.HOSTILE
+        enemy2.last_seen_player = agent.player.position
+        enemy2.disabled_turns = 0
+        enemy2.blinded_turns = 0
+        enemy2.move_cooldown = 0
+        agent.engine.enemies.append(enemy2)
 
         # Position both enemies adjacent
         enemy1.position = Position(agent.engine.player.x + 1, agent.engine.player.y)

@@ -10,9 +10,8 @@ Tests scenarios involving simultaneous or mixed input:
 These edge cases can cause state corruption if not handled properly.
 
 Uses the game_with_gamepad fixture from tests/conftest.py.
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
 """
-
-import time
 
 import tcod.event
 import tcod.sdl.joystick
@@ -89,7 +88,7 @@ class TestSimultaneousAxisInput:
 class TestEventPollingMixing:
     """Test mixing D-pad (events) with analog stick (polling)."""
 
-    def test_dpad_press_then_stick_move(self, game_with_gamepad):
+    def test_dpad_press_then_stick_move(self, game_with_gamepad, mock_time):
         """D-pad press followed by stick movement should both work."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -107,14 +106,14 @@ class TestEventPollingMixing:
 
         # Now move stick (separate input path)
         analog.update_left_stick(x=0, y=32000)  # Down
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         stick_movement = analog.get_left_stick_movement_menu()
 
         # Stick should also produce movement (independent of D-pad)
         assert stick_movement is not None
         assert stick_movement == (0, 1)  # Down
 
-    def test_stick_move_then_dpad_press(self, game_with_gamepad):
+    def test_stick_move_then_dpad_press(self, game_with_gamepad, mock_time):
         """Stick movement followed by D-pad press should both work."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -122,7 +121,7 @@ class TestEventPollingMixing:
 
         # Move stick first
         analog.update_left_stick(x=32000, y=0)  # Right
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         stick_movement = analog.get_left_stick_movement_menu()
         assert stick_movement == (1, 0)
 
@@ -300,7 +299,7 @@ class TestLeftAndRightStickTogether:
         assert analog.left_x == 32000
         assert analog.right_x == -32000
 
-    def test_left_stick_movement_right_stick_look(self, game_with_gamepad):
+    def test_left_stick_movement_right_stick_look(self, game_with_gamepad, mock_time):
         """Left stick for movement, right stick for look - normal config."""
         game, input_handler, _ = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -311,7 +310,7 @@ class TestLeftAndRightStickTogether:
         # Left stick moves - need to start settling then wait
         analog.update_left_stick(x=32000, y=0)
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement == (1, 0)
 
@@ -320,7 +319,7 @@ class TestLeftAndRightStickTogether:
         look_magnitude = analog.get_right_stick_magnitude()
         assert look_magnitude > GameConfig.GAMEPAD_LOOK_MODE_THRESHOLD
 
-    def test_swapped_sticks_movement_and_look(self, game_with_gamepad):
+    def test_swapped_sticks_movement_and_look(self, game_with_gamepad, mock_time):
         """With swap enabled, right moves and left looks."""
         game, input_handler, _ = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -331,7 +330,7 @@ class TestLeftAndRightStickTogether:
         # Right stick now moves - need to start settling then wait
         analog.update_right_stick(x=32000, y=0)
         analog.get_right_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_right_stick_movement_gameplay(game.turn)
         assert movement == (1, 0)
 

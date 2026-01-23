@@ -12,9 +12,8 @@ The sync_settings_to_analog_handler() method should apply these changes
 without recreating the handler.
 
 Uses the game_with_gamepad fixture from tests/conftest.py.
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
 """
-
-import time
 
 import tcod.event
 import tcod.sdl.joystick
@@ -253,7 +252,7 @@ class TestSwapSticksSetting:
 
         assert game.settings.gamepad_swap_sticks is False
 
-    def test_left_stick_moves_player_normally(self, game_with_gamepad):
+    def test_left_stick_moves_player_normally(self, game_with_gamepad, mock_time):
         """With swap disabled, left stick should move player."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -267,7 +266,7 @@ class TestSwapSticksSetting:
 
         # Start settling period (first call)
         analog.get_left_stick_movement_gameplay(game.turn)
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Get gameplay movement after settling
         movement = analog.get_left_stick_movement_gameplay(game.turn)
@@ -275,7 +274,7 @@ class TestSwapSticksSetting:
         assert movement is not None
         assert movement == (1, 0)  # Right
 
-    def test_right_stick_moves_player_when_swapped(self, game_with_gamepad):
+    def test_right_stick_moves_player_when_swapped(self, game_with_gamepad, mock_time):
         """With swap enabled, right stick should move player."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -289,7 +288,7 @@ class TestSwapSticksSetting:
 
         # Start settling period (first call)
         analog.get_right_stick_movement_gameplay(game.turn)
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Get gameplay movement from RIGHT stick (which is now movement)
         movement = analog.get_right_stick_movement_gameplay(game.turn)

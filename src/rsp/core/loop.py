@@ -315,9 +315,11 @@ def _run_graphics_preview_loop(graphics_preview_menu, console, context, settings
             # Render the preview map graphics FIRST (background)
             graphics_preview_menu._render_preview_map(console)
 
-            # Then render console text on top
+            # Then render console text on top (with dest_rect to scale to window size)
             console_texture = context.console_render.render(console)
-            context.sdl_renderer.copy(console_texture)
+            window_w, window_h = context.sdl_window.size
+            dest_rect = (0, 0, window_w, window_h)
+            context.sdl_renderer.copy(console_texture, dest=dest_rect)
             context.sdl_renderer.present()
         else:
             # Glyph mode: just show console

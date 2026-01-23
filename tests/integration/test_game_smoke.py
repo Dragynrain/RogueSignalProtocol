@@ -298,12 +298,11 @@ class TestEnemyBehavior:
 
     def test_get_enemy_at_position(self, agent_with_guaranteed_enemy):
         """get_enemy_at should find enemies at their positions."""
-        agent = agent_with_guaranteed_enemy
+        agent, enemy = agent_with_guaranteed_enemy
 
         # Fixture guarantees at least one enemy
         assert len(agent.enemies) > 0, "Fixture failed to provide enemy"
 
-        enemy = agent.enemies[0]
         found = agent.get_enemy_at(enemy.x, enemy.y)
 
         assert found is not None, f"Could not find enemy at ({enemy.x}, {enemy.y})"

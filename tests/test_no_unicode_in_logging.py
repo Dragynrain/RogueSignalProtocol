@@ -27,10 +27,12 @@ def test_no_unicode_in_logging_statements():
 
     violations = []
 
-    # Scan all Python files except tests and this file
+    # Scan all Python files in src/ directory (where actual logging happens)
     project_root = Path(__file__).parent.parent
-    for py_file in project_root.glob("*.py"):
-        if py_file.name == "test_no_unicode_in_logging.py":
+    src_dir = project_root / "src"
+    for py_file in src_dir.rglob("*.py"):
+        # Skip test files that might be in src
+        if "test" in py_file.name.lower():
             continue
 
         try:

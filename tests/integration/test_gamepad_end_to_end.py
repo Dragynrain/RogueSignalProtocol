@@ -6,9 +6,9 @@ not just mocked unit tests. They use actual game initialization and
 simulate complete user workflows with only gamepad input.
 
 Focus: Can you actually play the game with ONLY a controller?
-"""
 
-import time
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
+"""
 
 import pytest
 import tcod.console
@@ -94,7 +94,7 @@ class TestGamepadMovement:
         assert game.player.y < initial_y, "Player should move north"
         assert game.player.x == initial_x, "Player X should not change"
 
-    def test_left_stick_moves_player_full_deflection(self, game_setup):
+    def test_left_stick_moves_player_full_deflection(self, game_setup, mock_time):
         """Left stick at full deflection moves player."""
         game, input_handler, console, context = game_setup
         analog = input_handler.gamepad_handler.analog_handler
@@ -108,14 +108,14 @@ class TestGamepadMovement:
 
         # Wait for settling period before getting movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
 
         # Should get movement delta
         assert movement is not None, "Should get movement from stick"
         assert movement == (1, 0), "Should move east"
 
-    def test_time_gating_prevents_double_move(self, game_setup):
+    def test_time_gating_prevents_double_move(self, game_setup, mock_time):
         """Time-based gating prevents moving twice immediately."""
         game, input_handler, console, context = game_setup
         analog = input_handler.gamepad_handler.analog_handler
@@ -125,7 +125,7 @@ class TestGamepadMovement:
 
         # Wait for settling period then get first movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement1 is not None, "First movement should succeed"
 
@@ -520,7 +520,7 @@ class TestGamepadDeadzone:
 
         assert movement is None, "Small deflection should be filtered by deadzone"
 
-    def test_large_stick_movement_registered(self, game_setup):
+    def test_large_stick_movement_registered(self, game_setup, mock_time):
         """Stick deflection above threshold should register."""
         game, input_handler, console, context = game_setup
         analog = input_handler.gamepad_handler.analog_handler
@@ -531,7 +531,7 @@ class TestGamepadDeadzone:
 
         # Wait for settling period then get movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
 
         assert movement is not None, "Large deflection should generate movement"

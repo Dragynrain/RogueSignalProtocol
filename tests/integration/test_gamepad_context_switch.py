@@ -12,9 +12,8 @@ Test coverage:
 - Context priority enforcement
 
 Uses the game_with_gamepad fixture from tests/conftest.py.
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
 """
-
-import time
 
 import pytest
 import tcod.event
@@ -76,7 +75,7 @@ class TestButtonHeldDuringTransition:
         # (Button state tracking is independent - this tests that we don't get double actions)
         # In real gameplay, user would need to press A again
 
-    def test_stick_held_during_menu_open(self, game_with_gamepad):
+    def test_stick_held_during_menu_open(self, game_with_gamepad, mock_time):
         """Stick held when opening inventory should not cause phantom movement."""
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -86,7 +85,7 @@ class TestButtonHeldDuringTransition:
 
         # Wait for settling period (30ms) before getting movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement1 == (0, -1), "Should move north in gameplay"
 
@@ -101,7 +100,7 @@ class TestButtonHeldDuringTransition:
 class TestStickHeldDuringPause:
     """Test stick state during pause/unpause transitions."""
 
-    def test_stick_held_pause_unpause(self, game_with_gamepad):
+    def test_stick_held_pause_unpause(self, game_with_gamepad, mock_time):
         """Stick held when pausing game should not cause movement after unpause."""
         from rsp.core.config import GameConfig
 
@@ -113,7 +112,7 @@ class TestStickHeldDuringPause:
 
         # Wait for settling period then move north
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement1 == (0, -1)
 
@@ -126,7 +125,7 @@ class TestStickHeldDuringPause:
         assert input_handler._get_current_context() == InputContext.GAMEPLAY
 
         # Stick still held, needs time delay for auto-repeat (time-based gating)
-        time.sleep(GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY + 0.05)
+        mock_time.advance(GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY + 0.05)
         movement2 = analog.get_left_stick_movement_gameplay(game.turn)
         # Stick is still deflected and time has passed, so movement should work
         assert movement2 == (0, -1), "Stick still held should allow continued movement after delay"
@@ -135,7 +134,7 @@ class TestStickHeldDuringPause:
 class TestMenuOpenedDuringAction:
     """Test opening menu while action is in progress."""
 
-    def test_inventory_opened_mid_turn(self, game_with_gamepad):
+    def test_inventory_opened_mid_turn(self, game_with_gamepad, mock_time):
         """Opening inventory mid-turn should cleanly switch context."""
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -145,7 +144,7 @@ class TestMenuOpenedDuringAction:
 
         # Wait for settling period then get movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement == (1, 0)
 
@@ -180,7 +179,7 @@ class TestGameOverDuringInput:
         # Stick input should not generate gameplay movement
         # (Game over screen doesn't use analog stick for navigation)
 
-    def test_death_clears_analog_state_expectation(self, game_with_gamepad):
+    def test_death_clears_analog_state_expectation(self, game_with_gamepad, mock_time):
         """After death and respawn, analog state should still work."""
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -190,7 +189,7 @@ class TestGameOverDuringInput:
 
         # Wait for settling then first move
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement1 == (1, 0)
 
@@ -206,7 +205,7 @@ class TestGameOverDuringInput:
         analog.get_left_stick_movement_gameplay(game.turn)  # Reset state
         analog.update_left_stick(x=32767, y=0)  # Re-deflect
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement == (1, 0), "Stick state should work after respawn"
 
@@ -273,7 +272,7 @@ class TestContextPriority:
 class TestCleanTransitions:
     """Test that transitions are clean with no state corruption."""
 
-    def test_rapid_context_switches(self, game_with_gamepad):
+    def test_rapid_context_switches(self, game_with_gamepad, mock_time):
         """Rapidly open and close menus - no state corruption."""
         game, input_handler, controller = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -298,7 +297,7 @@ class TestCleanTransitions:
 
         # Wait for settling period then get movement
         analog.get_left_stick_movement_gameplay(game.turn)  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement = analog.get_left_stick_movement_gameplay(game.turn)
         assert movement == (1, 0), "Stick should still work after rapid context switches"
 

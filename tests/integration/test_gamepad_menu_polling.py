@@ -12,9 +12,8 @@ Coverage:
 - All menu types: Settings, Help, Achievements, Lore Viewer
 
 Uses the game_with_gamepad fixture from tests/conftest.py.
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
 """
-
-import time
 
 import pytest
 import tcod.event
@@ -120,7 +119,7 @@ class TestMenuNavigationPolling:
         movement2 = handler.get_left_stick_movement_menu()
         assert movement2 is None  # Blocked by auto-repeat timing
 
-    def test_analog_handler_menu_repeat_after_delay(self, analog_handler):
+    def test_analog_handler_menu_repeat_after_delay(self, analog_handler, mock_time):
         """After initial delay, held stick should start repeating."""
         handler = analog_handler
 
@@ -128,31 +127,31 @@ class TestMenuNavigationPolling:
         handler.update_left_stick(x=0, y=-32000)
 
         # First movement
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = handler.get_left_stick_movement_menu()
         assert movement1 is not None
 
         # Wait for initial delay (0.3s)
-        time.sleep(MENU_INITIAL_DELAY + 0.01)
+        mock_time.advance(MENU_INITIAL_DELAY + 0.01)
 
         # Should get repeat movement
         movement2 = handler.get_left_stick_movement_menu()
         assert movement2 is not None
         assert movement2 == (0, -1)
 
-    def test_direction_change_resets_timing(self, analog_handler):
+    def test_direction_change_resets_timing(self, analog_handler, mock_time):
         """Changing direction should allow immediate movement."""
         handler = analog_handler
 
         # Move up first
         handler.update_left_stick(x=0, y=-32000)
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = handler.get_left_stick_movement_menu()
         assert movement1 == (0, -1)
 
         # Change to down - should reset timing
         handler.update_left_stick(x=0, y=32000)
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Should get immediate movement in new direction
         movement2 = handler.get_left_stick_movement_menu()
@@ -181,7 +180,7 @@ class TestMenuNavigationPolling:
         assert movement3 is not None
         assert movement3 == (-1, 0)  # Left
 
-    def test_stick_release_resets_menu_state(self, analog_handler):
+    def test_stick_release_resets_menu_state(self, analog_handler, mock_time):
         """Releasing stick should reset timing, allowing immediate re-push."""
         handler = analog_handler
 
@@ -196,7 +195,7 @@ class TestMenuNavigationPolling:
         assert release_result is None  # Returns None on release
 
         # Small delay then push up AGAIN (same direction)
-        time.sleep(0.05)
+        mock_time.advance(0.05)
         handler.update_left_stick(x=0, y=-32000)
 
         # Should get IMMEDIATE movement (timing was reset by release)
@@ -361,7 +360,7 @@ class TestInventoryPolling:
 class TestGameplayPollingBranch:
     """Test the gameplay polling branch in game_loop.py."""
 
-    def test_gameplay_movement_via_analog_handler(self, game_with_gamepad):
+    def test_gameplay_movement_via_analog_handler(self, game_with_gamepad, mock_time):
         """Gameplay movement should use get_left_stick_movement_gameplay."""
         game, input_handler, _ = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -373,7 +372,7 @@ class TestGameplayPollingBranch:
         analog.get_left_stick_movement_gameplay(game.turn)
 
         # Wait for settling period to complete
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Second call gets movement after settling
         movement = analog.get_left_stick_movement_gameplay(game.turn)
@@ -381,7 +380,7 @@ class TestGameplayPollingBranch:
         assert movement is not None
         assert movement == (1, 0)  # Right
 
-    def test_gameplay_movement_respects_turn_gating(self, game_with_gamepad):
+    def test_gameplay_movement_respects_turn_gating(self, game_with_gamepad, mock_time):
         """Gameplay movement should be gated by time-based auto-repeat."""
         game, input_handler, _ = game_with_gamepad
         analog = input_handler.gamepad_handler.analog_handler
@@ -393,7 +392,7 @@ class TestGameplayPollingBranch:
 
         # Start settling, wait, then get first movement
         analog.get_left_stick_movement_gameplay(initial_turn)
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # First movement succeeds
         movement1 = analog.get_left_stick_movement_gameplay(initial_turn)
@@ -502,7 +501,7 @@ class TestButtonAutoRepeatInMenus:
         repeat_action = gamepad.get_button_repeat_action(InputContext.MAIN_MENU)
         assert repeat_action is None
 
-    def test_get_button_repeat_action_returns_action_after_delay(self, game_with_gamepad):
+    def test_get_button_repeat_action_returns_action_after_delay(self, game_with_gamepad, mock_time):
         """get_button_repeat_action should return action after initial delay."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -514,7 +513,7 @@ class TestButtonAutoRepeatInMenus:
         gamepad.handle_button_event(button_event, InputContext.MAIN_MENU)
 
         # Wait for initial delay
-        time.sleep(MENU_INITIAL_DELAY + 0.02)
+        mock_time.advance(MENU_INITIAL_DELAY + 0.02)
 
         # Should get repeat action
         repeat_action = gamepad.get_button_repeat_action(InputContext.MAIN_MENU)

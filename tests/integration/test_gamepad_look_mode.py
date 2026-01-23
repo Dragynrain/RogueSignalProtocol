@@ -11,9 +11,8 @@ Tests look mode entry, cursor movement, and targeting mode interactions:
 The look mode threshold is defined in GameConfig.GAMEPAD_LOOK_MODE_THRESHOLD (default 0.3).
 
 Uses the game_with_gamepad fixture from tests/conftest.py.
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
 """
-
-import time
 
 import pytest
 import tcod.event
@@ -167,7 +166,7 @@ class TestLookModeWithSwapSticks:
 class TestCursorMovementInLookMode:
     """Test cursor movement via stick in look mode."""
 
-    def test_right_stick_cursor_movement_in_look_mode(self, game_with_gamepad):
+    def test_right_stick_cursor_movement_in_look_mode(self, game_with_gamepad, mock_time):
         """Right stick should move cursor in LOOK_MODE context."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -180,7 +179,7 @@ class TestCursorMovementInLookMode:
 
         # Start settling, wait, then get cursor movement
         analog.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Send axis event in LOOK_MODE context
         axis_event = tcod.event.ControllerAxis(
@@ -192,7 +191,7 @@ class TestCursorMovementInLookMode:
         # Should return movement action for cursor
         assert action == InputAction.MOVE_EAST
 
-    def test_cursor_movement_8way_diagonal(self, analog_handler):
+    def test_cursor_movement_8way_diagonal(self, analog_handler, mock_time):
         """Cursor movement should support 8-way including diagonals."""
         handler = analog_handler
 
@@ -201,7 +200,7 @@ class TestCursorMovementInLookMode:
 
         # Start settling
         handler.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Get cursor movement
         movement = handler.get_right_stick_movement()
@@ -209,7 +208,7 @@ class TestCursorMovementInLookMode:
         assert movement is not None
         assert movement == (1, -1)  # Northeast
 
-    def test_cursor_movement_has_settling_period(self, analog_handler):
+    def test_cursor_movement_has_settling_period(self, analog_handler, mock_time):
         """Cursor movement should respect settling period like gameplay."""
         handler = analog_handler
 
@@ -225,18 +224,18 @@ class TestCursorMovementInLookMode:
         assert movement2 is None
 
         # After settling period
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement3 = handler.get_right_stick_movement()
         assert movement3 is not None
 
-    def test_cursor_movement_direction_locking(self, analog_handler):
+    def test_cursor_movement_direction_locking(self, analog_handler, mock_time):
         """Cursor should lock direction after settling (prevents diagonal swipes)."""
         handler = analog_handler
 
         # Start with right
         handler.update_right_stick(x=32000, y=0)
         handler.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Lock direction
         movement1 = handler.get_right_stick_movement()
@@ -246,20 +245,20 @@ class TestCursorMovementInLookMode:
         handler.update_right_stick(x=32000, y=-32000)
 
         # Wait for auto-repeat
-        time.sleep(handler.cursor_initial_delay + 0.01)
+        mock_time.advance(handler.cursor_initial_delay + 0.01)
         movement2 = handler.get_right_stick_movement()
 
         # Should still be (1, 0) due to direction locking
         assert movement2 == (1, 0)
 
-    def test_cursor_release_resets_direction_lock(self, analog_handler):
+    def test_cursor_release_resets_direction_lock(self, analog_handler, mock_time):
         """Releasing stick should reset direction lock."""
         handler = analog_handler
 
         # Move right, lock direction
         handler.update_right_stick(x=32000, y=0)
         handler.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = handler.get_right_stick_movement()
         assert movement1 == (1, 0)
 
@@ -270,7 +269,7 @@ class TestCursorMovementInLookMode:
         # Now push up - should work (direction unlocked)
         handler.update_right_stick(x=0, y=-32000)
         handler.get_right_stick_movement()  # Start settling
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement2 = handler.get_right_stick_movement()
 
         assert movement2 == (0, -1)  # Up (new direction)
@@ -279,7 +278,7 @@ class TestCursorMovementInLookMode:
 class TestCursorMovementWithSwapSticks:
     """Test cursor control with swap_sticks enabled."""
 
-    def test_left_stick_cursor_in_look_mode_when_swapped(self, game_with_gamepad):
+    def test_left_stick_cursor_in_look_mode_when_swapped(self, game_with_gamepad, mock_time):
         """When swapped, left stick should control cursor in look mode."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -293,7 +292,7 @@ class TestCursorMovementWithSwapSticks:
 
         # Start settling, wait
         analog.get_left_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Send axis event in LOOK_MODE context
         axis_event = tcod.event.ControllerAxis(
@@ -305,7 +304,7 @@ class TestCursorMovementWithSwapSticks:
         # Should return movement action
         assert action == InputAction.MOVE_EAST
 
-    def test_left_stick_cursor_movement_8way(self, analog_handler):
+    def test_left_stick_cursor_movement_8way(self, analog_handler, mock_time):
         """Left stick cursor movement should also support 8-way."""
         handler = analog_handler
 
@@ -314,7 +313,7 @@ class TestCursorMovementWithSwapSticks:
 
         # Start settling
         handler.get_left_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Get cursor movement
         movement = handler.get_left_stick_movement()
@@ -326,7 +325,7 @@ class TestCursorMovementWithSwapSticks:
 class TestTargetingMode:
     """Test cursor control in targeting mode."""
 
-    def test_right_stick_cursor_in_targeting_mode(self, game_with_gamepad):
+    def test_right_stick_cursor_in_targeting_mode(self, game_with_gamepad, mock_time):
         """Right stick should control cursor in TARGETING context."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -339,7 +338,7 @@ class TestTargetingMode:
 
         # Start settling, wait
         analog.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Send axis event in TARGETING context
         axis_event = tcod.event.ControllerAxis(
@@ -351,7 +350,7 @@ class TestTargetingMode:
         # Should return movement action for cursor
         assert action == InputAction.MOVE_NORTH
 
-    def test_targeting_mode_with_swap_sticks(self, game_with_gamepad):
+    def test_targeting_mode_with_swap_sticks(self, game_with_gamepad, mock_time):
         """Targeting mode should respect swap_sticks setting."""
         game, input_handler, _ = game_with_gamepad
         gamepad = input_handler.gamepad_handler
@@ -365,7 +364,7 @@ class TestTargetingMode:
 
         # Start settling, wait
         analog.get_left_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
 
         # Send axis event in TARGETING context
         axis_event = tcod.event.ControllerAxis(
@@ -432,7 +431,7 @@ class TestLookModeThreshold:
 class TestCursorAutoRepeat:
     """Test cursor movement auto-repeat behavior."""
 
-    def test_cursor_auto_repeat_timing(self, analog_handler):
+    def test_cursor_auto_repeat_timing(self, analog_handler, mock_time):
         """Cursor should auto-repeat at configured rate."""
         handler = analog_handler
 
@@ -441,7 +440,7 @@ class TestCursorAutoRepeat:
 
         # First movement (after settling)
         handler.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         movement1 = handler.get_right_stick_movement()
         assert movement1 is not None
 
@@ -450,11 +449,11 @@ class TestCursorAutoRepeat:
         assert movement2 is None
 
         # After initial delay
-        time.sleep(handler.cursor_initial_delay + 0.01)
+        mock_time.advance(handler.cursor_initial_delay + 0.01)
         movement3 = handler.get_right_stick_movement()
         assert movement3 is not None  # Should repeat
 
-    def test_cursor_repeat_continues(self, analog_handler):
+    def test_cursor_repeat_continues(self, analog_handler, mock_time):
         """Cursor should continue repeating while held."""
         handler = analog_handler
 
@@ -463,13 +462,13 @@ class TestCursorAutoRepeat:
 
         # Get past settling and initial delay
         handler.get_right_stick_movement()
-        time.sleep(SETTLING_PERIOD_SEC)
+        mock_time.advance(SETTLING_PERIOD_SEC)
         handler.get_right_stick_movement()  # First movement
-        time.sleep(handler.cursor_initial_delay + 0.01)
+        mock_time.advance(handler.cursor_initial_delay + 0.01)
         handler.get_right_stick_movement()  # First repeat
 
         # Now in repeat mode - wait for repeat rate
-        time.sleep(handler.cursor_repeat_rate + 0.01)
+        mock_time.advance(handler.cursor_repeat_rate + 0.01)
         movement = handler.get_right_stick_movement()
 
         assert movement is not None

@@ -190,10 +190,10 @@ class TestStoryFragmentIntegration:
 
         # Get a fragment index that's not yet discovered
         manager = engine.story_fragment_manager
+        # Clear discovered fragments to ensure we have an undiscovered one
+        manager.discovered_fragments = []
         next_index = manager.get_next_undiscovered_fragment()
-
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # Place fragment at player position
         player_pos = (engine.player.x, engine.player.y)
@@ -213,10 +213,10 @@ class TestStoryFragmentIntegration:
         """Story fragments should NOT be added to player inventory."""
         engine = basic_game_engine
 
-        # Get a fragment index
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # Place fragment at player position
         player_pos = (engine.player.x, engine.player.y)
@@ -272,10 +272,12 @@ class TestStoryFragmentIntegration:
         """Manager should correctly track which fragments are discovered."""
         manager = basic_game_engine.story_fragment_manager
 
+        # Clear discovered fragments to ensure we have undiscovered ones
+        manager.discovered_fragments = []
+
         # Get first undiscovered
         first = manager.get_next_undiscovered_fragment()
-        if first is None:
-            pytest.skip("All fragments already discovered")
+        assert first is not None, "Should have undiscovered fragment after clearing"
 
         # Record current discovered count
         count_before = len(manager.discovered_fragments)
@@ -466,11 +468,14 @@ class TestMetricsFinalizationIdempotency:
 
     def test_finalize_session_is_idempotent(self, basic_game_engine):
         """Calling finalize_and_save_session multiple times should be safe."""
-        from rsp.systems.metrics import finalize_and_save_session, get_current_session
+        from rsp.systems.metrics import finalize_and_save_session, get_current_session, init_session_metrics
 
+        # Ensure session exists
         session = get_current_session()
         if session is None:
-            pytest.skip("No active session")
+            init_session_metrics()
+            session = get_current_session()
+        assert session is not None, "Should have active session after init"
 
         # First finalization (victory)
         result1 = finalize_and_save_session(
@@ -723,10 +728,12 @@ class TestInvalidFragmentHandling:
         """Valid fragment index should be discovered and removed properly."""
         engine = basic_game_engine
 
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+
         # Get next valid fragment index
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # Place the valid fragment
         player_pos = (engine.player.x, engine.player.y)
@@ -884,9 +891,9 @@ class TestFragmentPlacementEdgeCases:
         # Mock randint to return valid positions
         monkeypatch.setattr(random, "randint", lambda a, b: 20)
 
-        # Ensure there's an undiscovered fragment
-        if engine.story_fragment_manager.get_next_undiscovered_fragment() is None:
-            pytest.skip("All fragments already discovered")
+        # Clear discovered fragments to ensure there's an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+        assert engine.story_fragment_manager.get_next_undiscovered_fragment() is not None
 
         engine.game_map.story_fragments.clear()
 

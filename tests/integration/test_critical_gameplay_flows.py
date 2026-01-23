@@ -298,10 +298,12 @@ class TestFragmentPickupFlow:
 
         from rsp.combat.inventory import StoryFragment
 
-        # Get next undiscovered fragment
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+
+        # Get next undiscovered fragment (now guaranteed to exist)
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # Place fragment at player position
         player_pos = (engine.player.x, engine.player.y)
@@ -325,9 +327,11 @@ class TestFragmentPickupFlow:
 
         from rsp.combat.inventory import StoryFragment
 
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         player_pos = (engine.player.x, engine.player.y)
         fragment = StoryFragment(next_index)
@@ -347,9 +351,11 @@ class TestFragmentPickupFlow:
 
         from rsp.core.data_loading import PersistentStorage
 
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # Discover the fragment
         result = engine.story_fragment_manager.discover_fragment(next_index)
@@ -366,9 +372,11 @@ class TestFragmentPickupFlow:
         """Test that discovering same fragment twice returns False."""
         engine = basic_game_engine
 
+        # Clear discovered fragments to ensure we have an undiscovered one
+        engine.story_fragment_manager.discovered_fragments = []
+
         next_index = engine.story_fragment_manager.get_next_undiscovered_fragment()
-        if next_index is None:
-            pytest.skip("All fragments already discovered")
+        assert next_index is not None, "Should have undiscovered fragment after clearing"
 
         # First discovery
         result1 = engine.story_fragment_manager.discover_fragment(next_index)

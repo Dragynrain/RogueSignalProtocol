@@ -618,9 +618,10 @@ class TestAscensionLevel20:
         """A20: Blind spot should disappear when player leaves it."""
         agent = AscensionTestAgent(seed=42, ascension_level=20)
 
-        # Find a blind spot
+        # Ensure there's a blind spot (add one if needed)
         if not agent.game_map.blind_spots:
-            pytest.skip("No blind spots on this map seed")
+            # Create a blind spot near the player
+            agent.game_map.blind_spots.add((agent.player.x + 2, agent.player.y))
 
         blind_spot = list(agent.game_map.blind_spots)[0]
         initial_count = len(agent.game_map.blind_spots)

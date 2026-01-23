@@ -5,9 +5,9 @@ These tests simulate the actual polling loop, not just single events.
 They would have caught BOTH bugs:
 1. D-pad infinite scrolling (no BUTTONUP handling)
 2. Left stick no auto-repeat (no polling)
-"""
 
-import time
+Uses mock_time fixture for deterministic timing (no flaky time.sleep).
+"""
 
 import pytest
 import tcod
@@ -84,7 +84,7 @@ class TestMainMenuAutoRepeatReal:
             repeat_action_after_release is None
         ), "After BUTTONUP, get_button_repeat_action() should return None"
 
-    def test_left_stick_auto_repeat_via_polling(self, main_menu_with_gamepad):
+    def test_left_stick_auto_repeat_via_polling(self, main_menu_with_gamepad, mock_time):
         """
         CRITICAL: Left stick auto-repeat must work via polling loop.
 
@@ -112,7 +112,7 @@ class TestMainMenuAutoRepeatReal:
         ), "First analog move should be immediate"
 
         # Wait past initial delay (0.4s + buffer)
-        time.sleep(0.45)
+        mock_time.advance(0.45)
 
         # CRITICAL: Simulate polling loop calling analog handler
         # This is what game_loop.py should do but WASN'T doing!
@@ -136,7 +136,7 @@ class TestMainMenuAutoRepeatReal:
                 ), "Polling should trigger another move (auto-repeat)"
 
         # Test that repeat continues if stick is still held
-        time.sleep(0.16)  # Wait past repeat rate (150ms + buffer)
+        mock_time.advance(0.16)  # Wait past repeat rate (150ms + buffer)
         movement2 = menu.gamepad_handler.analog_handler.get_left_stick_movement_menu()
         assert movement2 is not None, "Should continue repeating while held"
 
