@@ -525,15 +525,15 @@ class TestPrologueSection4:
         """Clean up after each test."""
         self.agent.teardown()
 
-    def test_patrol_blocks_door_approach(self):
-        """Patrol at (3, 15) blocks the door approach in Section 4."""
+    def test_patrol_at_range_encourages_ranged(self):
+        """Patrol at (6, 15) is at range from exploit pickup, encouraging ranged use."""
         patrol = None
         for enemy in self.agent.engine.enemies:
-            if enemy.y == 15 and enemy.x <= 4:
+            if enemy.y == 15 and enemy.x >= 6:
                 patrol = enemy
                 break
-        assert patrol is not None, "Section 4 patrol should block door approach at x<=4"
-        assert patrol.x == 3, f"Section 4 patrol should be at x=3, found x={patrol.x}"
+        assert patrol is not None, "Section 4 patrol should be at x>=6"
+        assert patrol.x == 6, f"Section 4 patrol should be at x=6, found x={patrol.x}"
 
     def test_exploit_pickup_exists(self):
         """Exploit pickup exists at (3, 14) in Section 4."""
@@ -542,10 +542,11 @@ class TestPrologueSection4:
         section_4_exploits = [(x, y) for x, y in exploit_positions if y == 14]
         assert len(section_4_exploits) > 0, "Section 4 should have exploit pickup"
 
-    def test_wall_prevents_right_flank(self):
-        """Wall at (4, 15) prevents flanking the patrol from the right."""
-        is_wall = (4, 15) in self.agent.engine.game_map.walls
-        assert is_wall, "Wall at (4, 15) should block right-side flanking"
+    def test_wall_blocks_melee_approach(self):
+        """Walls at (4-5, 15) block melee approach to patrol."""
+        walls = self.agent.engine.game_map.walls
+        assert (4, 15) in walls, "Wall at (4, 15) should block approach"
+        assert (5, 15) in walls, "Wall at (5, 15) should block approach"
 
 
 class TestPrologueThoughtTriggers:

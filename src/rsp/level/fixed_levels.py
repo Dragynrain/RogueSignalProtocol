@@ -136,10 +136,13 @@ def get_prologue_section(y: int) -> int:
 # Doors act as natural section dividers. Patrols cross door approaches to force timing.
 #
 # Section 1 (rows 0-4): MELEE - X blocks the first door, must bump-attack to pass
-# Section 2 (rows 5-8): TIMING - P patrols ACROSS corridor (x=2-10), wait for opening
-# Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision, P patrols across, blind spots help
-# Section 4 (rows 13-16): RANGED - P blocks door approach, wall prevents flanking right
+# Section 2 (rows 5-8): TIMING - P patrols right side (x=7-10), clear safe window at x=1-3
+# Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision 5, blind spots provide stealth path
+# Section 4 (rows 13-16): RANGED - P at range from exploit, wall blocks melee approach
 # Section 5 (rows 17-23): SYNTHESIS - Ghost node, stealth path, final P, gateway
+#
+# VISION RANGES: Player=15, Patrol=4, Scanner=5
+# Player can see full patrol routes and plan timing. Safe distance = patrol vision + 1.
 #
 PROLOGUE_LAYOUT_RAW = """
 ############################
@@ -148,16 +151,16 @@ PROLOGUE_LAYOUT_RAW = """
 #.X.########################
 ###+########################
 #...........################
-#...P.......################
+#......P....################
 #...........################
-###+########################
+##s#########################
 #ss.S.......################
 #sss........################
 #sss########################
-#...P.r.....################
+#.....r.P...################
 ###+########################
 #c.e........################
-#..P#.......################
+#...##P.....################
 ###+########################
 #sss........################
 #sss.g......################
@@ -174,30 +177,28 @@ def get_prologue_layout() -> FixedLevelData:
 
     Linear tutorial with forced path through left corridor:
     - X at (2,3): Damaged scanner blocks door - teaches melee
-    - P at (4,6): Patrol crosses corridor (x=2-10) - teaches turn timing
-    - S at (4,9): Scanner with blindspots at (1-3,10) - teaches FOV/stealth
-    - P at (4,12): Patrol crosses corridor + recovery at (6,12) - teaches alert/escape
-    - P at (3,15): Blocks door approach, wall at x=4 prevents flanking - teaches ranged
-    - P at (5,21): Guards gateway path (x=4-14) - final challenge
+    - P at (7,6): Patrol in right half (x=7-10), clear safe window at left - teaches timing
+    - S at (4,9): Scanner with vision 5, blind spots at (1-3,9-11) - teaches FOV/stealth
+    - P at (8,12): Patrol in right half, recovery at (6,12) - optional safety net
+    - P at (6,15): At range from exploit pickup, wall blocks melee - teaches ranged
+    - P at (5,21): Guards gateway path (x=5-14) - final challenge
     """
     lines = PROLOGUE_LAYOUT_RAW.split("\n")
 
     # Fixed patrol routes for deterministic teaching
     # Key: spawn position (x,y), Value: list of patrol waypoints
     #
-    # DESIGN: Patrols threaten door approaches when close, but have far positions
-    # where player can safely wait/cross. Patrol vision is 4 tiles.
-    # Player must wait for patrol to be at far end, then cross quickly.
+    # DESIGN: Player vision=15 lets them see full patrol routes and plan.
+    # Patrol vision=4, so distance 5+ is safe. Routes create obvious safe windows.
     patrol_routes = {
-        # Section 2: P at (4,6) patrols x=4-10. At x=8+, player can safely cross
-        # from door at (3,4) through corridor to door at (3,8).
-        # Vision 4 means: at x=4-6 patrol threatens corridor, at x=8-10 safe window
-        (4, 6): [Position(4, 6), Position(10, 6)],
-        # Section 3: P at (4,12) patrols x=4-10, same timing logic as Section 2
-        (4, 12): [Position(4, 12), Position(10, 12)],
-        # Section 4: P at (3,15) guards door approach with short patrol x=1-3
-        # Wall at x=4 blocks right side, forcing engagement or ranged attack
-        (3, 15): [Position(1, 15), Position(3, 15)],
+        # Section 2: P at (7,6) patrols x=7-10. Player at door (x=2) is always safe.
+        # Clear visual: patrol oscillates right side, left path is open.
+        (7, 6): [Position(7, 6), Position(10, 6)],
+        # Section 3: P at (8,12) patrols x=8-10, left path is safe. Recovery node optional.
+        (8, 12): [Position(8, 12), Position(10, 12)],
+        # Section 4: P at (6,15) patrols x=6-10. Player gets exploit at (3,14),
+        # sees patrol at range 3+, natural instinct is to use ranged exploit.
+        (6, 15): [Position(6, 15), Position(10, 15)],
         # Section 5: P at (5,21) patrols x=5-14, guards corridor to gateway
         (5, 21): [Position(5, 21), Position(14, 21)],
     }

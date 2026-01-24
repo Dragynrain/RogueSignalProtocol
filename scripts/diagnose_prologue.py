@@ -348,15 +348,15 @@ class PrologueDiagnostic:
         """Section 2: Turn-based - time the patrol.
 
         LESSON: Turn-based timing - enemies move on your turn, plan accordingly.
-        CONSTRAINT: Patrol blocks the corridor, must wait for opening.
-        SMART BEHAVIOR: Stay against left wall (x=1), wait until patrol moves right,
-        then quickly cross to the door at (3, 8).
+        CONSTRAINT: Patrol patrols right side (x=7-10), left wall is safe path.
+        SMART BEHAVIOR: Stay against left wall (x=1), move down to door at (2, 8).
+        Door is a blind spot - safe entry into Section 3.
         """
         print("\n" + "="*50)
-        print("SECTION 2: TURN-BASED (time patrol crossing)")
+        print("SECTION 2: TURN-BASED (observe patrol, use safe path)")
         print("="*50)
 
-        # Patrol at (4, 6) patrols horizontally in corridor
+        # Patrol at (7, 6) patrols right side of corridor
         patrol = None
         for enemy in self.engine.enemies:
             if enemy.position.y == 6:
@@ -364,48 +364,30 @@ class PrologueDiagnostic:
                 print(f"  Patrol at ({patrol.x}, {patrol.y}), vision: {patrol.vision_range}")
                 break
 
-        # SMART: Move to left wall first (x=1) for cover, then wait for patrol
-        print("  [SMART] Moving to left wall for cover...")
-        self.move_to(1, 5, "left wall cover")
+        # SMART: Move to left wall - patrol is always far right, left is safe
+        print("  [SMART] Moving to left wall (safe path)...")
+        self.move_to(1, 5, "left wall")
 
-        # Wait for patrol to be far right (x >= 7) so we can cross safely
-        print("  [SMART] Waiting for patrol to move right...")
-        waits = 0
-        while patrol and patrol.x < 7 and waits < 15:
-            self.wait()
-            waits += 1
-            print(f"    Patrol at ({patrol.x}, {patrol.y})")
+        # No need to wait - patrol is always at x=7+ which is outside vision range
+        print("  [SMART] Left path is safe, patrol at x=7+ (vision 4, distance 6+)")
 
-        if patrol and patrol.x >= 7:
-            print("  Patrol is right - crossing now!")
-        else:
-            print("  [WARNING] Patrol didn't move far enough - crossing anyway")
-
-        # SMART: Move down the left side (x=1), staying out of vision
-        # Then cross to the door at row 8
-        self.move_to(1, 7, "sneak down left wall")
-
-        # Wait for next door to be safe (scanner in section 3)
-        print("  [SMART] Checking if door to section 3 is safe...")
-        if not self.wait_until_safe(3, 8, max_waits=5):
-            print("  [WARNING] Section 3 door not safe - proceeding anyway")
-
-        self.move_to(3, 8, "approach section 3 door")
-        self.move_to(3, 9, "exit section 2")
+        # Move down the left side to blind spot door at (2, 8)
+        self.move_to(1, 7, "down left wall")
+        self.move_to(2, 8, "enter section 3 via blind spot door")
 
     def walk_section_3(self):
         """Section 3: FOV + Blindspots - use blindspots to pass scanner.
 
         LESSON: Blind spots block enemy vision, use them for stealth.
-        CONSTRAINT: Scanner at (4,9) blocks direct path, blindspots at (1-3, 10).
-        SMART BEHAVIOR: Move left to x=1 first, then down to blindspots row,
-        traverse blindspots, exit through door.
+        CONSTRAINT: Scanner at (4,9) has vision 5. Blind spots at (2,8) and (1-3, 9-11).
+        SMART BEHAVIOR: Enter at blind spot door (2,8), move through blind spot
+        corridor to exit at row 12.
         """
         print("\n" + "="*50)
         print("SECTION 3: FOV + BLINDSPOTS (scanner area)")
         print("="*50)
 
-        # Scanner at (4, 9), blindspots at (1-3, 10)
+        # Scanner at (4, 9), blindspots at (2,8) and (1-3, 9-11)
         scanner = None
         for enemy in self.engine.enemies:
             if enemy.type == "scanner" and enemy.cpu > 5:  # Not damaged scanner
@@ -413,81 +395,69 @@ class PrologueDiagnostic:
                 print(f"  Scanner at ({scanner.x}, {scanner.y}), vision: {scanner.vision_range}")
                 break
 
-        # SMART: Move left first to avoid scanner's direct LOS
-        print("  [SMART] Moving left to avoid scanner LOS...")
-        self.move_to(1, 9, "move left for blindspot approach")
+        # Already in blind spot at (2,8) - continue through blind spot corridor
+        print("  [SMART] Already in blind spot zone at entry...")
 
-        # Enter blindspots at row 10 from left side
-        print("  [SMART] Entering blindspot zone...")
-        self.move_to(1, 10, "enter blindspot (1,10)")
+        # Move through blind spots (1-3, 9-11)
+        self.move_via_blindspots(1, 9, "continue in blindspots")
+        self.move_via_blindspots(1, 10, "traverse blindspots")
+        self.move_via_blindspots(3, 10, "through blindspot row")
 
         # Show blindspot status
-        if (1, 10) in self.engine.game_map.blind_spots:
+        if self.is_in_blind_spot():
             print("    Confirmed: in blind spot!")
 
-        # Traverse blindspots to the door
-        print("  [SMART] Traversing blindspots to door...")
-        self.move_via_blindspots(3, 10, "through blindspots")
-
-        # Exit through door at (3, 11)
-        self.move_to(3, 11, "exit through door")
+        # Exit through door area at (3, 11) - still blind spot
+        self.move_via_blindspots(3, 11, "exit through blind spot")
         self.move_to(3, 12, "enter section 4")
 
     def walk_section_4(self):
-        """Section 4: Alert + Escape - demonstrate recovery from being spotted.
+        """Section 4: Recovery node area - optional safety net.
 
-        LESSON: Recovery nodes restore CPU, useful after combat or getting spotted.
-        CONSTRAINT: Patrol blocks path, recovery node at (6, 12) offers healing.
-        SMART BEHAVIOR: This section intentionally teaches that getting spotted
-        isn't always fatal - recovery nodes can help. Try to avoid, but if spotted,
-        use the recovery node.
+        LESSON: Recovery nodes restore CPU if you take damage.
+        CONSTRAINT: Patrol at x=8-10, left path is safe. Recovery at (6,12) optional.
+        SMART BEHAVIOR: Stealth down left side, optionally grab recovery node.
         """
         print("\n" + "="*50)
-        print("SECTION 4: ALERT + ESCAPE (recovery lesson)")
+        print("SECTION 4: RECOVERY NODE (optional safety net)")
         print("="*50)
 
-        # Patrol at (4, 12), recovery at (6, 12)
+        # Patrol at (8, 12), recovery at (6, 12)
         patrol = None
         for enemy in self.engine.enemies:
             if enemy.position.y == 12:
                 patrol = enemy
-                print(f"  Patrol at ({patrol.x}, {patrol.y})")
+                print(f"  Patrol at ({patrol.x}, {patrol.y}), vision: {patrol.vision_range}")
                 break
 
         recovery_pos = (6, 12)
         print(f"  Recovery node at {recovery_pos}")
+        print("  [SMART] Left path is safe (patrol at x=8+, vision 4)")
 
-        # SMART: Wait for patrol to move away if possible
-        print("  [SMART] Waiting for patrol to move...")
-        waits = 0
-        while patrol and patrol.x <= 5 and waits < 8:
-            self.wait()
-            waits += 1
-            print(f"    Patrol at ({patrol.x}, {patrol.y})")
+        # Move down left side - patrol is always far right
+        self.move_to(1, 12, "sneak down left wall")
 
-        # Move to recovery node
-        print("  [SMART] Moving toward recovery node...")
-        self.move_to(6, 12, "get recovery node")
-
-        # Exit toward section 5 door
+        # Optionally get recovery if needed
+        print("  [SMART] Recovery node available if needed...")
+        # Skip recovery for clean run, just exit
         self.move_to(3, 13, "approach section 5 door")
         self.move_to(3, 14, "enter section 5")
 
     def walk_section_5(self):
         """Section 5: Exploits + Ranged combat.
 
-        LESSON: Exploits provide ranged attacks - enemies behind walls need ranged.
-        CONSTRAINT: Patrol at (6, 15) is behind wall at (4, 15), melee can't reach.
+        LESSON: Exploits provide ranged attacks - patrol is at range, use exploit.
+        CONSTRAINT: Patrol at (6, 15) is at range 3+ from exploit pickup.
+        Walls at (4-5, 15) block direct melee approach from left.
         Exploit pickup at (3, 14), cooling node at (1, 14).
-        SMART BEHAVIOR: Get cooling node first (heat management), then get exploit,
-        then use ranged to clear the path.
+        SMART BEHAVIOR: Get cooling node, get exploit, patrol at range suggests ranged.
         """
         print("\n" + "="*50)
         print("SECTION 5: EXPLOITS + RANGED")
         print("="*50)
 
         # Cooling at (1, 14), exploit at (3, 14)
-        # Wall at (4, 15), patrol at (6, 15) behind wall
+        # Walls at (4-5, 15), patrol at (6, 15) at range
         patrol = None
         for enemy in self.engine.enemies:
             if enemy.position.y == 15:
@@ -497,7 +467,7 @@ class PrologueDiagnostic:
 
         print("  Cooling node at (1, 14)")
         print("  Exploit pickup at (3, 14)")
-        print("  Wall at (4, 15) blocks melee to patrol")
+        print("  Walls at (4-5, 15) + patrol at x=6 suggests ranged attack")
 
         # SMART: Get cooling node first for heat management
         print("  [SMART] Getting cooling node for heat management...")
