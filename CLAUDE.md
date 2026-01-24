@@ -78,16 +78,3 @@ Alerts: 1 turn only, chain to others when spotting player
 ## 12. Batch Files
 
 NO `else if` - use `) else ( if ... )`. Test before commit. See `.claude/WINDOWS_SCRIPTING.md`
-
-## 13. Top 10 Mistakes
-
-1. Unicode in logging → Windows crash
-2. `distance_to()` for gameplay → diag break
-3. `get_controllers()` in-game → empty
-4. `context.convert_event()` → incompatible
-5. Direct arrays → `[y,x]` vs `(x,y)` confusion
-6. `path[0]` → starting position!
-7. `(x,y)` pathfinding → TCOD uses `(y,x)`
-8. Untested .bat → syntax fail
-9. URLs from memory → hallucinate
-10. Skip keybinding check → conflicts

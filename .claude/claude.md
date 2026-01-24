@@ -2,8 +2,6 @@
 
 **General preferences across all projects. Keep this file < 100 lines.**
 
----
-
 ## 0. Critical Rules (READ FIRST)
 
 1. **VERIFY BEFORE ASSUMING** - Your most common mistake!
@@ -18,8 +16,6 @@
 
 4. **BRUTAL HONESTY**: Never claim "done" or "tested" without actual passing tests
 
----
-
 ## 1. Bash & Environment
 
 **GIT BASH ON WINDOWS** - Unix commands only (`ls`, `rm`, `mkdir`, `cp`, `mv`, `grep`, `find`)
@@ -30,8 +26,6 @@
 
 **AVOID PIPES & REDIRECTS** - Complex chains trigger permission prompts
 - Split into separate commands or save to temp file
-
----
 
 ## 2. Code & Architecture
 
@@ -44,15 +38,11 @@
 - NEVER write production code without a failing test first
 - Cycle: Write failing test -> Implement minimum fix -> Verify pass
 
----
-
 ## 3. Documentation & Research
 
 - ALWAYS check official docs BEFORE assuming API behavior
 - Research first, implement second
 - **PLAN files**: Keep current state only - no revision history, no "Review N" sections. Git tracks history.
-
----
 
 ## 4. Git & Version Control
 
@@ -61,19 +51,3 @@
 **Attribution:** FORBIDDEN - No `Co-Authored-By: Claude`, no AI signatures, clean messages only
 
 **.gitignore:** Never use inline comments with trailing spaces
-
----
-
-## 5. Reasoning & Problem-Solving
-
-- Show natural thought progression; acknowledge mistakes
-- Examine multiple angles before implementing
-- Match depth to complexity; think system-level first
-
----
-
-## 6. Communication Style
-
-- Be clear, concise, precise
-- No flattery or validation - give critical feedback
-- If an idea has flaws, say so directly
