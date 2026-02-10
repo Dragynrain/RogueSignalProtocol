@@ -349,8 +349,8 @@ class MainMenu(BaseMenu):
 
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu options."""
-        # Position depends on layout - graphics mode needs options higher to avoid help text overlap
-        start_y = 17 if box["use_background_layout"] else 21
+        start_y = self._get_options_start_y()
+        spacing = self._get_options_spacing()
         for i, option in enumerate(self.options):
             # Ascension option gets special color to stand out
             if option.startswith("Ascension"):
@@ -372,20 +372,20 @@ class MainMenu(BaseMenu):
                 # Glyph mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(full_text) // 2
 
-            render_char_safe(console, x_pos, start_y + i * 2, full_text, fg=color, bg=bg_color)
+            render_char_safe(console, x_pos, start_y + i * spacing, full_text, fg=color, bg=bg_color)
 
     def _render_save_info(self, console: tcod.console.Console, box: dict) -> None:
         """Render save file information if available."""
         if SaveGameManager.save_exists():
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
-                # Match menu options start_y
-                start_y = 17 if box["use_background_layout"] else 21
+                start_y = self._get_options_start_y()
+                spacing = self._get_options_spacing()
                 if box["use_background_layout"]:
                     # Background mode - position within narrow box
                     # Cap save info position to avoid overlapping controls at y=45
                     # Save info needs 3 lines, so max start is 42 (42, 43, 44)
-                    save_info_y = min(start_y + len(self.options) * 2 + 2, 42)
+                    save_info_y = min(start_y + len(self.options) * spacing + 2, 42)
                     save_text = "Save found"
                     continue_text = "Continue to resume"
                     render_char_safe(
@@ -418,7 +418,7 @@ class MainMenu(BaseMenu):
                     render_char_safe(
                         console,
                         GameConfig.SCREEN_WIDTH // 2 - 15,
-                        start_y + len(self.options) * 2 + 2,
+                        start_y + len(self.options) * spacing + 2,
                         "Save file found - Continue to resume",
                         fg=Colors.GREEN,
                         bg=Colors.BLACK,
@@ -426,7 +426,7 @@ class MainMenu(BaseMenu):
                     render_char_safe(
                         console,
                         GameConfig.SCREEN_WIDTH // 2 - 12,
-                        start_y + len(self.options) * 2 + 3,
+                        start_y + len(self.options) * spacing + 3,
                         f"Last saved: {save_timestamp}",
                         fg=Colors.LIGHT_GRAY,
                         bg=Colors.BLACK,

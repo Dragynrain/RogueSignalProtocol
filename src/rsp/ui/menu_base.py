@@ -138,6 +138,23 @@ class BaseMenu(BaseInputHandler):
             console, layout, height, border_color, y_offset
         )
 
+    def _get_options_start_y(self) -> int:
+        """Y position where the first menu option is rendered.
+
+        Shared by both rendering and mouse hit-detection to prevent drift.
+        Subclasses should override if they use a different start position.
+        """
+        layout = self._get_menu_layout_params()
+        return 17 if layout["use_background_layout"] else 21
+
+    def _get_options_spacing(self) -> int:
+        """Vertical spacing between menu options (in console rows).
+
+        Shared by both rendering and mouse hit-detection to prevent drift.
+        Subclasses should override if they use a different spacing.
+        """
+        return 2
+
     # ========================================================================
     # BASEINPUTHANDLER ABSTRACT METHODS (implemented for menus)
     # ========================================================================
@@ -231,13 +248,9 @@ class BaseMenu(BaseInputHandler):
         if tile_y is None:
             return ""
 
-        # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
-        # Menu options Y position depends on graphics mode:
-        # - Graphics mode (with background): start_y = 19
-        # - Glyph mode: start_y = 21
-        layout = self._get_menu_layout_params()
-        start_y = 19 if layout["use_background_layout"] else 21
-        spacing = 2
+        # Use shared geometry to stay in sync with rendering
+        start_y = self._get_options_start_y()
+        spacing = self._get_options_spacing()
 
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
@@ -282,13 +295,9 @@ class BaseMenu(BaseInputHandler):
         if tile_y is None:
             return ""
 
-        # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
-        # Menu options Y position depends on graphics mode:
-        # - Graphics mode (with background): start_y = 19
-        # - Glyph mode: start_y = 21
-        layout = self._get_menu_layout_params()
-        start_y = 19 if layout["use_background_layout"] else 21
-        spacing = 2
+        # Use shared geometry to stay in sync with rendering
+        start_y = self._get_options_start_y()
+        spacing = self._get_options_spacing()
 
         # Calculate which option was clicked
         if tile_y >= start_y:

@@ -264,6 +264,8 @@ class GameEngine:
                 self.ascension_level = 0  # Force base difficulty for tutorial
                 self.ascension_modifiers = calculate_ascension_modifiers(0)
                 self.game_state.level = 0  # Level 0 = prologue
+                # Tutorial always starts with Network Scan (cheap, safe utility)
+                self.player.inventory_manager.equipped_exploits = ["network_scan"]
 
                 # Reset prologue thought tracking for fresh start
                 # (handles case where player played prologue before, returned to menu,
