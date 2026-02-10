@@ -46,6 +46,7 @@ class TestThoughtKeys:
             "blindspot_adjacent_fail",
             "blindspot_range_success",
             "alert_escape_success",
+            "exploit_equip_hint",
             "exploit_success",
             "heat_high",
             "gateway_spotted",

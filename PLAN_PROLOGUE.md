@@ -34,11 +34,11 @@ e = Code Injection    + = Door
 #c.e........################  Row 14: SECTION 4 - c at (1,14), e at (3,14)
 #...#.P.....################  Row 15: wall at (4,15), P at (6,15) behind wall
 ###+########################  Row 16: door at (3,16)
-#sss........################  Row 17: SECTION 5 - blind spots start
-#sss.g......################  Row 18: g at (5,18)
-#sss........################  Row 19
-#sss........################  Row 20
-#sss.P..........+.........>#  Row 21: P at (5,21) patrols x=6-14, gateway at (26,21)
+#sss........################  Row 17: SECTION 5 - observation blind spots
+#sss.g......################  Row 18: g at (5,18) - ghost node
+#sss.......ssss#############  Row 19: stepping blind spots at x=11-14
+#sss............############  Row 20: open x=1-15 for descent path
+#......P...........+......>#  Row 21: P at (7,21) patrols x=7-18, gateway at (26,21)
 #...........################  Row 22
 ############################  Row 23
 ```
@@ -53,7 +53,7 @@ e = Code Injection    + = Door
 | 2 | 5-8 | **Turn timing** | P patrols corridor - wait for opening |
 | 3 | 9-12 | **FOV + Blind spots** | S has vision 5; blind spots at (1-3, 9-11) work at range > 1 |
 | 4 | 13-16 | **Ranged combat** | Wall at (4,15) blocks melee; exploit pickup at (3,14) |
-| 5 | 17-23 | **Synthesis** | Ghost node, stealth path via blind spots, final patrol to gateway |
+| 5 | 17-23 | **Timing/Stealth** | Stepping blind spots, ghost node, follow patrol to gateway |
 
 ---
 
@@ -84,7 +84,7 @@ Routes defined in `fixed_levels.py`. Patrols avoid x=3 (door column) to create s
 | (4, 6) | x=5 to x=11 | Section 2 |
 | (4, 12) | x=5 to x=11 | Section 3 |
 | (6, 15) | x=6 to x=11 | Section 4 (behind wall) |
-| (5, 21) | x=6 to x=14 | Section 5 (final) |
+| (7, 21) | x=7 to x=18 | Section 5 (timing puzzle) |
 
 ---
 
@@ -96,7 +96,7 @@ Routes defined in `fixed_levels.py`. Patrols avoid x=3 (door column) to create s
 | 2 | "Next time, wait for an opening..." |
 | 3 | "Distance matters. Too close and they see through everything." |
 | 4 | "There must be a way to reach them from here..." |
-| 5 | "Patience. Watch the pattern." |
+| 5 | "Patience. Watch the patrol pattern, then follow behind." |
 | Heat | "Overheated... those nodes might help next time." |
 
 ---
@@ -107,7 +107,7 @@ Routes defined in `fixed_levels.py`. Patrols avoid x=3 (door column) to create s
 
 **Blind Spots:** Hide at range > 1 only. Adjacent enemies see through.
 
-**Prologue Thoughts:** 23 reactive triggers in `prologue_thoughts.py`
+**Prologue Thoughts:** 24 reactive triggers in `prologue_thoughts.py`
 
 **Visibility Status:** CONCEALED/EXPOSED/TOO CLOSE indicator (prologue only)
 

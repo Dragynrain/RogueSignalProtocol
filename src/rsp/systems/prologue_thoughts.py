@@ -77,6 +77,10 @@ THOUGHT_TRIGGER_REGISTRY: dict[str, tuple[str, str]] = {
         "Enemy loses sight during alert, doesn't go hostile",
     ),
     # Exploits
+    "exploit_equip_hint": (
+        "turn_manager.py:_handle_pickups",
+        "Player picks up Code Injection exploit in prologue",
+    ),
     "exploit_observe": (
         "turn_manager.py:_check_blindspot_thoughts",
         "Player in blind spot sees enemy at range 2-5",
@@ -123,7 +127,7 @@ THOUGHT_TRIGGER_REGISTRY: dict[str, tuple[str, str]] = {
     # Navigation
     "stealth_choice": (
         "engine.py:move_player",
-        "Player enters stealth corridor (x<=5, y>=21)",
+        "Player enters stepping blind spot alcove (x=11-14, y=19)",
     ),
     "gateway_spotted": (
         "engine.py:move_player",
@@ -146,6 +150,7 @@ THOUGHT_KEYS = {
     "blindspot_range_success",
     "alert_to_hostile_fail",
     "alert_escape_success",
+    "exploit_equip_hint",
     "exploit_observe",
     "exploit_success",
     "exploit_ranged_practice",

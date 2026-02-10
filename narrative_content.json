@@ -258,7 +258,7 @@
   "prologue_thoughts": {
     "diagonal_discover": "Diagonal movement... that's faster.",
     "melee_success": "Walking into them... that works.",
-    "turn_based_observe": "It moves when I move...",
+    "turn_based_observe": "It moves when I move. Turn-based... I can plan around that.",
     "wait_fail": "Still in their path. Need to find a safer spot to wait.",
     "wait_success": "Timing. That's the key.",
     "fov_bidirectional": "If I can see them, they can see me.",
@@ -270,6 +270,7 @@
     "exploit_observe": "Can't reach them from here... maybe an exploit would work.",
     "exploit_success": "The exploit worked. Good to know.",
     "exploit_ranged_practice": "The exploit worked from a distance. Useful.",
+    "exploit_equip_hint": "New exploit. I need to open inventory and equip it first.",
     "utility_pickup": "This one reveals enemy vision... not all exploits are weapons.",
     "code_hack_discovery": "The effect matched the color. Worth remembering.",
     "intent_observe": "I can see where it's going... the next three moves.",
@@ -277,7 +278,7 @@
     "cooling_node_use": "Heat dissipating... these nodes are useful.",
     "cpu_node_use": "Systems restored. Good to know these exist.",
     "ghost_node_use": "Invisible... but only for a moment.",
-    "stealth_choice": "The quieter route. Worth the extra steps.",
+    "stealth_choice": "A safe spot to watch the patrol from. I can time my move.",
     "gateway_spotted": "The gateway. Almost there."
   },
   "prologue_death_hints": {
@@ -289,8 +290,8 @@
     "section_3_escalate": "Blind spots only work at range. Stay at least 2 tiles away.",
     "section_4": "There must be a way to reach them from here...",
     "section_4_escalate": "Use the exploit pickup (1-5 keys). It can hit from range.",
-    "section_5": "Patience. Watch the pattern.",
-    "section_5_escalate": "The left path has more cover. Ghost nodes make you invisible.",
+    "section_5": "Patience. Watch the patrol pattern, then follow behind.",
+    "section_5_escalate": "Use the blind spots to hide. When the patrol heads right, follow at a distance.",
     "heat_death": "Overheated... those nodes might help next time.",
     "general_encouragement": "Keep trying. The pattern will become clear."
   },

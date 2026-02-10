@@ -19,7 +19,7 @@
 ### Comprehensive Wiki (All Game Knowledge)
 **[Visit the Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki)** - Complete game encyclopedia including:
 - Gameplay mechanics and systems
-- All 26 achievements and how to unlock them
+- All 47 achievements and how to unlock them
 - Complete enemy, exploit, and item databases
 - Status effects, code hacks, and progression guides
 - UI/HUD explanations and settings reference

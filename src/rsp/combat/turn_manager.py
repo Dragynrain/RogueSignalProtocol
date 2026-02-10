@@ -320,12 +320,16 @@ class GameTurnManager:
             )
             del self.game_engine.game_map.exploit_pickups[player_pos]
 
-            # Prologue: Utility pickup thought (Threat Scan)
+            # Prologue: Exploit pickup thoughts
             if getattr(self.game_engine, "prologue_mode", False):
-                if "threat" in exploit_item.name.lower() or "scan" in exploit_item.name.lower():
-                    from rsp.systems.prologue_thoughts import show_prologue_thought
+                from rsp.systems.prologue_thoughts import show_prologue_thought
 
+                if "threat" in exploit_item.name.lower() or "scan" in exploit_item.name.lower():
+                    # Utility pickup thought (Threat Scan)
                     show_prologue_thought("utility_pickup", self.game_engine)
+                else:
+                    # Combat exploit pickup - hint to equip it
+                    show_prologue_thought("exploit_equip_hint", self.game_engine)
 
         # Permanent upgrade pickup (auto-equip)
         if player_pos in self.game_engine.game_map.permanent_upgrades:
@@ -562,9 +566,21 @@ class GameTurnManager:
                 # Prologue: Turn-based observation thought (first time seeing enemy move)
                 if getattr(self.game_engine, "prologue_mode", False):
                     if enemy.position != old_pos:  # Enemy actually moved
-                        from rsp.systems.prologue_thoughts import show_prologue_thought
+                        # Only trigger if player can actually see this enemy
+                        player_pos = Position(
+                            self.game_engine.player.x, self.game_engine.player.y
+                        )
+                        vision = self.game_engine.player.get_vision_range()
+                        if self.game_engine.game_map.can_see_position(
+                            player_pos, enemy.position, vision
+                        ):
+                            from rsp.systems.prologue_thoughts import (
+                                show_prologue_thought,
+                            )
 
-                        show_prologue_thought("turn_based_observe", self.game_engine)
+                            show_prologue_thought(
+                                "turn_based_observe", self.game_engine
+                            )
 
         # Show inventory attack warning dialogue if player was attacked while in inventory
         if player_attacked_in_inventory:

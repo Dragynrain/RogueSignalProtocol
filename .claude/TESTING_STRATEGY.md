@@ -279,9 +279,9 @@ def test_emp_tactical_use():
 ```
 tests/unit/
 ├── test_audio_system.py       # Audio logic
-├── test_core.py               # Core calculations
 ├── test_enemies.py            # Enemy behavior
-└── test_engine.py             # Engine state
+├── test_game_config.py        # Config loading
+└── test_game_combat.py        # Combat calculations
 
 tests/integration/
 ├── test_balance_relationships.py      # Config relationships

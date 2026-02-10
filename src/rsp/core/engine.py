@@ -529,10 +529,10 @@ class GameEngine:
 
                     show_prologue_thought("diagonal_discover", self)
 
-                # Prologue: Stealth choice thought (Section 6 left path)
+                # Prologue: Stealth choice thought (stepping blind spot alcove)
                 if getattr(self, "prologue_mode", False):
                     px, py = self.player.position.x, self.player.position.y
-                    if px <= 5 and py >= 21:
+                    if 11 <= px <= 14 and py == 19:
                         from rsp.systems.prologue_thoughts import show_prologue_thought
 
                         show_prologue_thought("stealth_choice", self)

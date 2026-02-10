@@ -139,7 +139,7 @@ def get_prologue_section(y: int) -> int:
 # Section 2 (rows 5-8): TIMING - P patrols right side (x=7-10), clear safe window at x=1-3
 # Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision 5, blind spots provide stealth path
 # Section 4 (rows 13-16): RANGED - P at range from exploit, wall blocks melee approach
-# Section 5 (rows 17-23): SYNTHESIS - Ghost node, stealth path, final P, gateway
+# Section 5 (rows 17-23): SYNTHESIS - Timing puzzle with stepping blind spots, ghost node, gateway
 #
 # VISION RANGES: Player=15, Patrol=4, Scanner=5
 # Player can see full patrol routes and plan timing. Safe distance = patrol vision + 1.
@@ -164,9 +164,9 @@ PROLOGUE_LAYOUT_RAW = """
 ###+########################
 #sss........################
 #sss.g......################
-#sss........################
-#sss........################
-#sss.P..........+.........>#
+#sss.......ssss#############
+#sss............############
+#......P...........+......>#
 #...........################
 ############################
 """.strip()
@@ -181,7 +181,7 @@ def get_prologue_layout() -> FixedLevelData:
     - S at (4,9): Scanner with vision 5, blind spots at (1-3,9-11) - teaches FOV/stealth
     - P at (8,12): Patrol in right half, recovery at (6,12) - optional safety net
     - P at (6,15): At range from exploit pickup, wall blocks melee - teaches ranged
-    - P at (5,21): Guards gateway path (x=5-14) - final challenge
+    - P at (7,21): Timing puzzle (x=7-18), stepping blind spots at (11-14,19) - teaches sneaking
     """
     lines = PROLOGUE_LAYOUT_RAW.split("\n")
 
@@ -199,8 +199,9 @@ def get_prologue_layout() -> FixedLevelData:
         # Section 4: P at (6,15) patrols x=6-10. Player gets exploit at (3,14),
         # sees patrol at range 3+, natural instinct is to use ranged exploit.
         (6, 15): [Position(6, 15), Position(10, 15)],
-        # Section 5: P at (5,21) patrols x=5-14, guards corridor to gateway
-        (5, 21): [Position(5, 21), Position(14, 21)],
+        # Section 5: P at (7,21) patrols x=7-18. Timing puzzle: player follows
+        # patrol from stepping blind spots (11-14, row 19) at distance 5+.
+        (7, 21): [Position(7, 21), Position(18, 21)],
     }
 
     layout_data = PrologueLayoutData(

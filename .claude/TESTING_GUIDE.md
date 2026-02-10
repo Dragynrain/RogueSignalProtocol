@@ -40,7 +40,7 @@ pytest tests/ -q --tb=no 2>&1 | tail -20
 | Changed File | Run This |
 |--------------|----------|
 | rsp/systems/audio.py | `pytest tests/unit/test_audio_system.py -v` |
-| rsp/core/config.py | `pytest tests/unit/test_config_loading.py -v` |
+| rsp/core/config.py | `pytest tests/unit/test_game_config.py -v` |
 | rsp/entities/characters.py | `pytest tests/integration/test_enemy_pathfinding_fixes.py -v` |
 | rsp/combat/combat.py | `pytest tests/ -k "combat" -v` |
 | rsp/input/*.py | `pytest tests/unit/test_input_validation.py -v` |

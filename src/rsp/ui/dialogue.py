@@ -648,8 +648,8 @@ def create_prologue_intro_dialogue() -> DialogueBox:
             "Remote uplink active.\n"
             "Reach the gateway.\n"
             "\n"
-            "Arrow keys to move. Period (.) to wait. 1-5 for exploits.\n"
-            "Press ? anytime for help."
+            "Arrow keys to move. Period (.) to wait.\n"
+            "1-5 for exploits. Press ? for help."
         ),
         options=["[ENTER] Begin"],
         valid_keys=[tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
