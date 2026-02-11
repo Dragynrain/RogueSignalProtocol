@@ -356,10 +356,14 @@ class BaseMenu(BaseInputHandler):
             return "continue"
         elif "New Game" in option_text:
             return "new_game"
+        elif "Tutorial" in option_text:
+            return "tutorial"
         elif "Ascension" in option_text:
             return "ascension"
         elif "Settings" in option_text:
             return "settings"
+        elif "Controls" in option_text:
+            return "controls"
         elif "Help" in option_text:
             return "help"
         elif "Achievements" in option_text:
