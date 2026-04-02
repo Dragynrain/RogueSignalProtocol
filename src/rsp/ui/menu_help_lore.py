@@ -308,10 +308,8 @@ class LoreMenu(BaseInputHandler):
             return ""
         else:
             # In list mode, update selection and open
-            result = self.handle_mouse_motion(event)
-            if result == "":  # Motion was handled successfully
-                # Mouse was over a valid item, open it
-                self.lore_viewer_mode = "reading"
+            self.handle_mouse_motion(event)
+            self.lore_viewer_mode = "reading"
             return ""
 
     def handle_right_click(self, event) -> str:
@@ -511,11 +509,6 @@ class HelpMenu(BaseInputHandler):
                     Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY,
                 )
             )
-
-        # Debug
-        for label, desc in controls["debug"]:
-            text = f"{label}: {desc}"
-            lines.append((utils.center_x(text), text, Colors.LIGHT_GRAY))
 
         return lines
 

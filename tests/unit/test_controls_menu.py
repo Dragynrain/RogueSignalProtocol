@@ -1226,55 +1226,6 @@ class TestModifierKeyHandling:
 # =============================================================================
 
 
-class TestSettingsMenuSeparator:
-    """Tests for visual separators in the settings menu.
-
-    Issue: In classic graphics mode (glyph mode), there should be a blank
-    line separator above the "Export Debug Package" option to visually
-    separate utility actions from settings.
-    """
-
-    def test_separator_option_exists_before_export_debug_package(self, settings):
-        """Settings menu should have a separator before Export Debug Package."""
-        from rsp.ui.menu_settings import SettingsMenu
-
-        menu = SettingsMenu(settings, None, None)
-
-        # Find the index of Export Debug Package option
-        export_index = None
-        for i, opt in enumerate(menu.options):
-            if opt.get("name") == "Export Debug Package":
-                export_index = i
-                break
-
-        assert export_index is not None, "Export Debug Package option not found"
-
-        # The option before Export Debug Package should be a separator
-        # (or there should be a separator type option somewhere before it)
-        separator_index = export_index - 1
-        assert separator_index >= 0, "Export Debug Package is first option (no room for separator)"
-
-        separator_option = menu.options[separator_index]
-        assert (
-            separator_option.get("type") == "separator"
-        ), f"Expected separator before Export Debug Package, found: {separator_option}"
-
-    def test_separator_renders_as_blank_line_in_classic_mode(self, settings, console):
-        """Separator should render as blank line in classic (glyph) mode."""
-        from rsp.ui.menu_settings import SettingsMenu
-
-        menu = SettingsMenu(settings, None, None)
-
-        # Force classic/glyph mode (no background)
-        menu.menu_background = None
-
-        # Render the menu
-        menu.render(console)
-
-        # This test passes if render doesn't crash
-        # The visual blank line is verified by test_separator_option_exists_before_export_debug_package
-
-
 class TestMouseWheelNavigation:
     """Tests for mouse wheel navigation in binding menus."""
 

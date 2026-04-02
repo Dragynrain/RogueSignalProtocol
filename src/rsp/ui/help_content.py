@@ -130,9 +130,6 @@ class HelpContent:
                 ("Mouse Wheel", "Scroll lists & menus"),
                 ("Hover", "Highlight elements"),
             ],
-            "debug": [
-                ("Shift+F12", "Export debug package"),
-            ],
         }
 
     @staticmethod

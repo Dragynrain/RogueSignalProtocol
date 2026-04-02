@@ -9,12 +9,12 @@ on:
       build_type:
         description: 'Build type (alpha/beta/release)'
         required: true
-        default: 'beta'
+        default: 'release'
         type: choice
         options:
-          - alpha
-          - beta
           - release
+          - beta
+          - alpha
       version:
         description: 'Version number (e.g., 0.9.1)'
         required: true
@@ -82,9 +82,9 @@ jobs:
         # Use spec file for consistent build settings with local builds
         pyinstaller --clean RogueSignalProtocol.spec
 
-        # Determine build type (from workflow_dispatch input or default to beta for releases)
+        # Determine build type (from workflow_dispatch input or default to release)
         $buildType = "${{ github.event.inputs.build_type }}"
-        if (-not $buildType) { $buildType = "beta" }
+        if (-not $buildType) { $buildType = "release" }
 
         # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
         # Release builds have no flag = minimal logging
@@ -289,9 +289,9 @@ jobs:
       run: |
         pyinstaller RogueSignalProtocol-linux.spec
 
-        # Determine build type (from workflow_dispatch input or default to beta for releases)
+        # Determine build type (from workflow_dispatch input or default to release)
         BUILD_TYPE="${{ github.event.inputs.build_type }}"
-        if [ -z "$BUILD_TYPE" ]; then BUILD_TYPE="beta"; fi
+        if [ -z "$BUILD_TYPE" ]; then BUILD_TYPE="release"; fi
 
         # Create debug_mode.flag for alpha/beta builds (enables DEBUG logging)
         # Release builds have no flag = minimal logging

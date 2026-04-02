@@ -8,7 +8,6 @@ Provides settings configuration for:
 - Particle Effects
 - UI Color themes
 - Dialogue preferences
-- Debug package export
 """
 
 import logging
@@ -33,18 +32,6 @@ class SettingsMenu(BaseMenu):
         self.sound_manager = sound_manager  # For live volume updates and sound previews
 
         self._build_options()
-
-        # Debug export confirmation dialogue state
-        self.show_export_confirmation = False
-        self.export_confirmation_selection = 0
-        self.export_status_message = None  # Status message after export (success or failure)
-        self.export_path = None  # Full path to exported file (shown on second line)
-
-        # Stored coordinates for confirmation dialog click detection
-        self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
-        self.confirm_option_1_x_range = None  # (start_x, end_x) for "No"
-        self.confirm_option_0_y = None  # Y coordinate for "Yes"
-        self.confirm_option_1_y = None  # Y coordinate for "No"
 
     def _build_options(self):
         """Build options list based on current graphics mode.
@@ -104,8 +91,6 @@ class SettingsMenu(BaseMenu):
                     "type": "dialogue_toggle",
                     "key": "show_system_crash_warning",
                 },
-                {"type": "separator"},  # Visual separation before utility actions
-                {"name": "Export Debug Package", "type": "action"},
                 {"name": "Back", "type": "action"},
             ]
         )
@@ -116,11 +101,6 @@ class SettingsMenu(BaseMenu):
             self._clear_text_areas_only(console)
         else:
             console.clear()
-
-        # Show confirmation dialogue if active
-        if self.show_export_confirmation:
-            self._render_export_confirmation_dialog(console)
-            return
 
         # Calculate menu height - match Main Menu for consistent transitions
         menu_height = GameConfig.SCREEN_HEIGHT - 4  # Same as Main Menu (46 tiles)
@@ -388,36 +368,6 @@ class SettingsMenu(BaseMenu):
                         bg=bg_color,
                     )
 
-        # Status message (debug export result) - shown on two lines for readability
-        if self.export_status_message:
-            msg_color = Colors.GREEN if "Success" in self.export_status_message else Colors.RED
-            msg_x = box["center_x"] - len(self.export_status_message) // 2
-            msg_y = box["bottom"] - 9
-            render_char_safe(
-                console,
-                msg_x,
-                msg_y,
-                self.export_status_message,
-                fg=msg_color,
-                bg=Colors.BLACK,
-            )
-            # Show path on second line (truncated to fit box if needed)
-            if self.export_path:
-                path_str = str(self.export_path)
-                max_width = box["content_width"] - 4
-                if len(path_str) > max_width:
-                    # Truncate from start to show the filename
-                    path_str = "..." + path_str[-(max_width - 3) :]
-                path_x = box["center_x"] - len(path_str) // 2
-                render_char_safe(
-                    console,
-                    path_x,
-                    msg_y + 1,
-                    path_str,
-                    fg=Colors.LIGHT_GRAY,
-                    bg=Colors.BLACK,
-                )
-
         # Show "* Restart Required" note in graphics mode (explains the * on UI Scale)
         if box["use_background_layout"]:
             restart_note = "* Restart Required"
@@ -448,20 +398,14 @@ class SettingsMenu(BaseMenu):
     # ========================================================================
 
     def get_context(self):
-        """Return input context - DIALOGUE for confirmation, SETTINGS_MENU otherwise."""
+        """Return input context for settings menu."""
         from rsp.input.actions import InputContext
 
-        return (
-            InputContext.DIALOGUE if self.show_export_confirmation else InputContext.SETTINGS_MENU
-        )
+        return InputContext.SETTINGS_MENU
 
     def execute_action(self, action) -> str:
         """Execute an InputAction and return menu command."""
         from rsp.input.actions import InputAction
-
-        # Handle confirmation dialog if active
-        if self.show_export_confirmation:
-            return self._execute_confirmation_action(action)
 
         # Navigation (UP/DOWN)
         if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
@@ -485,11 +429,6 @@ class SettingsMenu(BaseMenu):
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
-                elif option["name"] == "Export Debug Package":
-                    # Show confirmation dialogue
-                    self.show_export_confirmation = True
-                    self.export_confirmation_selection = 0
-                    return ""
             elif option["type"] in ("toggle", "bool_toggle", "dialogue_toggle"):
                 # Trigger toggle with Enter/B button
                 self._adjust_setting(1)
@@ -499,40 +438,6 @@ class SettingsMenu(BaseMenu):
         # Cancel/Back
         elif action == InputAction.CANCEL:
             return "back"
-
-        return ""
-
-    def _execute_confirmation_action(self, action) -> str:
-        """Handle confirmation dialog actions through unified input system."""
-        from rsp.input.actions import InputAction
-
-        # Navigation (swap between Yes/No)
-        if action in (
-            InputAction.NAVIGATE_UP,
-            InputAction.NAVIGATE_DOWN,
-            InputAction.NAVIGATE_LEFT,
-            InputAction.NAVIGATE_RIGHT,
-            InputAction.MOVE_NORTH,
-            InputAction.MOVE_SOUTH,
-            InputAction.MOVE_WEST,
-            InputAction.MOVE_EAST,
-        ):
-            self.export_confirmation_selection = 1 - self.export_confirmation_selection
-            return ""
-
-        # Confirm selection
-        elif action == InputAction.CONFIRM:
-            if self.export_confirmation_selection == 0:  # Yes, Export
-                self.show_export_confirmation = False
-                return "export_debug_confirmed"
-            else:  # No, Cancel
-                self.show_export_confirmation = False
-            return ""
-
-        # Cancel dialogue
-        elif action == InputAction.CANCEL:
-            self.show_export_confirmation = False
-            return ""
 
         return ""
 
@@ -562,12 +467,7 @@ class SettingsMenu(BaseMenu):
     # ========================================================================
 
     def handle_mouse_motion(self, event) -> str:
-        """Handle mouse motion - update selection in settings menu or confirmation dialogue."""
-        # Priority: Handle confirmation dialogue if active
-        if self.show_export_confirmation:
-            self._handle_confirmation_mouse_motion(event)
-            return ""
-
+        """Handle mouse motion - update selection in settings menu."""
         from rsp.core.config import GameConfig
 
         # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
@@ -625,69 +525,8 @@ class SettingsMenu(BaseMenu):
 
         return ""
 
-    def _handle_confirmation_mouse_motion(self, event):
-        """Handle mouse motion in confirmation dialog - update selection."""
-        # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
-        # Prefer event.tile, fall back to event.position for test compatibility
-        tile_x, tile_y = None, None
-        for attr_name in ("tile", "position"):
-            if hasattr(event, attr_name):
-                coord_source = getattr(event, attr_name)
-                if coord_source is not None:
-                    try:
-                        tile_x = int(coord_source.x)
-                        tile_y = int(coord_source.y)
-                        break
-                    except (TypeError, ValueError, AttributeError):
-                        continue
-        if tile_x is None or tile_y is None:
-            return
-
-        # Check if hovering over option 0
-        if (
-            hasattr(self, "confirm_option_0_y")
-            and hasattr(self, "confirm_option_0_x_range")
-            and self.confirm_option_0_y is not None
-            and self.confirm_option_0_x_range is not None
-        ):
-
-            start_x, end_x = self.confirm_option_0_x_range
-            if tile_y == self.confirm_option_0_y and start_x <= tile_x < end_x:
-                self.export_confirmation_selection = 0
-                return
-
-        # Check if hovering over option 1
-        if (
-            hasattr(self, "confirm_option_1_y")
-            and hasattr(self, "confirm_option_1_x_range")
-            and self.confirm_option_1_y is not None
-            and self.confirm_option_1_x_range is not None
-        ):
-
-            start_x, end_x = self.confirm_option_1_x_range
-            if tile_y == self.confirm_option_1_y and start_x <= tile_x < end_x:
-                self.export_confirmation_selection = 1
-                return
-
-    def _handle_confirmation_mouse_click(self, event) -> str:
-        """Handle mouse click in confirmation dialog - execute selected option."""
-        # Update selection based on click position
-        self._handle_confirmation_mouse_motion(event)
-
-        # Execute the selected option (same as pressing Enter)
-        if self.export_confirmation_selection == 0:  # Yes, Export
-            self.show_export_confirmation = False
-            return "export_debug_confirmed"
-        else:  # No, Cancel
-            self.show_export_confirmation = False
-            return ""
-
     def handle_left_click(self, event) -> str:
-        """Handle left click - activate clicked option (for toggle/action types) or confirmation dialogue."""
-        # Priority: Handle confirmation dialogue if active
-        if self.show_export_confirmation:
-            return self._handle_confirmation_mouse_click(event)
-
+        """Handle left click - activate clicked option."""
         # First update selection based on click position
         self.handle_mouse_motion(event)
 
@@ -697,11 +536,6 @@ class SettingsMenu(BaseMenu):
         if option["type"] == "action":
             if option["name"] == "Back":
                 return "back"
-            elif option["name"] == "Export Debug Package":
-                # Show confirmation dialogue
-                self.show_export_confirmation = True
-                self.export_confirmation_selection = 0  # Default to "Yes, Export"
-                return ""
         elif option["type"] == "toggle":
             # Toggle the value (same as pressing Enter)
             if option["key"] == "graphics_mode":
@@ -842,12 +676,7 @@ class SettingsMenu(BaseMenu):
         return ""
 
     def handle_right_click(self, event) -> str:
-        """Handle right click - go back or cancel confirmation."""
-        # If confirmation dialogue is open, right-click closes it
-        if self.show_export_confirmation:
-            self.show_export_confirmation = False
-            return ""
-        # Otherwise go back to main menu
+        """Handle right click - go back."""
         return "back"
 
     def handle_mouse_wheel(self, event) -> str:
@@ -863,107 +692,6 @@ class SettingsMenu(BaseMenu):
             self._navigate_skip_headers(1)
 
         return ""
-
-    def _render_export_confirmation_dialog(self, console: tcod.console.Console) -> None:
-        """Render debug export confirmation dialog with background-aware positioning."""
-        # Calculate dialog height
-        dialog_height = 26
-
-        # Render the right-side box using common method
-        box = self._render_right_side_box(console, dialog_height, Colors.GOLDEN)
-
-        # Title
-        render_char_safe(
-            console,
-            box["center_x"] - 10,
-            box["top"] + 2,
-            "EXPORT DEBUG PACKAGE",
-            fg=Colors.GOLDEN,
-            bg=Colors.BLACK,
-        )
-
-        # Message - adjust for narrow box
-        if box["use_background_layout"]:
-            # Narrow box - break text into shorter lines
-            messages = [
-                "This will create a",
-                "debug package with:",
-                "",
-                "• Save files",
-                "• Settings",
-                "• Game logs",
-                "• Metrics",
-                "• System info",
-                "",
-                "Saved to:",
-                "debug_exports/",
-                "",
-                "This helps devs",
-                "fix bugs.",
-                "",
-                "Continue?",
-            ]
-        else:
-            # Glyph mode - use longer lines
-            messages = [
-                "This will create a debug package containing:",
-                "",
-                "• Your save files and settings",
-                "• Game logs and metrics",
-                "• System information",
-                "",
-                "This package can help developers fix bugs.",
-                "",
-                "Package will be saved to:",
-                "  debug_exports/debug_YYYY-MM-DD_HHMM.zip",
-                "",
-                "Continue?",
-            ]
-
-        for i, msg in enumerate(messages):
-            msg_x = (
-                box["content_left"] + 1 if len(msg) <= box["content_width"] else box["content_left"]
-            )
-            render_char_safe(
-                console, msg_x, box["top"] + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK
-            )
-
-        # Options
-        options = ["Yes, Export", "No, Cancel"]
-        options_start_y = box["bottom"] - 4
-
-        for i, option in enumerate(options):
-            color = (
-                Colors.GOLDEN
-                if i == self.export_confirmation_selection and i == 0
-                else Colors.YELLOW if i == self.export_confirmation_selection else Colors.WHITE
-            )
-            prefix = "> " if i == self.export_confirmation_selection else "  "
-
-            if box["use_background_layout"]:
-                # Narrow box - shorter option text and center alignment
-                short_options = ["Yes, Export", "No, Cancel"]
-                option_text = short_options[i]
-                option_x = box["center_x"] - len(option_text) // 2 - 1
-            else:
-                # Glyph mode - use full option text
-                option_text = option
-                option_x = box["center_x"] - len(option_text) // 2 - 1
-
-            full_text = f"{prefix}{option_text}"
-            render_char_safe(
-                console, option_x, options_start_y + i, full_text, fg=color, bg=Colors.BLACK
-            )
-
-            # Store X range for click detection (includes prefix)
-            start_x = option_x
-            end_x = option_x + len(full_text)
-            if i == 0:
-                self.confirm_option_0_x_range = (start_x, end_x)
-                self.confirm_option_0_y = options_start_y + i
-            else:
-                self.confirm_option_1_x_range = (start_x, end_x)
-                self.confirm_option_1_y = options_start_y + i
 
     def _adjust_setting(self, direction: int):
         """Adjust the currently selected setting."""

@@ -4,14 +4,14 @@ setlocal enabledelayedexpansion
 REM Change to parent directory (where RogueSignalProtocol.py is located)
 cd /d "%~dp0.."
 
-REM Build type: alpha (default), beta, or release
+REM Build type: release (default), alpha, or beta
 REM - alpha/beta: DEBUG logging enabled (creates debug_mode.flag)
 REM - release: Minimal logging (no flag file)
 set BUILD_TYPE=%1
-if "%BUILD_TYPE%"=="" set BUILD_TYPE=alpha
+if "%BUILD_TYPE%"=="" set BUILD_TYPE=release
 
 REM Version: optional, defaults to date-based naming
-REM Usage: build.bat beta 0.9.1
+REM Usage: build.bat release 1.0.0
 set VERSION=%2
 
 echo Building RogueSignalProtocol (%BUILD_TYPE% mode)...

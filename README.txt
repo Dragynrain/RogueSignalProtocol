@@ -1,16 +1,8 @@
 ===============================================================================
                         ROGUE SIGNAL PROTOCOL
-                         Version 0.9.2 Beta
+                         Version 1.0.0
                     A Coffee Break Stealth Roguelike
 ===============================================================================
-
-** BETA BUILD NOTICE **
-This build includes debug features:
-- Console window shows startup/error messages (intentional!)
-- Verbose logging to help track bugs
-- Shift+F12 creates debug packages for bug reports
-
-Final release builds will hide the console for a cleaner experience.
 
 ABOUT
 -----
@@ -18,10 +10,6 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth
 roguelike where you play as an escaped digital consciousness navigating
 hostile corporate networks. Quick 10-15 minute runs with permadeath -
 each death teaches lessons, each run reveals more truth.
-
-** FEEDBACK WANTED **
-This is a beta release! Please share your experience (2 minute survey):
-https://forms.gle/jbwGdn8VGPa6NG9p9
 
 KEY FEATURES
 ------------
@@ -169,9 +157,9 @@ APPDATA MODE (automatic fallback):
 - Same folder structure: saves/, logs/, metrics/, debug_exports/
 
 TO CHECK YOUR MODE:
-- Look at the console window when the game starts
-- It will show: "Data storage mode: Portable mode: [path]"
-  or "Data storage mode: AppData mode: [path]"
+- Check the log file at [data directory]\logs\game_debug.log
+  (requires debug_mode.flag - see LOGGING CONTROL below)
+- Or check if saves/ exists next to the game executable (portable mode)
 
 TYPICAL FILE PATHS:
 Portable: RogueSignalProtocol\saves\user_settings.json
@@ -196,7 +184,7 @@ Linux data is stored in XDG-compliant locations:
 
 Distribution formats available:
 - AppImage: Portable, works on any distro
-- Flatpak: Via Flathub beta channel
+- Flatpak: Via Flathub
 - AUR: For Arch-based distros (rogue-signal-protocol-bin)
 
 Steam Deck: Runs natively. Add as non-Steam game for Gaming Mode.
@@ -204,17 +192,13 @@ Steam Deck: Runs natively. Add as non-Steam game for Gaming Mode.
 TROUBLESHOOTING
 ---------------
 GAME WON'T START:
-- Check the console window for error messages
-- Check if debug_mode.flag exists (should exist for beta builds)
+- Create debug_mode.flag next to the game executable for verbose logging
 - Review logs in [data directory]\logs\ (see FILE LOCATIONS section above)
 - If directories can't be created: Move game to a writable location
   (Desktop, Documents, etc.) instead of Program Files
 
 CRASHES/BUGS:
-- This is a beta build - bugs may still occur!
-- Use Shift+F12 or Settings > Export Debug Package to create bug report
-- Debug package includes: saves, logs, metrics, system info, screenshot
-- Package saved to [data directory]\debug_exports\debug_YYYY-MM-DD_HHMM.zip
+- Check log files in [data directory]\logs\ for error details
 - When reporting, please include your OS (Windows 10/11, Linux distro, Steam Deck)
 - Report issues on GitHub: github.com/Dragynrain/RogueSignalProtocol
 
@@ -239,10 +223,10 @@ GAMEPAD NOT RECOGNIZED:
 
 ADVANCED - LOGGING CONTROL
 ---------------------------
-This beta build includes verbose logging for bug tracking.
+Debug logging is available for troubleshooting.
 
 ENABLE DEBUG LOGGING:
-1. Create empty file: debug_mode.flag
+1. Create empty file: debug_mode.flag (next to the game executable)
 2. Restart game
 3. game_debug.log will contain detailed info
 
@@ -251,13 +235,8 @@ DISABLE DEBUG LOGGING:
 2. Restart game
 3. Only errors logged to game_errors.log
 
-COMMUNITY & FEEDBACK
---------------------
-This is a BETA release. Your feedback helps improve the game!
-
-** SHARE YOUR FEEDBACK (2 minute survey): **
-https://forms.gle/jbwGdn8VGPa6NG9p9
-
+COMMUNITY
+---------
 LINKS:
 Discord:  https://discord.gg/5fykUtECqz
 Itch.io:  https://dragynrain.itch.io/rogue-signal-protocol

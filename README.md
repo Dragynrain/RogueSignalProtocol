@@ -2,13 +2,11 @@
 
 # Rogue Signal Protocol
 
-**Version 0.9.2 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 1.0.0** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.9.2%20Beta-orange.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-
-**[SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!
 
 ---
 
@@ -131,10 +129,9 @@ cd RogueSignalProtocol
 ./RogueSignalProtocol
 ```
 
-**Flatpak (via Flathub beta channel):**
+**Flatpak (via Flathub):**
 ```bash
-flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
-flatpak install flathub-beta com.dragynrain.roguesignalprotocol
+flatpak install flathub info.aforster.roguesignalprotocol
 ```
 
 **Arch Linux (AUR):**

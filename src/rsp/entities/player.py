@@ -86,6 +86,10 @@ class Player:
         }
         self.speed_moves_remaining = 0
 
+        # Combat tracking (used by bump attack heat penalty)
+        self.last_attack_position = None
+        self.consecutive_attacks_here = 0
+
         # Inventory system - imported later to avoid circular imports
         # Delayed import to avoid circular dependency
         from rsp.combat.inventory import InventoryManager

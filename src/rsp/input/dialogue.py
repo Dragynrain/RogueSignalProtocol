@@ -472,7 +472,7 @@ class DialogueInputManager:
 
         # Determine action based on which option was clicked
         action = None  # Initialize to avoid potential unbound variable
-        if option_index is not None and option_index < len(dialogue.valid_keys):
+        if option_index is not None and 0 <= option_index < len(dialogue.valid_keys):
             # Clicked on a specific option - use that option's key
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[option_index])
         elif not dialogue.valid_keys:

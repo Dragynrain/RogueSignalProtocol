@@ -214,10 +214,8 @@ class SaveGameManager:
                             save_data, f, indent=2, ensure_ascii=False, default=cls._numpy_converter
                         )
 
-                    # Atomic rename to prevent corruption
-                    import shutil
-
-                    shutil.move(temp_file, cls._get_save_file_path())
+                    # Atomic replace to prevent corruption
+                    os.replace(temp_file, cls._get_save_file_path())
 
                     file_size = os.path.getsize(cls._get_save_file_path())
                     logging.info(
@@ -276,13 +274,21 @@ class SaveGameManager:
             # Try to parse JSON with better error reporting
             try:
                 save_data = json.loads(content)
+
+                # Version compatibility check
+                save_version = save_data.get("version", "unknown")
+                if save_version != VERSION:
+                    logging.warning(
+                        f"Save version mismatch: save={save_version}, game={VERSION}"
+                    )
+
                 level = save_data.get("level", "?")
                 turn = save_data.get("turn", "?")
                 player_data = save_data.get("player", {})
                 player_cpu = player_data.get("cpu", "?")
                 enemy_count = len(save_data.get("enemies", []))
                 logging.info(
-                    f"Load: Successful, level={level}, turn={turn}, player_cpu={player_cpu}, enemies={enemy_count}"
+                    f"Load: Successful, version={save_version}, level={level}, turn={turn}, player_cpu={player_cpu}, enemies={enemy_count}"
                 )
                 return save_data
             except json.JSONDecodeError as e:

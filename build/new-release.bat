@@ -48,7 +48,7 @@ echo   2. Check off items as you complete them: [ ] to [x]
 echo   3. Delete the file when release is complete
 echo.
 echo Quick reference - key commands for %VERSION%:
-echo   Build:    build\build.bat beta %VERSION%
+echo   Build:    build\build.bat release %VERSION%
 echo   Push:     build\push-all.bat %VERSION%
 echo   Notes:    python build\extract-release-notes.py %VERSION%
 echo   Validate: python build\validate-release.py

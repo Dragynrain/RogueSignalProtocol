@@ -38,7 +38,7 @@ class GameErrorHandler:
         if user_message:
             logging.error(f"User Impact: {user_message}")
 
-        # Always include stack trace for beta debugging - use exception() for proper formatting
+        # Always include stack trace for debugging - use exception() for proper formatting
         logging.exception(f"Stack trace for {context}:")
 
         if fatal:

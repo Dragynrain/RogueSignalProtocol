@@ -239,16 +239,21 @@ class PlayerDeathHandler:
         from rsp.ui.dialogue import create_prologue_death_dialogue
 
         # Mark as handled to prevent re-entry during restart
+        # Set early for re-entrancy protection, but use try/finally to ensure
+        # we complete state changes even if intermediate operations fail
         self._handled = True
 
-        # Clear any queued dialogues (like pending thoughts) before showing death dialogue
-        # This prevents confusing messages appearing after the death notification
-        self.game.dialogue_state.close_and_clear_queue()
+        try:
+            # Clear any queued dialogues (like pending thoughts) before showing death dialogue
+            # This prevents confusing messages appearing after the death notification
+            self.game.dialogue_state.close_and_clear_queue()
+        except (AttributeError, RuntimeError):
+            pass
 
         # Play death sounds (still want audio feedback)
         try:
             self.game.sound_manager.play_sound("player_death", priority=10)
-        except Exception:
+        except (RuntimeError, OSError, AttributeError):
             pass
 
         # Build death message from cause and source

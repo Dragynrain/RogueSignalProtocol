@@ -9,7 +9,7 @@ RogueSignalProtocol supports two build types with different logging configuratio
 
 ## Build Types
 
-### Alpha Build (Default)
+### Alpha Build (Debug)
 
 **Purpose**: Playtesting and bug reports
 
@@ -163,7 +163,7 @@ This is documented in README.txt under "ADVANCED - LOGGING CONTROL"
 
 ## GitHub Actions
 
-Default: **Alpha builds** (for early releases with bug tracking)
+Default: **Release builds** for tagged releases. Use workflow_dispatch for debug builds.
 
 To create a release build via GitHub Actions:
 1. Edit `.github/workflows/release.yml`
@@ -261,7 +261,7 @@ dir game_errors.log  # Only created if errors occur
 
 | Feature | Alpha | Release |
 |---------|-------|---------|
-| Console output | Yes | No |
+| Console window | No | No |
 | Debug logging | Yes | No |
 | Log file | game_debug.log | game_errors.log |
 | Flag file | Present | Absent |

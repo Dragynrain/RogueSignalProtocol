@@ -75,7 +75,7 @@ def log_exception(e: Exception, context: str, level: str = "error"):
     log_func(f"{context} in {filename}:{line_no}")
     log_func(f"Exception: {str(e)}")
     log_func(f"Exception type: {type(e).__name__}")
-    traceback.print_exc()
+    logging.error(traceback.format_exc())
 
     # Auto-export crash report for critical errors
     if level == "critical":
@@ -406,24 +406,7 @@ def _process_menu_action(
         menu_sound_manager.cleanup()
         return current_menu, (None, True)  # game=None, should_exit=True
 
-    elif action == "export_debug_confirmed":
-        # Export debug package from settings menu (user confirmed)
-        from rsp.utils.debug_export import export_debug_package
-
-        logging.info("Debug Export: Starting debug package creation from settings menu")
-        zip_path = export_debug_package(game_engine=active_game)
-        if zip_path:
-            logging.info(f"Debug Export: Success from settings menu - {zip_path}")
-            menus["settings_menu"].export_status_message = "Debug package exported!"
-            menus["settings_menu"].export_path = zip_path  # Full path shown on second line
-        else:
-            logging.error("Debug Export: Failed to create package from settings menu")
-            menus["settings_menu"].export_status_message = "Failed to create debug package"
-            menus["settings_menu"].export_path = None
-        return current_menu, None
-
     elif action == "settings":
-        # Don't clear export_status_message - keep it visible until user leaves settings
         menus["settings_menu"].selected_option = 0  # Reset to top when entering
         menu_stack.append(current_menu)
         return menus["settings_menu"], None

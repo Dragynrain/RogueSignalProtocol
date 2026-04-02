@@ -134,7 +134,7 @@ class GameTurnManager:
             logging.warning(
                 "Death caught by fallback check - a damage source may be missing check_death() call"
             )
-        self.game_engine.death_handler.check_death("unknown")
+            self.game_engine.death_handler.check_death("unknown")
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
@@ -494,7 +494,7 @@ class GameTurnManager:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player, game_engine=self.game_engine)
 
-                # Log combat at INFO level for beta debugging (playtester reports)
+                # Log combat at INFO level for debugging
                 if damage > 0:
                     logging.info(
                         f"[DAMAGE] Player took {damage} damage from {enemy.type_data.name}, "

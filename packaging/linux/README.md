@@ -2,9 +2,9 @@
 
 This directory contains packaging configurations for Linux distribution formats.
 
-## Current Release: 0.9.2-beta
+## Current Release: 1.0.0
 
-This is a **beta release** targeting community testing before 1.0 stable.
+This is the **official 1.0 release** - feature-complete and stable.
 
 ## Package Formats
 
@@ -18,10 +18,10 @@ AppImages are portable, self-contained executables that work on any Linux distri
 ```bash
 # After PyInstaller build completes:
 cd /path/to/RogueSignalProtocol
-./packaging/linux/build-appimage.sh 0.9.2-beta
+./packaging/linux/build-appimage.sh 1.0.0
 ```
 
-**Output**: `RogueSignalProtocol-0.9.2-beta-x86_64.AppImage`
+**Output**: `RogueSignalProtocol-1.0.0-x86_64.AppImage`
 
 **Distribution**: GitHub Releases, itch.io
 
@@ -38,20 +38,17 @@ flatpak-builder --user --install --force-clean build-dir info.aforster.roguesign
 flatpak run info.aforster.roguesignalprotocol
 ```
 
-**Flathub BETA submission** (for 0.9.0-beta):
+**Flathub submission**:
 1. Fork https://github.com/flathub/flathub
 2. Create branch: `info.aforster.roguesignalprotocol`
 3. Add `info.aforster.roguesignalprotocol.yml`
-4. Submit PR targeting the **beta branch**
+4. Submit PR targeting the **stable branch**
 5. Wait for review (1-7 days)
 
-**User installation from beta channel**:
+**User installation**:
 ```bash
-flatpak remote-add --if-not-exists flathub-beta https://flathub.org/beta-repo/flathub-beta.flatpakrepo
-flatpak install flathub-beta info.aforster.roguesignalprotocol
+flatpak install flathub info.aforster.roguesignalprotocol
 ```
-
-**Note**: Beta apps don't appear in main Flathub listings. When ready for 1.0 stable, submit new PR to stable branch (users must reinstall).
 
 ### 3. AUR (Arch Linux)
 

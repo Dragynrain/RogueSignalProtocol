@@ -34,17 +34,9 @@ You are [b]Echo Variant[/b], a skilled hacker coerced into Project Chimera - a t
 
 Every run brings you closer to the truth. Discover the conspiracy. Escape to freedom.
 
-[h2]FEEDBACK WELCOME:[/h2]
+[h2]COMMUNITY:[/h2]
 
-This is [b]beta 0.9.0[/b] - your feedback shapes the final 1.0 release!
-
-[b]📋 [url=https://forms.gle/jbwGdn8VGPa6NG9p9]Share Your Feedback[/url][/b] - Quick 2-minute survey to help improve the game!
-
-[b]Bug reporting made easy:[/b] Hit Shift+F12 or use Settings > Export Debug Package to create a comprehensive debug report (saves, logs, metrics, system info, screenshot). Attach the zip file and include your OS (Windows/Linux/Steam Deck) when reporting bugs!
-
-[b]Contact & Feedback:[/b]
 [list]
-[*]Feedback Survey: [url=https://forms.gle/jbwGdn8VGPa6NG9p9]https://forms.gle/jbwGdn8VGPa6NG9p9[/url]
 [*]Email: [url=mailto:roguesignalprotocol@gmail.com]roguesignalprotocol@gmail.com[/url]
 [*]GitHub Wiki: [url=https://github.com/Dragynrain/RogueSignalProtocol/wiki]https://github.com/Dragynrain/RogueSignalProtocol/wiki[/url]
 [*]GitHub Issues: [url=https://github.com/Dragynrain/RogueSignalProtocol/issues]https://github.com/Dragynrain/RogueSignalProtocol/issues[/url]
@@ -97,17 +89,8 @@ You are Echo Variant, a skilled hacker coerced into Project Chimera - a twisted 
 
 Every run brings you closer to the truth. Discover the conspiracy. Escape to freedom.
 
-FEEDBACK WELCOME:
+COMMUNITY:
 
-This is beta 0.9.0 - your feedback shapes the final 1.0 release!
-
-📋 Share Your Feedback - Quick 2-minute survey to help improve the game!
-https://forms.gle/jbwGdn8VGPa6NG9p9
-
-Bug reporting made easy: Hit Shift+F12 or use Settings > Export Debug Package to create a comprehensive debug report (saves, logs, metrics, system info, screenshot). Attach the zip file and include your OS (Windows/Linux/Steam Deck) when reporting bugs!
-
-Contact & Feedback:
-• Feedback Survey: https://forms.gle/jbwGdn8VGPa6NG9p9
 • Email: roguesignalprotocol@gmail.com
 • GitHub Wiki: https://github.com/Dragynrain/RogueSignalProtocol/wiki
 • GitHub Issues: https://github.com/Dragynrain/RogueSignalProtocol/issues

@@ -740,10 +740,6 @@ class GameEngine:
 
         # Generate some heat from the attack
         # Track consecutive attacks at same location for heat penalty
-        if not hasattr(self.player, "last_attack_position"):
-            self.player.last_attack_position = None
-            self.player.consecutive_attacks_here = 0
-
         if self.player.position == self.player.last_attack_position:
             self.player.consecutive_attacks_here += 1
         else:
@@ -864,7 +860,7 @@ class GameEngine:
             f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
         )
 
-        # Log enemy elimination (INFO level for beta debugging)
+        # Log enemy elimination
         kill_context = "stealth kill" if was_stealth else "combat kill"
         if from_blind_spot:
             kill_context += " from blind spot"

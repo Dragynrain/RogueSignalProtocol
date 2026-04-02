@@ -229,8 +229,10 @@ class GameStatePersistence:
         self.game_engine.game_state.distraction_points = {}
         for pos_str, turns in effects_data.get("distraction_points", {}).items():
             position = parse_coordinate_string(pos_str)
-            if position:  # Skip malformed coordinate data
+            if position:
                 self.game_engine.game_state.distraction_points[position] = turns
+            else:
+                logging.warning(f"Dropped malformed distraction point coordinate: {pos_str}")
 
         # Restore revealed special nodes (from Network Scan exploit)
         self.game_engine.game_state.revealed_special_nodes = {}
@@ -343,12 +345,15 @@ class GameStatePersistence:
         for pos_str, exploit_key in map_data["exploit_pickups"].items():
             position = parse_coordinate_string(pos_str)
             if not position:
+                logging.warning(f"Dropped malformed exploit pickup coordinate: {pos_str}")
                 continue
             x, y = position.x, position.y
             if exploit_key in GameData.EXPLOITS:
                 exploit_def = GameData.EXPLOITS[exploit_key]
                 exploit_item = ExploitItem(exploit_key, exploit_def)
                 game_map.exploit_pickups[(x, y)] = exploit_item
+            else:
+                logging.warning(f"Dropped unknown exploit '{exploit_key}' at ({x},{y}) - save may be from different version")
 
         # Restore permanent upgrades
         for pos_str, upgrade_key in map_data["permanent_upgrades"].items():

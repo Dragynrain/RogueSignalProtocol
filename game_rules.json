@@ -1,5 +1,5 @@
 {
-  "version": "0.9.2 Beta",
+  "version": "1.0.0",
   "display": {
     "screen_width": 80,
     "screen_height": 50,
@@ -912,7 +912,7 @@
     }
   },
   "welcome_messages": [
-    "Welcome to Rogue Signal Protocol v0.9.2 Beta!",
+    "Welcome to Rogue Signal Protocol v1.0.0!",
     "Navigate using stealth",
     "Reach the gateway (>)",
     "Hide in monitoring blind spots (.) to avoid detection",

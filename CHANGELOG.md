@@ -2,6 +2,75 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
+## [1.0.0] - 2026-04-01 - Official Release
+
+### Added
+
+#### Prologue Tutorial System
+- **5-section guided tutorial** teaching core mechanics through show-don't-tell gameplay
+- **Hand-designed 28x24 fixed layout** with forced linear progression through door barriers
+- **Section 1: Melee** - Damaged Scanner (5 HP, 0 damage) blocks the exit, teaches bump attacks
+- **Section 2: Timing** - Patrol oscillates on fixed route, teaches wait (.) and pattern observation
+- **Section 3: FOV & Stealth** - Scanner at distance with blind spots, teaches distance-based visibility
+- **Section 4: Ranged Combat** - Patrol behind wall with exploit pickup, teaches ranged exploit usage
+- **Section 5: Synthesis** - Timing puzzle with ghost node and stepping blind spots, combines all mechanics
+- **Reactive thought system** - 24 internal thoughts triggered by player actions (not pre-emptive instructions)
+- **Section-specific death hints** that escalate with repeated deaths in the same section
+- **No permadeath in tutorial** - player restarts without save deletion or penalty
+- **"Tutorial [Done]" indicator** on main menu after completion
+- **Completion dialogue** - "The real networks won't be this forgiving..."
+- Player vision (15) exceeds enemy vision (4-5) so players can see full patrol routes to plan
+
+#### Menu Improvements
+- **Tutorial and Controls options** now respond to mouse clicks in main menu
+
+### Changed
+- **Console window hidden** - Game no longer shows a CMD window on Windows (PyInstaller `console=False`)
+- **Debug export hidden from UI** - Shift+F12 still works as undocumented shortcut for bug reports
+- **Build system defaults to release** - `build.bat` and GitHub Actions now default to release builds
+- **Crash tracebacks logged to file** - `traceback.print_exc()` replaced with `logging.error()` for windowless operation
+- **Startup diagnostics moved to logging** - print statements replaced with logging.info after logging init
+
+### Fixed
+
+#### Pathfinding
+- **Enemy pathfinding no longer blocks on player position** - player removed from cost map so enemies can path toward player
+
+#### Input
+- **Main menu mouse click off-by-one** - mouse now selects correct menu option
+- **Tutorial starting exploit locked** - prevents equipping unintended exploits at tutorial start
+
+#### Testing
+- **Session ID collision in parallel tests** - fixed race condition in test fixtures
+- **Replaced time.sleep with mock_time** - deterministic test timing, no flaky sleeps
+- Removed flaky performance tests
+
+### Removed
+- Beta build notice from README.txt
+- Feedback survey links from README.md and marketing pages
+- Debug export button from Settings menu
+- Shift+F12 reference from help text
+- Console window references from troubleshooting docs
+- All beta-specific language from code and documentation
+
+### Files Added
+- `src/rsp/systems/prologue_thoughts.py` - Reactive tutorial hint system (24 triggers)
+- `src/rsp/level/fixed_levels.py` - Hand-designed prologue level layout
+- Tutorial-specific tests for level generation, thought triggers, and death handling
+
+### Files Modified
+- `src/rsp/core/engine.py` - Prologue mode initialization, death tracking, thought validation
+- `src/rsp/systems/death.py` - Prologue-specific death handling with escalating hints
+- `src/rsp/ui/menu_main.py` - Tutorial menu option with completion indicator
+- `src/rsp/ui/menu_settings.py` - Removed debug export UI (~200 lines)
+- `src/rsp/core/loop.py` - Removed dead export handler, fixed traceback logging
+- `RogueSignalProtocol.py` - Removed print statements, console-free startup
+- `RogueSignalProtocol.spec` / `RogueSignalProtocol-linux.spec` - `console=False`
+- `narrative_content.json` - Prologue thoughts and section-specific death hints
+- `.github/workflows/release.yml` - Default build type changed to release
+
+---
+
 ## [0.9.2 Beta] - 2025-12-30 - Bug Fixes & Code Quality
 
 ### Fixed

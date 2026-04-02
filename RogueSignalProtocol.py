@@ -28,12 +28,10 @@ if getattr(sys, "frozen", False):
     # Running as compiled exe
     application_path = os.path.dirname(sys.executable)
     os.chdir(application_path)
-    print(f"Running as frozen exe, changed working directory to: {application_path}")
 else:
     # Running as script
     application_path = os.path.dirname(os.path.abspath(__file__))
     os.chdir(application_path)
-    print(f"Running as script, working directory: {application_path}")
 
 # CRITICAL: Initialize file paths BEFORE any logging or file operations
 # This determines whether to use portable mode (./saves, ./logs) or AppData mode
@@ -54,17 +52,12 @@ if not initialize_data_directories():
         "Rogue Signal Protocol - Startup Error",
     )
 
-print(f"Data storage mode: {get_mode_description()}")
-
-# Import refactored modules
-
 # Import modular components for game loop and rendering
 from rsp.core.loop import main  # noqa: E402
 
 # Configure logging based on build type
-# Alpha/Beta builds: DEBUG logging with file output (for playtester bug reports)
-# Release builds: WARNING logging with minimal file output
-# Build script creates debug_mode.flag for alpha/beta builds only
+# debug_mode.flag present: DEBUG logging with file output
+# No flag: WARNING logging with minimal file output
 DEBUG_MODE = os.path.exists("debug_mode.flag")
 
 # Get log directory path (supports portable/AppData modes)
@@ -74,7 +67,7 @@ log_dir = get_data_directory() / "logs"
 log_dir.mkdir(exist_ok=True)
 
 if DEBUG_MODE:
-    # Alpha/Debug build - DEBUG level logging (for playtester bug reports)
+    # Debug mode - DEBUG level logging
     log_level = logging.DEBUG
     # Use unbuffered file handler so logs are written immediately (critical for crash debugging)
     # Open with buffering=1 for line buffering
@@ -91,12 +84,10 @@ if DEBUG_MODE:
     console_handler.setLevel(logging.INFO)  # Keep console at INFO to reduce spam
 
     log_handlers = [console_handler, file_handler]
-    print("DEBUG MODE: Verbose logging enabled (Beta/Alpha build)")
 else:
     # Release build - minimal logging (default when no debug_mode.flag)
     log_level = logging.WARNING
     log_handlers = [logging.FileHandler(str(log_dir / "game_errors.log"), mode="w")]
-    print("RELEASE MODE: Minimal logging")
 
 logging.basicConfig(
     level=log_level,
@@ -106,17 +97,17 @@ logging.basicConfig(
     force=True,  # Force reconfiguration even if already configured
 )
 
-# Log the startup mode
+# Log startup info (now that logging is configured, replaces earlier print statements)
 if DEBUG_MODE:
     logging.info("=" * 80)
     logging.info("[START] GAME SESSION START")
     logging.info("=" * 80)
-    logging.info("Game started in DEBUG mode (Beta build for playtesters)")
+    logging.info("Game started in DEBUG mode")
+    logging.info(f"Working directory: {application_path}")
+    logging.info(f"Data storage: {get_mode_description()}")
     logging.info(f"Log file: {log_dir / 'game_debug.log'}")
-    logging.info(f"Data directory: {get_mode_description()}")
     logging.info(f"Python version: {__import__('sys').version}")
     logging.info(f"TCOD version: {tcod.__version__}")
-    logging.info("NOTE: Remove 'debug_mode.flag' to switch to minimal logging")
     # Force flush to ensure it's written
     for handler in logging.root.handlers:
         handler.flush()

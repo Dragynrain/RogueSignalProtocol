@@ -110,7 +110,7 @@ class StatusBarRenderer:
         x_pos = 1
         for part, color in zip(status_parts, colors):
             # Keep status bar in game area only
-            if x_pos + len(part) <= GameConfig.GAME_AREA_WIDTH() - 1:
+            if x_pos + len(part) <= GameConfig.GAME_AREA_WIDTH():
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
 
@@ -125,10 +125,8 @@ class StatusBarRenderer:
             if getattr(game, "prologue_spotted_in_blind_spot", False):
                 try:
                     game.sound_manager.play_sound("alert", volume=0.5)
-                except Exception:
+                except (RuntimeError, OSError, AttributeError):
                     pass  # Audio failure is non-critical
-            # Reset the flash flag after rendering
-            if hasattr(game, "prologue_spotted_in_blind_spot"):
                 game.prologue_spotted_in_blind_spot = False
 
         # Bottom border of status bar (row 1) - horizontal line with UI color

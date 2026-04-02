@@ -43,7 +43,7 @@ VERSION = _load_version()
 
 # Convenience formatted strings
 VERSION_DISPLAY = f"Version {VERSION}"
-VERSION_SHORT = VERSION.split()[0] if " " in VERSION else VERSION  # "0.9.1" from "0.9.1 Beta"
+VERSION_SHORT = VERSION.split()[0] if " " in VERSION else VERSION  # Strips suffix if present
 
 
 def get_version() -> str:
@@ -52,10 +52,10 @@ def get_version() -> str:
 
 
 def get_version_display() -> str:
-    """Get the version string formatted for display (e.g., 'Version 0.9.1 Beta')."""
+    """Get the version string formatted for display (e.g., 'Version 1.0.0')."""
     return VERSION_DISPLAY
 
 
 def get_version_short() -> str:
-    """Get just the version number without suffix (e.g., '0.9.1' from '0.9.1 Beta')."""
+    """Get just the version number without suffix (strips suffix if present)."""
     return VERSION_SHORT

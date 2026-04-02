@@ -1,6 +1,6 @@
 # Rogue Signal Protocol - Developer Guide
 
-**Version 0.9.2 Beta** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 1.0.0** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 > **For Players**: See [README.txt](README.txt) for game instructions
 >
@@ -13,7 +13,7 @@ Copyright (C) 2025 Adam Forster
 This program is free software licensed under the MIT License. You can freely use, modify, and distribute it. See LICENSE file for full details.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-0.9.2%20Beta-orange.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Game Overview
@@ -57,11 +57,11 @@ Discover the dark truth through environmental storytelling:
 - **Dr. Aris Thorne**: Learn about the obsessed lead researcher
 - **Digital Consciousness**: Explore themes of mind uploading and identity
 
-## Beta Status
+## Release Status
 
-This is a **Beta release** - feature-complete and seeking community testing before 1.0.
+This is the **1.0 release** - feature-complete and stable.
 
-### What's Implemented
+### Features
 - Complete stealth gameplay loop
 - All 8 enemy types with unique behaviors
 - Full exploit system with 13 abilities
@@ -72,9 +72,6 @@ This is a **Beta release** - feature-complete and seeking community testing befo
 - Complete story content (20+ fragments)
 - Full gamepad support with remapping
 - Cross-platform: Windows and Linux (including Steam Deck)
-
-### Known Limitations
-- No tutorial scenario (help menu is comprehensive)
 
 ---
 
@@ -287,15 +284,15 @@ The game uses a build system supporting both Windows and Linux.
 
 ### Windows Build
 
-**Beta Build (For Playtesters):**
+**Debug Build (For Testing):**
 ```bash
 cd build
-build.bat beta  # or: build.bat alpha
+build.bat alpha
 ```
 - Includes DEBUG logging
 - Creates `game_debug.log` for bug reports
 
-**Release Build (For Public Release):**
+**Release Build (Default):**
 ```bash
 cd build
 build.bat release
@@ -328,14 +325,14 @@ dist/                         # Complete distribution
 ├── RogueSignalProtocol.exe   # Windows executable (or no extension on Linux)
 ├── README.txt                # End-user instructions
 ├── build_info.txt            # Build type and date
-├── debug_mode.flag           # Present in beta/alpha builds
+├── debug_mode.flag           # Present in debug builds only
 ├── game_content.json         # All JSON configs
 ├── graphics/                 # All sprites
 ├── sound/                    # All SFX
 └── music/                    # All music
 
 releases/                     # Timestamped archives (Windows only)
-└── RogueSignalProtocol_Beta_2025-01-15_143022.zip
+└── RogueSignalProtocol_Release_2026-04-01_143022.zip
 ```
 
 ### Build Documentation

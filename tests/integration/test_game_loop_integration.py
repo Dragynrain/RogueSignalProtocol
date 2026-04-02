@@ -362,26 +362,25 @@ class TestErrorHandling(unittest.TestCase):
     def test_log_exception_with_traceback(self):
         """Test log_exception extracts traceback info correctly."""
         with patch("logging.error") as mock_log_error:
-            with patch("traceback.print_exc") as mock_print_exc:
-                try:
-                    raise ValueError("Test error")
-                except Exception as e:
-                    log_exception(e, "Test context", level="error")
+            try:
+                raise ValueError("Test error")
+            except Exception as e:
+                log_exception(e, "Test context", level="error")
 
-                    # Should call logging.error
-                    self.assertTrue(mock_log_error.called)
+                # Should call logging.error
+                self.assertTrue(mock_log_error.called)
 
-                    # Check that context was logged
-                    error_calls = [str(call) for call in mock_log_error.call_args_list]
-                    self.assertTrue(any("Test context" in str(call) for call in error_calls))
+                # Check that context was logged
+                error_calls = [str(call) for call in mock_log_error.call_args_list]
+                self.assertTrue(any("Test context" in str(call) for call in error_calls))
 
-                    # Should print traceback
-                    mock_print_exc.assert_called_once()
+                # Should log traceback via logging.error(traceback.format_exc())
+                self.assertTrue(any("Traceback" in str(call) for call in error_calls))
 
     def test_log_exception_with_warning_level(self):
         """Test log_exception with warning level."""
         with patch("logging.warning") as mock_log_warning:
-            with patch("traceback.print_exc"):
+            with patch("logging.error"):
                 try:
                     raise RuntimeError("Test warning")
                 except Exception as e:

@@ -21,10 +21,8 @@ from unittest.mock import Mock, patch
 import pytest
 import tcod.event
 
-from rsp.core.config import GameSettings
 from rsp.core.engine import GameEngine
 from rsp.input.handler import InputHandler
-from rsp.ui.menus import SettingsMenu
 from rsp.utils.debug_export import DebugExporter
 
 
@@ -160,14 +158,6 @@ def input_handler(mock_game_engine):
     return handler
 
 
-@pytest.fixture
-def settings_menu(mock_game_engine):
-    """Create a settings menu instance."""
-    settings = GameSettings()
-    menu = SettingsMenu(settings)
-    return menu
-
-
 # ============================================================================
 # Test Shift+F12 Hotkey Flow
 # ============================================================================
@@ -251,187 +241,6 @@ def test_shift_f12_cancel_closes_dialogue(input_handler, mock_game_engine):
     if mock_game_engine.message_log.add_message.called:
         messages = [call[0][0] for call in mock_game_engine.message_log.add_message.call_args_list]
         assert not any("Creating debug package" in msg for msg in messages)
-
-
-# ============================================================================
-# Test Settings Menu Keyboard Flow
-# ============================================================================
-
-
-def test_settings_menu_navigate_to_export_option(settings_menu):
-    """Test navigating to the Export Debug Package option in settings menu."""
-    # Find the index of "Export Debug Package" option
-    export_index = None
-    for i, option in enumerate(settings_menu.options):
-        if option.get("name") == "Export Debug Package":
-            export_index = i
-            break
-
-    assert export_index is not None, "Export Debug Package option not found in settings menu"
-
-    # Navigate to the option
-    settings_menu.selected_option = export_index
-
-    # Verify we're on the correct option
-    assert settings_menu.options[settings_menu.selected_option]["name"] == "Export Debug Package"
-
-
-def test_settings_menu_export_shows_confirmation(settings_menu):
-    """Test that selecting Export Debug Package shows confirmation dialogue."""
-    # Find and select the export option
-    for i, option in enumerate(settings_menu.options):
-        if option.get("name") == "Export Debug Package":
-            settings_menu.selected_option = i
-            break
-
-    # Simulate pressing Enter
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    settings_menu.handle_input(event)
-
-    # Verify confirmation dialogue is shown
-    assert settings_menu.show_export_confirmation is True
-    assert settings_menu.export_confirmation_selection == 0  # Default to first option
-
-
-def test_settings_menu_confirm_export_returns_action(settings_menu):
-    """Test that confirming export in settings menu returns correct action."""
-    # Show the confirmation dialogue
-    settings_menu.show_export_confirmation = True
-    settings_menu.export_confirmation_selection = 0  # "Yes, Export"
-
-    # Simulate pressing Enter to confirm
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    result = settings_menu.handle_input(event)
-
-    # Verify the action returned
-    assert result == "export_debug_confirmed"
-    assert settings_menu.show_export_confirmation is False
-
-
-def test_settings_menu_cancel_export_confirmation(settings_menu):
-    """Test that canceling export confirmation closes the dialogue."""
-    # Show the confirmation dialogue
-    settings_menu.show_export_confirmation = True
-    settings_menu.export_confirmation_selection = 1  # "No, Cancel"
-
-    # Simulate pressing Enter on "No"
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    result = settings_menu.handle_input(event)
-
-    # Verify dialogue was closed without export action
-    assert result == ""
-    assert settings_menu.show_export_confirmation is False
-
-
-def test_settings_menu_escape_closes_confirmation(settings_menu):
-    """Test that ESC key closes the export confirmation dialogue."""
-    # Show the confirmation dialogue
-    settings_menu.show_export_confirmation = True
-
-    # Simulate pressing ESC
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.ESCAPE, sym=tcod.event.KeySym.ESCAPE, mod=0
-    )
-
-    result = settings_menu.handle_input(event)
-
-    # Verify dialogue was closed
-    assert settings_menu.show_export_confirmation is False
-    assert result == ""
-
-
-# ============================================================================
-# Test Settings Menu Mouse Flow
-# ============================================================================
-
-
-def test_settings_menu_mouse_click_export_button(settings_menu, monkeypatch):
-    """Test clicking the Export Debug Package button with mouse."""
-    # Mock console for rendering
-    mock_console = Mock()
-    settings_menu.render(mock_console)
-
-    # Find the export option coordinates
-    export_index = None
-    for i, option in enumerate(settings_menu.options):
-        if option.get("name") == "Export Debug Package":
-            export_index = i
-            break
-
-    assert export_index is not None
-
-    # The menu stores click coordinates during render
-    # We need to simulate a click at the option's position
-    # This is complex without full rendering, so we test the logic path
-
-    # Set selected option to export option
-    settings_menu.selected_option = export_index
-
-    # Test that clicking triggers the same flow as Enter key
-    enter_event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    settings_menu.handle_input(enter_event)
-
-    # Verify confirmation dialogue is shown
-    assert settings_menu.show_export_confirmation is True
-
-
-def test_settings_menu_mouse_click_confirm_yes(settings_menu):
-    """Test clicking 'Yes' in export confirmation with mouse."""
-    # Render to populate click coordinates
-    mock_console = Mock()
-    settings_menu.show_export_confirmation = True
-    settings_menu._render_export_confirmation_dialog(mock_console)
-
-    # Verify click ranges were set
-    assert settings_menu.confirm_option_0_x_range is not None
-    assert settings_menu.confirm_option_0_y is not None
-
-    # Select "Yes" option
-    settings_menu.export_confirmation_selection = 0
-
-    # Simulate Enter key (mouse click handler would set selection then trigger this)
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    result = settings_menu.handle_input(event)
-
-    # Verify export action was returned
-    assert result == "export_debug_confirmed"
-
-
-def test_settings_menu_mouse_click_confirm_no(settings_menu):
-    """Test clicking 'No' in export confirmation with mouse."""
-    # Render to populate click coordinates
-    mock_console = Mock()
-    settings_menu.show_export_confirmation = True
-    settings_menu._render_export_confirmation_dialog(mock_console)
-
-    # Select "No" option
-    settings_menu.export_confirmation_selection = 1
-
-    # Simulate Enter key
-    event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
-    )
-
-    result = settings_menu.handle_input(event)
-
-    # Verify dialogue was closed without export
-    assert result == ""
-    assert settings_menu.show_export_confirmation is False
 
 
 # ============================================================================
