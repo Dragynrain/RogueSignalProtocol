@@ -6,21 +6,20 @@
 
 ABOUT
 -----
-Rogue Signal Protocol is a traditional turn-based coffee break stealth
-roguelike where you play as an escaped digital consciousness navigating
-hostile corporate networks. Quick 10-15 minute runs with permadeath -
-each death teaches lessons, each run reveals more truth.
+A turn-based stealth roguelike. You play an escaped digital
+consciousness picking through hostile corporate networks. Runs take
+10-15 minutes and end with permadeath.
 
 KEY FEATURES
 ------------
-- DETERMINISTIC GAMEPLAY: No RNG - pure skill-based tactical decisions
-- 3 PROCEDURALLY-GENERATED LEVELS: 8 enemy types, 13 exploits, distinct AI
-- ENEMY MOVEMENT PREDICTION: See enemies' next 3 planned moves
-- STEALTH-FIRST TACTICS: Hiding > fighting. Detection spawns Admin Avatar
-- 20+ STORY FRAGMENTS: Discover the truth about Project Chimera
-- DUAL RENDERING: Switch between ASCII glyphs or cyberspace graphics
-- COFFEE BREAK RUNS: Complete runs in 10-15 minutes
-- PERMADEATH: Save files deleted on death. Every choice matters
+- NO RNG in combat or movement - only the layout is random
+- 3 PROCEDURALLY-GENERATED LEVELS with 8 enemy types and 13 exploits
+- ENEMY MOVEMENT PREDICTION - each enemy shows its next 3 planned moves
+- STEALTH-FIRST: hiding works better than fighting
+- 20+ STORY FRAGMENTS that persist across runs (Project Chimera plot)
+- DUAL RENDERING - ASCII glyphs or graphics, plays identically
+- 10-15 minute runs
+- PERMADEATH - save file gets deleted on death
 
 OBJECTIVE
 ---------
@@ -86,15 +85,15 @@ STEALTH: Hide in blind spots (♠) to break line of sight. +10 damage when attac
 RESOURCES: Cooling nodes reduce heat, CPU nodes restore health.
 PERMANENT UPGRADES: RAM/CPU/Heat capacity improvements persist throughout run.
 
-TIPS FOR SURVIVAL
-------------------
-1. HIDE FIRST: Blind spots (♠) are your best friend - +10 damage bonus!
-2. WATCH ENEMY QUEUES: Enemies show next 3 planned moves (arrows)
-3. MANAGE HEAT: Cool down regularly to avoid overheat damage
-4. AVOID DETECTION: High trace spawns unbeatable Admin Avatar
-5. EXPLORE CAREFULLY: Story fragments reveal game lore
-6. EQUIP SMARTLY: Balance combat, stealth, and utility exploits
-7. PROGRESS SAVED: Game auto-saves when returning to menu
+TIPS
+----
+1. Attack from a blind spot (♠) for +10 damage
+2. Read the enemy move queue arrows - they show the next 3 moves
+3. Cool down at nodes before heat damage starts
+4. High trace spawns the Admin Avatar. It's beatable but expensive.
+5. Story fragments persist across runs - exploring is rarely wasted
+6. Mix combat, stealth, and utility exploits
+7. Returning to menu auto-saves
 
 ENEMY TYPES
 -----------
@@ -200,7 +199,7 @@ GAME WON'T START:
 CRASHES/BUGS:
 - Check log files in [data directory]\logs\ for error details
 - When reporting, please include your OS (Windows 10/11, Linux distro, Steam Deck)
-- Report issues on GitHub: github.com/Dragynrain/RogueSignalProtocol
+- Report issues at: https://github.com/Dragynrain/RogueSignalProtocol/issues
 
 SAVE FILE LOST:
 - Permadeath is intentional, but if save corruption occurred:
@@ -271,4 +270,4 @@ This game is free forever. Modify it. Share it. Learn from it.
 Detection means deletion. Make your signal count.
 ===============================================================================
 
-Copyright (C) 2025 Adam Forster
+Copyright (C) 2026 Adam Forster

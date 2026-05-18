@@ -5,62 +5,62 @@ Copy the wiki markup below:
 ---
 
 ```wiki
-{{game-beta
+{{Gameinfo
 | name = Rogue Signal Protocol
 | developer = [[User:Dragynrain|Dragynrain]]
 | theme = Cyberpunk, Stealth
 | influences =
-| released = December 2025 (0.9.0)
-| updated = December 2025
+| released = May 2026 (1.0)
+| updated = May 2026
 | licensing = [[MIT License]]
 | language = [[Python]], [[python-tcod]]
 | platforms = [[Windows]], [[Linux]]
 | interface = Graphical tiles, ASCII
-| length = 5-15 minutes
+| length = 10-15 minutes
 | site = https://dragynrain.itch.io/rogue-signal-protocol
 | download = https://dragynrain.itch.io/rogue-signal-protocol
 | repository = https://github.com/Dragynrain/RogueSignalProtocol
 }}
 
-'''Rogue Signal Protocol''' is a coffee-break turn-based roguelike focused on tactical stealth. The player is a trapped digital consciousness exfiltrating hostile corporate networks, using exploits and stealth to reach the exit of each level.
+'''Rogue Signal Protocol''' is a coffee-break turn-based roguelike focused on stealth. The player is a digital consciousness escaping hostile corporate networks, using stealth and exploits to reach the exit of each level.
 
 == Gameplay ==
 
-The core mechanic is '''visible enemy intent''': every enemy displays their next 3 planned moves based on their current AI state (patrol, investigate, chase). The queue only updates when the enemy changes state or a move gets blocked. This transforms stealth into a spatial puzzle where you read patrol routes, find timing windows, and set up ambushes.
+The central mechanic is '''visible enemy intent''': every enemy displays its next 3 planned moves based on its current AI state (patrol, investigate, chase). The queue only updates when the enemy changes state or a move gets blocked. Stealth becomes a spatial puzzle of patrol routes, timing windows, and ambush positions.
 
-Combat uses '''deterministic damage''' with no RNG. Every attack lands, damage values are fixed. Deaths result from tactical mistakes rather than bad luck.
+Combat is '''deterministic'''. Every attack lands, damage values are fixed, no dice rolls. Deaths come from positioning and resource mistakes rather than bad luck.
 
 === Detection System ===
 
-Getting spotted increases a global trace meter. If trace reaches 100%, the Admin Avatar spawns - a powerful boss with 250 HP that ignores normal movement rules and tracks the player perfectly. This creates tension between aggressive play and careful stealth.
+Getting spotted raises a global trace meter. At 100%, the Admin Avatar spawns - 250 HP, perfect tracking, 45 damage per hit. It's beatable but expensive, and most runs end better if it never appears.
 
 === Heat Management ===
 
-All abilities (called "exploits") generate heat. Overheating causes self-damage, limiting burst potential and requiring resource management throughout each run.
+All abilities (called "exploits") generate heat. Overheating causes self-damage, so exploit use has to be paced.
 
 == Features ==
 
 * 3 procedurally generated networks (Corporate, Government, Military)
 * 8 enemy types with distinct AI behaviors
-* 13 exploits ranging from stealth utilities to attacks
-* True permadeath with automatic save deletion
-* 20 Ascension difficulty levels for replayability
+* 13 exploits covering stealth, combat, and utility
+* Permadeath with automatic save deletion
+* 20-level Ascension mode (stacking difficulty modifiers)
 * 47 achievements
-* Dual rendering: switch between graphical tiles and ASCII anytime
+* Dual rendering: graphical tiles or ASCII, toggle in-game
 * Full gamepad support including Steam Deck
 * Keyboard and gamepad remapping
 
 == Story ==
 
-Narrative fragments are scattered across levels and persist between deaths. Each run reveals more of the conspiracy, encouraging multiple playthroughs to piece together the full story.
+20+ narrative fragments are scattered across the levels and persist between deaths. Each run reveals more of the Project Chimera plot.
 
 == Links ==
 
 * [https://dragynrain.itch.io/rogue-signal-protocol Itch.io page] (free/pay what you want)
 * [https://github.com/Dragynrain/RogueSignalProtocol GitHub repository] (MIT license)
+* [https://github.com/Dragynrain/RogueSignalProtocol/issues Bug tracker] (GitHub Issues)
 * [https://www.youtube.com/watch?v=URI75uHpOOc Gameplay video]
 
-[[Category:Beta projects]]
 [[Category:Coffeebreak roguelikes]]
 [[Category:Futuristic roguelikes]]
 [[Category:Handheld roguelikes]]
@@ -70,7 +70,9 @@ Narrative fragments are scattered across levels and persist between deaths. Each
 
 ## Notes
 
-- Template might be `{{game-beta}}` or `{{Gameinfo}}` - check RogueBasin for exact name
+- Template is `{{Gameinfo}}` for stable releases (was `{{game-beta}}` for the 0.9.x drafts)
+- "Beta projects" category dropped now that 1.0 has shipped
+- Verify exact template/category names against current RogueBasin conventions before posting
 - Categories at the bottom link the game to relevant lists
 - Create a user page `[[User:Dragynrain]]` if you want your name linked
 - You may need to create the page at: https://www.roguebasin.com/index.php?title=Rogue_Signal_Protocol

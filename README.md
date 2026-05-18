@@ -39,20 +39,20 @@
 
 ## Quick Overview
 
-Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
+A turn-based stealth roguelike. You play an escaped digital consciousness picking through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
 
 ### Key Features
-- **Deterministic Gameplay (no RNG)**: Pure skill-based tactical decisions, no luck involved
-- **Enemy Movement Prediction**: See each enemy's next 3 planned moves for tactical planning
-- **3 Procedurally-Generated Network Levels**: 8 unique enemy types, 13 exploits, and distinct AI behaviors
-- **Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
+- **No RNG in combat or movement** - only the layout is random
+- **Enemy movement prediction** - each enemy shows its next 3 planned moves
+- **3 procedurally-generated network levels** - 8 enemy types, 13 exploits
+- **Dual rendering** - graphical sprites or ASCII/Unicode glyphs, toggle in-game
 
-**Additional Features:**
-- **Blind Spot Stealth** - Hide in shadows to avoid detection and manage heat levels
-- **Dynamic Threat System** - High detection spawns the Admin Avatar boss with perfect tracking
-- **Achievement System** - Persistent tracking across runs with unlockable challenges
-- **Rich Narrative** - 20+ story fragments persist across runs, revealing the Project Chimera conspiracy
-- **Full Polish** - Atmospheric music, 40+ sound effects, particle explosions, keyboard/mouse support
+**Additional features:**
+- **Stealth via blind spots** - break line of sight, attack from cover for +10 damage
+- **Admin Avatar** - spawns when your trace gets too high, tracks perfectly, hard to kill
+- **47 achievements** - persist across runs
+- **20+ story fragments** - persist across runs, slowly assembling the Project Chimera plot
+- **Audio** - music plus 40+ SFX, full keyboard/mouse/gamepad support
 
 ---
 
@@ -72,22 +72,16 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike
 
 ## Community & Links
 
-**Join the community and stay connected:**
-
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.gg/5fykUtECqz)
 [![Itch.io](https://img.shields.io/badge/itch.io-Download-fa5c5c?logo=itch.io&logoColor=white)](https://dragynrain.itch.io/rogue-signal-protocol)
 [![GitHub](https://img.shields.io/badge/GitHub-Source-181717?logo=github&logoColor=white)](https://github.com/Dragynrain/RogueSignalProtocol/)
 
-- **Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz) - Share feedback, stories, and ideas
-- **Itch.io:** [https://dragynrain.itch.io/rogue-signal-protocol](https://dragynrain.itch.io/rogue-signal-protocol) - Download and follow development
-- **GitHub:** [https://github.com/Dragynrain/RogueSignalProtocol/](https://github.com/Dragynrain/RogueSignalProtocol/) - Source code and issues
-- **Email:** roguesignalprotocol@gmail.com - Direct contact
+- **Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz)
+- **Itch.io:** [https://dragynrain.itch.io/rogue-signal-protocol](https://dragynrain.itch.io/rogue-signal-protocol)
+- **GitHub:** [https://github.com/Dragynrain/RogueSignalProtocol/](https://github.com/Dragynrain/RogueSignalProtocol/)
+- **Email:** roguesignalprotocol@gmail.com
 
-Share your:
-- Epic runs and close calls
-- Ideas for features or improvements
-- Bug reports
-- Fan art and mods
+Bug reports, balance complaints, fan art, mods - all welcome.
 
 ---
 
@@ -210,4 +204,4 @@ Contact: roguesignalprotocol@gmail.com
 - **Graphics:** AI-generated sprites (Stable Diffusion, curated & edited)
 - **Audio:** AI-generated music & SFX (AudioCraft, curated & edited)
 
-Copyright (C) 2025 Adam Forster
+Copyright (C) 2026 Adam Forster

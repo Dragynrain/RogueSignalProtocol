@@ -2,29 +2,29 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
-## [1.0.0] - 2026-04-01 - Official Release
+## [1.0.0] - 2026-05-18 - Official Release
 
 ### Added
 
-#### Prologue Tutorial System
-- **5-section guided tutorial** teaching core mechanics through show-don't-tell gameplay
-- **Hand-designed 28x24 fixed layout** with forced linear progression through door barriers
-- **Section 1: Melee** - Damaged Scanner (5 HP, 0 damage) blocks the exit, teaches bump attacks
-- **Section 2: Timing** - Patrol oscillates on fixed route, teaches wait (.) and pattern observation
-- **Section 3: FOV & Stealth** - Scanner at distance with blind spots, teaches distance-based visibility
-- **Section 4: Ranged Combat** - Patrol behind wall with exploit pickup, teaches ranged exploit usage
-- **Section 5: Synthesis** - Timing puzzle with ghost node and stepping blind spots, combines all mechanics
-- **Reactive thought system** - 24 internal thoughts triggered by player actions (not pre-emptive instructions)
-- **Section-specific death hints** that escalate with repeated deaths in the same section
-- **No permadeath in tutorial** - player restarts without save deletion or penalty
-- **"Tutorial [Done]" indicator** on main menu after completion
-- **Completion dialogue** - "The real networks won't be this forgiving..."
-- Player vision (15) exceeds enemy vision (4-5) so players can see full patrol routes to plan
+#### Prologue Tutorial
+- **5-section hand-designed level** on a 28x24 fixed layout. Doors gate progression so each section is encountered in order.
+- **Section 1 - Melee:** Damaged Scanner (5 HP, 0 damage) blocks the only door. Bumping it is the only way out.
+- **Section 2 - Timing:** Patrol oscillates on a fixed route. Wait for the opening.
+- **Section 3 - FOV:** Scanner with blind spots adjacent. Distance and cover.
+- **Section 4 - Ranged:** Patrol behind a wall with a Code Injection pickup. Some fights need exploits.
+- **Section 5:** Timing puzzle with a ghost node and stepping blind spots. Combines all four.
+- **Reactive thought system** - 24 internal thoughts triggered by what the player just did
+- **Section-specific death hints** that get more direct with repeated deaths in the same section
+- **No permadeath in tutorial** - dying does not delete the save
+- **"Tutorial [Done]" indicator** on the main menu after completion
+- **Completion line:** "The real networks won't be this forgiving..."
+- Player vision (15) exceeds enemy vision (4-5) so full patrol routes are visible
 
 #### Menu Improvements
 - **Tutorial and Controls options** now respond to mouse clicks in main menu
 
 ### Changed
+- **Codebase reorganized into `src/rsp/` package** - flat `game_*.py` modules consolidated into namespaced subpackages (`core`, `entities`, `systems`, `ui`, `level`, `input`, `combat`); 331 files moved, ~2400 net lines removed
 - **Console window hidden** - Game no longer shows a CMD window on Windows (PyInstaller `console=False`)
 - **Debug export hidden from UI** - Shift+F12 still works as undocumented shortcut for bug reports
 - **Build system defaults to release** - `build.bat` and GitHub Actions now default to release builds
@@ -33,17 +33,40 @@ All notable changes to Rogue Signal Protocol will be documented in this file.
 
 ### Fixed
 
+#### Save System
+- **Atomic save writes** - `shutil.move` replaced with `os.replace` so a crash mid-save can't leave a partial file
+- **Save version logged on load** - version string from the save file is checked against the game's version, mismatch logs a warning instead of failing silently
+- **Persistence warnings** - dropped items and dropped coordinates during save/load now log warnings instead of being silently discarded
+
 #### Pathfinding
 - **Enemy pathfinding no longer blocks on player position** - player removed from cost map so enemies can path toward player
 
 #### Input
 - **Main menu mouse click off-by-one** - mouse now selects correct menu option
 - **Tutorial starting exploit locked** - prevents equipping unintended exploits at tutorial start
+- **Dialogue click lower-bound check** - prevents negative `option_index` when clicking outside the option list
+
+#### Combat / Death
+- **Player attack tracking initialized in `__init__`** - removed `hasattr` guards on combat metric attributes
+- **Prologue death state wrapped in try/except** - tutorial death handler survives unexpected state errors
+- **Fallback `check_death` no longer runs every turn** - moved inside its conditional path
+
+#### UI
+- **Status bar off-by-one** - text was being truncated one character early
+- **Redundant `hasattr`/`getattr` in status bar blind-spot check** - consolidated
+- **Always-true condition removed from lore menu click handler**
+
+#### Audio
+- **Narrowed exception handling** - bare `except Exception` catches replaced with specific types
 
 #### Testing
 - **Session ID collision in parallel tests** - fixed race condition in test fixtures
 - **Replaced time.sleep with mock_time** - deterministic test timing, no flaky sleeps
 - Removed flaky performance tests
+
+### Technical
+- **`validate-release.py` Unicode-logging check** - now passes `--no-cov` so the project's 70% coverage threshold doesn't false-fail on single-file runs
+- **GitHub workflow `build_info.txt`** - now reflects the actual `build_type` and log level instead of hardcoded "Alpha (GitHub Actions)" / "DEBUG"
 
 ### Removed
 - Beta build notice from README.txt

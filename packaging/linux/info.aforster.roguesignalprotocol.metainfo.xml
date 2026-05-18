@@ -9,23 +9,22 @@
   <project_license>MIT</project_license>
 
   <developer id="info.aforster">
-    <name>Alex Forster</name>
+    <name>Adam Forster</name>
   </developer>
 
   <description>
     <p>
-      A traditional turn-based coffee break stealth roguelike where you play as
-      an escaped digital consciousness navigating hostile cyberspace networks.
-      Quick 10-15 minute runs with permadeath - each death teaches lessons,
-      each run reveals more of the story.
+      A turn-based stealth roguelike. You play an escaped digital consciousness
+      picking through hostile corporate networks. Runs take 10-15 minutes and
+      end with permadeath.
     </p>
     <p>Features:</p>
     <ul>
-      <li>Enemy movement prediction - see their next 3 planned moves</li>
-      <li>Stealth-focused gameplay with blind spots and ambushes</li>
-      <li>12 exploits (abilities) and 6 code hacks to discover</li>
+      <li>Enemy movement prediction - each enemy shows its next 3 planned moves</li>
+      <li>Stealth via blind spots and ambushes (+10 damage from cover)</li>
+      <li>13 exploits and 6 code hacks to discover</li>
       <li>47 achievements and 20 Ascension difficulty levels</li>
-      <li>Full gamepad support (Steam Deck verified)</li>
+      <li>Full gamepad support (tested on Steam Deck)</li>
     </ul>
   </description>
 
@@ -85,9 +84,9 @@
   </screenshots>
 
   <releases>
-    <release version="1.0.0" date="2026-04-01" type="stable">
+    <release version="1.0.0" date="2026-05-18" type="stable">
       <description>
-        <p>Official 1.0 release - feature-complete and stable.</p>
+        <p>1.0 release. New prologue tutorial, console window removed on Windows, save system and pathfinding polish, codebase reorganized into src/rsp package.</p>
       </description>
     </release>
     <release version="0.9.2-beta" date="2025-12-30" type="development">
@@ -112,7 +111,7 @@
         <ul>
           <li>Ascension mode with meta-progression</li>
           <li>Cross-platform support (Windows, Linux)</li>
-          <li>Steam Deck verified</li>
+          <li>Tested on Steam Deck</li>
           <li>Full gamepad support with remapping</li>
         </ul>
       </description>

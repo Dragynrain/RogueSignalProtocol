@@ -4,7 +4,7 @@
 
 ## Title:
 
-`Rogue Signal Protocol - Stealth roguelike, beta build. Break it.`
+`Rogue Signal Protocol 1.0 - Stealth roguelike. Break it.`
 
 ---
 
@@ -18,28 +18,31 @@
 
 ### What it is
 
-Turn-based stealth roguelike. You're an escaped AI navigating corporate networks. 10-15 minute runs, permadeath.
+Turn-based stealth roguelike. You're an escaped digital consciousness navigating corporate networks. 10-15 minute runs, permadeath.
 
-Core mechanic: enemies show their next 3 planned moves. You see their plan, they commit to it. Use this to slip past or set ambushes.
+Core mechanic: enemies show their next 3 planned moves. You see their plan, they commit to it unless they spot you. Use this to slip past or set ambushes.
+
+Just hit 1.0 after a year of betas. New prologue tutorial, console window removed on Windows, big polish pass.
 
 ### What I need destroyed
 
 **Balance:**
 - Is stealth viable or do you end up fighting everything anyway?
-- Ascension mode (20 difficulty levels that stack) - does it feel like genuine challenge or artificial BS?
+- Ascension mode (20 difficulty levels that stack) - genuine challenge or artificial BS?
 - Any enemy type feel unfair or too easy?
+- Is the prologue tutorial actually teaching the mechanics, or just confusing?
 
 **Controls:**
-- Just added gamepad support. Does it feel right or clunky?
-- Control remapping - did you find anything broken?
+- Gamepad: clunky or fine? Movement timing right?
+- Keyboard rebindings: anything broken?
 
 **Crashes:**
-- This is a beta. I want to know what kills it.
-- Shift+F12 auto-generates a debug package if something breaks.
-- Include your OS (Windows 10/11, Linux distro) when reporting.
+- 1.0 just shipped. I want to know what kills it.
+- Include your OS (Windows 10/11, Linux distro, Steam Deck) when reporting.
+- Logs land in `%LOCALAPPDATA%\RogueSignalProtocol\logs\` on Windows.
 
 **First impressions:**
-- Did you understand what to do without the help menu?
+- Did the prologue work or did you bounce off it?
 - What made you quit before finishing a run?
 
 ### What I don't need
@@ -50,7 +53,8 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 
 ### Technical details
 
-- Windows 10/11, Linux
+- Windows 10/11, Linux (AppImage, AUR, tarball)
+- Steam Deck native
 - Gamepad support (Xbox/PS tested)
 - ~250 MB download
 
@@ -77,15 +81,15 @@ Core mechanic: enemies show their next 3 planned moves. You see their plan, they
 
 ## Alternative shorter version:
 
-**Title:** `Stealth roguelike beta - looking for crash reports and balance complaints`
+**Title:** `Stealth roguelike 1.0 - looking for crash reports and balance complaints`
 
 Escape a corporate network as a rogue AI. Enemies telegraph their next 3 moves. 10-15 minute runs, permadeath.
 
-Just added gamepad support and 20 Ascension difficulty levels. Need people to break it.
+1.0 just shipped after a year of betas. New tutorial, big polish pass. Need people to break it.
 
 **What kills the fun?** Stealth vs combat balance? Heat management? Controls?
 
-**What crashes it?** Shift+F12 generates debug reports.
+**What crashes it?** Bug reports on GitHub with your OS and the log file.
 
 Free download: [itch.io link]
 

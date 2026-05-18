@@ -85,7 +85,7 @@ def check_unicode_logging(project_root: Path) -> ValidationResult:
         python = project_root / ".venv" / "bin" / "python"
 
     returncode, stdout, stderr = run_command(
-        [str(python), "-m", "pytest", "tests/test_no_unicode_in_logging.py", "-v"],
+        [str(python), "-m", "pytest", "tests/test_no_unicode_in_logging.py", "-v", "--no-cov"],
         cwd=project_root,
     )
 

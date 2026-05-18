@@ -135,8 +135,11 @@ jobs:
 
         # Create build info
         Write-Host "Creating build info..."
-        "Build Type: Alpha (GitHub Actions)" | Out-File -FilePath "dist\build_info.txt" -Encoding ASCII
-        "Log Level: DEBUG" | Add-Content -Path "dist\build_info.txt"
+        $buildType = "${{ github.event.inputs.build_type }}"
+        if (-not $buildType) { $buildType = "release" }
+        if ($buildType -eq "release") { $logLevel = "WARNING" } else { $logLevel = "DEBUG" }
+        "Build Type: $buildType (GitHub Actions)" | Out-File -FilePath "dist\build_info.txt" -Encoding ASCII
+        "Log Level: $logLevel" | Add-Content -Path "dist\build_info.txt"
         "Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Add-Content -Path "dist\build_info.txt"
 
         # Copy asset folders
@@ -337,8 +340,11 @@ jobs:
 
         # Create build info
         echo "Creating build info..."
-        echo "Build Type: Alpha (GitHub Actions - Linux)" > dist/build_info.txt
-        echo "Log Level: DEBUG" >> dist/build_info.txt
+        BUILD_TYPE="${{ github.event.inputs.build_type }}"
+        if [ -z "$BUILD_TYPE" ]; then BUILD_TYPE="release"; fi
+        if [ "$BUILD_TYPE" = "release" ]; then LOG_LEVEL="WARNING"; else LOG_LEVEL="DEBUG"; fi
+        echo "Build Type: $BUILD_TYPE (GitHub Actions - Linux)" > dist/build_info.txt
+        echo "Log Level: $LOG_LEVEL" >> dist/build_info.txt
         echo "Build Date: $(date '+%Y-%m-%d %H:%M:%S')" >> dist/build_info.txt
 
         # Copy asset folders
