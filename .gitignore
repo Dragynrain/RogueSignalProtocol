@@ -75,3 +75,6 @@ scripts/diagnostics/
 
 # Large video files
 marketing/*.mp4
+
+# Local secrets (butler creds, etc.)
+.secrets/
