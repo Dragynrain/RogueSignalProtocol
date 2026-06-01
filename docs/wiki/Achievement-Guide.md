@@ -332,11 +332,11 @@ Special challenge conditions for advanced players.
 Demonstrate comprehensive knowledge and usage of game systems.
 
 #### 💻 Master Hacker
-**Use all 12 exploits in one run**
-- **Unlock Condition:** Activate each of the 12 exploits at least once in single playthrough
+**Use all 13 exploits in one run**
+- **Unlock Condition:** Activate each of the 13 exploits at least once in single playthrough
 - **Difficulty:** Hard
 - **Tips:**
-  - **All 12 Exploits:** System Hop, Traffic Masquerade, Decoy Swarm, Memory Leak, Buffer Overflow, Code Injection, Logic Bomb, Denial of Service, Threat Scan, Network Scan, Log Wiper, Antivirus, System Crash
+  - **All 13 Exploits:** System Hop, Traffic Masquerade, Decoy Swarm, Memory Leak, Buffer Overflow, Code Injection, Logic Bomb, Denial of Service, Threat Scan, Network Scan, Log Wiper, Antivirus, System Crash
   - Requires significant RAM (32 total RAM = 8 base + 6 upgrades × 4)
   - Collect all exploit pickups (4 on L1, 3 on L2, 2 on L3 = 9 total)
   - Must have 3 exploits pre-unlocked or find them all
@@ -560,7 +560,7 @@ Special achievements for unique accomplishments and memorable moments.
 25. Resource Efficient → Win without code hacks
 
 **Expert Route (Mastery):**
-26. Master Hacker → Use all 12 exploits
+26. Master Hacker → Use all 13 exploits
 27. Massacre → Kill 20+ enemies
 28. Invisible Victory → Win never detected
 29. Pure Skill → Win without exploits/code hacks (extreme)

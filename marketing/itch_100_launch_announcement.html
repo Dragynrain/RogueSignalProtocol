@@ -1,0 +1,86 @@
+<h1>Rogue Signal Protocol 1.0</h1>
+
+<p>The beta is over. 1.0 ships today.</p>
+
+<p>If you played the betas: same game, long polish pass, plus a new tutorial. If you didn't: keep reading.</p>
+
+<h2>What's new in 1.0</h2>
+
+<h3>Prologue tutorial</h3>
+
+<p>A 5-section level that teaches the mechanics by making them necessary. No popups.</p>
+
+<p>The first room has a damaged Scanner blocking the only door - 5 HP, 0 damage - and the only way through is to bump it. You figure out you can attack because the level doesn't let you not.</p>
+
+<p>Each section adds one thing:</p>
+
+<ol>
+<li>Bump attacks</li>
+<li>Waiting for openings</li>
+<li>Distance and blind spots</li>
+<li>Ranged exploits</li>
+<li>All four at once</li>
+</ol>
+
+<p>Dying in the prologue doesn't delete your save. Die in the same section twice and the next attempt gets a more specific hint. Main menu shows "Tutorial [Done]" once you clear it.</p>
+
+<h3>Console window is gone</h3>
+
+<p>Windows builds used to flash a CMD window behind the game on launch. They don't anymore. PyInstaller <code>console=False</code>, startup messages go to the log file, crashes still get full tracebacks written there.</p>
+
+<h3>Pre-release bug sweep</h3>
+
+<p>The things that got fixed since the last beta:</p>
+
+<ul>
+<li>Saves write atomically now. A crash mid-save can't corrupt the file.</li>
+<li>Status bar was truncating text one character early.</li>
+<li>Dialogue clicks could underflow if you clicked outside the option list.</li>
+<li>Enemy pathfinding treated the player tile as blocked. It doesn't anymore.</li>
+<li>Prologue death handler is wrapped against unexpected state.</li>
+<li>A few audio paths used bare <code>except</code>. They don't anymore.</li>
+<li>Main menu mouse selection was off by one.</li>
+<li>Tutorial's starting exploit is locked so you can't equip something weird before section 1.</li>
+</ul>
+
+<h3>Codebase reorg</h3>
+
+<p>The source moved from ~300 flat <code>game_*.py</code> files into a <code>src/rsp/</code> package with subpackages for <code>core</code>, <code>entities</code>, <code>systems</code>, <code>ui</code>, and a few others. If you've been modding or contributing from source, your imports will break. Contents didn't change, only locations. The dev README has the new layout.</p>
+
+<h2>If you haven't played</h2>
+
+<ul>
+<li>3 procedurally-generated network levels, 8 enemy types, 13 exploits</li>
+<li>No RNG in combat or movement - only the layout is random</li>
+<li>Each enemy shows its next 3 planned moves on the map</li>
+<li>Permadeath. Save gets deleted on death.</li>
+<li>Stealth via blind spots, distraction, and heat management</li>
+<li>Graphical sprites or ASCII glyphs. Toggle in settings, plays identically.</li>
+<li>47 achievements that persist across runs</li>
+<li>20-level Ascension mode for post-victory difficulty</li>
+<li>Full gamepad support (Xbox, PlayStation, Steam Deck), rebindable</li>
+<li>Linux native: tarball, AppImage, AUR. Flatpak pending Flathub.</li>
+<li>No macOS yet.</li>
+</ul>
+
+<p>Runs are 10-15 minutes. The first few will probably go badly.</p>
+
+<h2>Downloads</h2>
+
+<ul>
+<li>itch.io: <a href="https://dragynrain.itch.io/rogue-signal-protocol">https://dragynrain.itch.io/rogue-signal-protocol</a></li>
+<li>GitHub Releases: <a href="https://github.com/Dragynrain/RogueSignalProtocol/releases">https://github.com/Dragynrain/RogueSignalProtocol/releases</a></li>
+<li>AUR: <code>yay -S rogue-signal-protocol-bin</code></li>
+</ul>
+
+<h2>Feedback</h2>
+
+<p>Discord, itch.io comments, GitHub issues, email - whatever works. I read all of it.</p>
+
+<ul>
+<li>Discord: <a href="https://discord.gg/5fykUtECqz">https://discord.gg/5fykUtECqz</a></li>
+<li>GitHub Issues: <a href="https://github.com/Dragynrain/RogueSignalProtocol/issues">https://github.com/Dragynrain/RogueSignalProtocol/issues</a></li>
+<li>Email: roguesignalprotocol@gmail.com</li>
+</ul>
+
+<p>Bug reports, balance complaints, "this part felt unfair" - all useful. Thanks to everyone who reported things through the betas.</p>

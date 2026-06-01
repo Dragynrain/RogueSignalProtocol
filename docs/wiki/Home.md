@@ -34,7 +34,7 @@ More in the **[Screenshots](Screenshots)** gallery.
 - **[Code Hacks System](Code-Hacks-System)** - Randomized beneficial pickups explained
 - **[Network Configuration](Network-Configuration)** - Level progression and difficulty
 - **[Ascension System](Ascension-System)** - Post-game difficulty scaling (20 levels)
-- **[Achievement Guide](Achievement-Guide)** - All 37 achievements and how to unlock them
+- **[Achievement Guide](Achievement-Guide)** - All 47 achievements and how to unlock them
 
 ### ⚙️ Configuration
 - **[Settings and Configuration](Settings-and-Configuration)** - All settings and customization options
@@ -47,7 +47,7 @@ More in the **[Screenshots](Screenshots)** gallery.
 - **Stealth-Focused Gameplay**: Hide in blind spots, manage detection risk, avoid the Admin Avatar boss
 - **Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
 - **8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and more
-- **12 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
+- **13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
 - **3 Network Environments**: Corporate, Government, Military with escalating difficulty
 - **Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
 - **Achievement System**: Track progress across runs with persistent unlocks
