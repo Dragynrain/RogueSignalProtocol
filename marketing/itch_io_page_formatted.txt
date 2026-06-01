@@ -14,6 +14,7 @@ A [b]turn-based stealth roguelike[/b]. You play an escaped digital consciousness
 [*][b]Enemy movement prediction[/b] - each enemy shows its next 3 planned moves on the map
 [*][b]3 procedurally-generated network levels[/b] with 8 enemy types and 13 exploits
 [*][b]Dual rendering[/b] - graphical sprites or ASCII glyphs, plays identically
+[*][b]Hands-on prologue tutorial[/b] - 5 sections that teach the mechanics by making them necessary, no popups
 [/list]
 
 [h2]GAMEPLAY:[/h2]
@@ -68,6 +69,7 @@ FEATURES:
 • Enemy movement prediction - each enemy shows its next 3 planned moves on the map
 • 3 procedurally-generated network levels with 8 enemy types and 13 exploits
 • Dual rendering - graphical sprites or ASCII glyphs, plays identically
+• Hands-on prologue tutorial - 5 sections that teach the mechanics by making them necessary, no popups
 
 GAMEPLAY:
 
