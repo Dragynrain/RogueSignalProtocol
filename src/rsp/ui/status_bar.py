@@ -124,7 +124,7 @@ class StatusBarRenderer:
             # Play TOO CLOSE audio cue when spotted in blind spot
             if getattr(game, "prologue_spotted_in_blind_spot", False):
                 try:
-                    game.sound_manager.play_sound("alert", volume=0.5)
+                    game.sound_manager.play_sound("alert", volume_modifier=0.5)
                 except (RuntimeError, OSError, AttributeError):
                     pass  # Audio failure is non-critical
                 game.prologue_spotted_in_blind_spot = False

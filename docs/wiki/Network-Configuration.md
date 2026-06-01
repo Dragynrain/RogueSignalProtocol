@@ -4,6 +4,23 @@ Level progression, difficulty settings, and resource distribution.
 ## Network Levels
 Rogue Signal Protocol has **3 progressive network levels** with escalating difficulty.
 
+### Level 0: First Infiltration
+
+**Threat Level:**
+- Enemies: 3
+- Blind Spot Coverage: 15%
+- Background Trace: 0/25 turns
+- Trace Alert -> Hostile: 5%
+- Trace Continuous Hostile: 0%/turn
+
+**Resources:**
+- Cooling Nodes: 1
+- CPU Recovery Nodes: 1
+- Ghost Nodes: 1
+- Data Codes: 2
+- Exploit Pickups: 3
+- Permanent Upgrades: 0
+
 ### Level 1: Corporate Network
 
 **Threat Level:**

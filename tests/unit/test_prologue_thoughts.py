@@ -187,8 +187,8 @@ class TestThoughtMessageColors:
         """Reset thought tracking before each test."""
         reset_prologue_thoughts()
 
-    def test_thought_uses_dimmed_color(self):
-        """Thoughts should use DIMMED color for subtle feedback."""
+    def test_thought_uses_bright_highlight_color(self):
+        """Thoughts should use a bright color so they stand out as tutorial guidance."""
         from rsp.entities.base import Colors
 
         game = Mock()
@@ -199,9 +199,10 @@ class TestThoughtMessageColors:
             mock_get.return_value = {"melee_success": "Test message"}
             show_prologue_thought("melee_success", game)
 
-        # Verify DIMMED color was used
+        # Verify the bright tutorial-hint color was used (not the subtle/dimmed text color).
         call_args = game.message_log.add_message.call_args
-        assert call_args[0][1] == Colors.DIMMED
+        assert call_args[0][1] == Colors.NEON_GOLD
+        assert call_args[0][1] != Colors.DIMMED
 
 
 class TestTriggerRegistry:

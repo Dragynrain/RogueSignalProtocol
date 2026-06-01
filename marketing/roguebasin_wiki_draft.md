@@ -10,8 +10,8 @@ Copy the wiki markup below:
 | developer = [[User:Dragynrain|Dragynrain]]
 | theme = Cyberpunk, Stealth
 | influences =
-| released = May 2026 (1.0)
-| updated = May 2026
+| released = June 2026 (1.0)
+| updated = June 2026
 | licensing = [[MIT License]]
 | language = [[Python]], [[python-tcod]]
 | platforms = [[Windows]], [[Linux]]

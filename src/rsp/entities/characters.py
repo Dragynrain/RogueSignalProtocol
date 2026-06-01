@@ -463,8 +463,9 @@ class Enemy:
         # 1. Patrol waypoint advancement
         if self._should_advance_patrol_waypoint():
             self._advance_patrol_waypoint()
-            # Don't clear queue - it already has valid moves to next waypoint
-            # from _extend_patrol_queue. Queue is only cleared when blocked.
+            # Queue is not cleared here: for non-hostile patrols the queue is built by
+            # _fill_patrol_lookahead, which simulates this same advancement, so the
+            # already-queued moves stay correct through the turnaround.
 
         # 2. Disability check
         if self.disabled_turns > 0:
@@ -530,9 +531,13 @@ class Enemy:
         if self.state == EnemyState.HOSTILE:
             return False  # Hostile patrol enemies chase player
 
-        # Check if arrived at current patrol waypoint (use grid distance for gameplay)
+        # Check if arrived at current patrol waypoint (use grid distance for gameplay).
+        # Must be EXACTLY on the waypoint: advancing while still 1 tile away flips the
+        # target before the queued move to the endpoint executes, which makes the patrol
+        # overshoot and jerk back (endpoint double-tap). Reachability of waypoints is
+        # validated at spawn (procedural) and load (prologue), so exact arrival is safe.
         current_target = self.patrol_points[self.patrol_index]
-        return self.position.grid_distance_to(current_target) <= 1
+        return self.position.grid_distance_to(current_target) == 0
 
     def _advance_patrol_waypoint(self) -> None:
         """Advance to next patrol waypoint (wraps around)."""
@@ -617,6 +622,18 @@ class Enemy:
             self._fill_random_moves(game_map, player, game_engine)
             return
 
+        # PATROL (non-hostile): build the queue by simulating waypoint advancement so the
+        # predicted moves the player sees always match the patrol's actual motion,
+        # including clean turnarounds at endpoints. Hostile patrols fall through to the
+        # player-chasing pathfinding below.
+        if (
+            movement_type == EnemyMovement.PATROL
+            and self.state != EnemyState.HOSTILE
+            and self.patrol_points
+        ):
+            self._fill_patrol_lookahead(game_map, player, game_engine)
+            return
+
         # Pathfinding-based movement (PATROL, SEEK, or HOSTILE/ADMIN override)
         target = self._get_current_target(player, game_map)
         if not target:
@@ -658,16 +675,6 @@ class Enemy:
         # Pathfinding failed - try greedy fallback (chain up to 3 moves)
         elif target and not self.move_queue:
             self._fill_greedy_moves(target, game_map, player, game_engine)
-
-        # PATROL special case: If queue still not full, extend with next waypoint(s)
-        # Only extend patrol queue for non-hostile enemies (hostile chase player, not patrol)
-        if (
-            movement_type == EnemyMovement.PATROL
-            and self.state != EnemyState.HOSTILE
-            and self.patrol_points
-            and len(self.move_queue) < 3
-        ):
-            self._extend_patrol_queue(game_map, game_engine)
 
     def _fill_random_moves(self, game_map, player, game_engine) -> None:
         """
@@ -743,53 +750,73 @@ class Enemy:
             position, game_map, game_engine.enemies, player.position, self
         )
 
-    def _extend_patrol_queue(self, game_map, game_engine) -> None:
+    def _fill_patrol_lookahead(self, game_map, player, game_engine) -> None:
         """
-        Extend patrol queue with next waypoint(s) to reach 3 moves.
+        Fill the queue with the patrol's actual upcoming positions.
 
-        When close to current waypoint, this chains pathfinding to subsequent
-        waypoints to maintain the 3-move prediction guarantee.
+        Builds the 3-move queue by stepping toward the current waypoint and
+        advancing to the next waypoint upon exact arrival - the same rule move()
+        uses. Because the lookahead simulates that advancement, the predicted moves
+        shown to the player always match where the patrol will really go, including
+        clean turnarounds at endpoints (no phantom backtrack).
 
         Args:
             game_map: GameMap for pathfinding
+            player: Player (its tile is never queued)
             game_engine: GameEngine for enemy collision avoidance
         """
-        attempts = 0
-        max_attempts = len(self.patrol_points)  # Avoid infinite loops
+        if not self.patrol_points:
+            return
 
-        while len(self.move_queue) < 3 and attempts < max_attempts:
-            attempts += 1
+        # Rebuild from the current position so the queue is always the true future
+        # path. The patrol is deterministic, so rebuilding each turn yields the same
+        # committed route while avoiding stale moves left over from a turnaround.
+        self.move_queue.clear()
+        sim_pos = self.position
+        sim_index = self.patrol_index
+        num_points = len(self.patrol_points)
 
-            # Calculate next waypoint index (wraps around)
-            next_index = (self.patrol_index + attempts) % len(self.patrol_points)
-            next_waypoint = self.patrol_points[next_index]
+        # Bounded: enough iterations to fill 3 moves even while crossing waypoints.
+        guard = 0
+        max_guard = 3 + num_points
 
-            # Start from last queued position
-            start_pos = self._get_queue_end_position()
+        while len(self.move_queue) < 3 and guard < max_guard:
+            guard += 1
 
-            # Skip only if already exactly at this waypoint
-            # Don't skip if 1 tile away - we still need to queue that move for short patrols
-            if start_pos.grid_distance_to(next_waypoint) == 0:
-                continue
+            target = self.patrol_points[sim_index]
 
-            # Calculate path to next waypoint
+            # Mirror move(): when sitting exactly on the current waypoint, advance.
+            if sim_pos.grid_distance_to(target) == 0:
+                sim_index = (sim_index + 1) % num_points
+                target = self.patrol_points[sim_index]
+                # Degenerate route (next waypoint coincides with current tile).
+                if sim_pos.grid_distance_to(target) == 0:
+                    break
+
             path = PathfindingHelper.calculate_path(
-                start=start_pos,
-                goal=next_waypoint,
+                start=sim_pos,
+                goal=target,
                 game_map=game_map,
                 game_engine=game_engine,
                 moving_enemy=self,
             )
 
-            # Add moves from path
-            if path is not None and len(path) > 1:
-                for i in range(1, len(path)):
-                    if len(self.move_queue) >= 3:
-                        return  # Queue full, done
-                    self.move_queue.append(Position(path[i][1], path[i][0]))
-            else:
-                # Can't pathfind to next waypoint, stop trying
+            # No path to the waypoint right now - stop; move() re-plans when unblocked.
+            if path is None or len(path) < 2:
                 break
+
+            # Append steps toward this waypoint until reached or the queue is full.
+            for i in range(1, len(path)):
+                if len(self.move_queue) >= 3:
+                    break
+                step = Position(path[i][1], path[i][0])
+                # Never queue the player's exact tile.
+                if step == player.position:
+                    return
+                self.move_queue.append(step)
+                sim_pos = step
+                if sim_pos.grid_distance_to(target) == 0:
+                    break  # reached waypoint; outer loop advances index next iteration
 
     def _fill_greedy_moves(self, target: Position, game_map, player, game_engine) -> None:
         """

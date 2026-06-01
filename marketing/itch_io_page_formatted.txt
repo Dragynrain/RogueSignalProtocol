@@ -5,7 +5,7 @@ Copy the content below into your itch.io page editor
 
 [h1]About Rogue Signal Protocol[/h1]
 
-A [b]turn-based stealth roguelike[/b]. You play an escaped digital consciousness picking through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
+A [b]turn-based stealth roguelike[/b]. You play an escaped digital consciousness slipping through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
 
 [h2]FEATURES:[/h2]
 
@@ -60,7 +60,7 @@ ALTERNATIVE - SIMPLIFIED VERSION (Less BBCode)
 
 ABOUT ROGUE SIGNAL PROTOCOL
 
-A turn-based stealth roguelike. You play an escaped digital consciousness picking through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
+A turn-based stealth roguelike. You play an escaped digital consciousness slipping through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
 
 FEATURES:
 

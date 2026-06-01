@@ -197,8 +197,9 @@ def show_prologue_thought(thought_key: str, game) -> bool:
     if not message:
         return False
 
-    # Show the thought (using DIMMED for subtle tutorial feedback)
-    game.message_log.add_message(message, Colors.DIMMED)
+    # Show the thought in a bright, attention-drawing color so these reactive
+    # tutorial hints stand out from regular message-log text.
+    game.message_log.add_message(message, Colors.NEON_GOLD)
     _shown_thoughts.add(thought_key)
     return True
 

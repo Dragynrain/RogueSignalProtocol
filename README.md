@@ -39,7 +39,7 @@
 
 ## Quick Overview
 
-A turn-based stealth roguelike. You play an escaped digital consciousness picking through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
+A turn-based stealth roguelike. You play an escaped digital consciousness slipping through hostile corporate networks. Runs take 10-15 minutes and end with permadeath.
 
 ### Key Features
 - **No RNG in combat or movement** - only the layout is random

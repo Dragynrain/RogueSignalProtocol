@@ -7,7 +7,7 @@
 ABOUT
 -----
 A turn-based stealth roguelike. You play an escaped digital
-consciousness picking through hostile corporate networks. Runs take
+consciousness slipping through hostile corporate networks. Runs take
 10-15 minutes and end with permadeath.
 
 KEY FEATURES
@@ -72,7 +72,7 @@ GAMEPAD CONTROLS (Xbox/PlayStation):
   Start              - Main menu (pause, toggle back to game)
   Select             - Help menu
 
-Full gamepad documentation: docs/wiki/Keybindings.md
+Full gamepad documentation: https://github.com/Dragynrain/RogueSignalProtocol/wiki/Keybindings
 
 CORE MECHANICS
 --------------
@@ -218,7 +218,7 @@ KEYBOARD/GAMEPAD ONLY:
 GAMEPAD NOT RECOGNIZED:
 - Most controllers work automatically (Xbox, PlayStation, Switch Pro, etc.)
 - Steam users: Add game to Steam library, use Steam Input to configure
-- Manual mapping: See docs/wiki/Keybindings.md for SDL controller setup
+- Manual mapping: See https://github.com/Dragynrain/RogueSignalProtocol/wiki/Keybindings for SDL controller setup
 
 ADVANCED - LOGGING CONTROL
 ---------------------------

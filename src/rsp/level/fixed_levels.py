@@ -136,7 +136,7 @@ def get_prologue_section(y: int) -> int:
 # Doors act as natural section dividers. Patrols cross door approaches to force timing.
 #
 # Section 1 (rows 0-4): MELEE - X blocks the first door, must bump-attack to pass
-# Section 2 (rows 5-8): TIMING - P patrols right side (x=7-10), clear safe window at x=1-3
+# Section 2 (rows 5-8): TIMING - P sweeps x=3-10 across the crossing; wait for it to reach the right end
 # Section 3 (rows 9-12): FOV + BLINDSPOTS - S has vision 5, blind spots provide stealth path
 # Section 4 (rows 13-16): RANGED - P at range from exploit, wall blocks melee approach
 # Section 5 (rows 17-23): SYNTHESIS - Timing puzzle with stepping blind spots, ghost node, gateway
@@ -151,7 +151,7 @@ PROLOGUE_LAYOUT_RAW = """
 #.X.########################
 ###+########################
 #...........################
-#......P....################
+#..P........################
 #...........################
 ##s#########################
 #ss.S.......################
@@ -177,7 +177,7 @@ def get_prologue_layout() -> FixedLevelData:
 
     Linear tutorial with forced path through left corridor:
     - X at (2,3): Damaged scanner blocks door - teaches melee
-    - P at (7,6): Patrol in right half (x=7-10), clear safe window at left - teaches timing
+    - P at (3,6): Patrol sweeps x=3-10 across the crossing - teaches timing (wait for the opening)
     - S at (4,9): Scanner with vision 5, blind spots at (1-3,9-11) - teaches FOV/stealth
     - P at (8,12): Patrol in right half, recovery at (6,12) - optional safety net
     - P at (6,15): At range from exploit pickup, wall blocks melee - teaches ranged
@@ -191,9 +191,10 @@ def get_prologue_layout() -> FixedLevelData:
     # DESIGN: Player vision=15 lets them see full patrol routes and plan.
     # Patrol vision=4, so distance 5+ is safe. Routes create obvious safe windows.
     patrol_routes = {
-        # Section 2: P at (7,6) patrols x=7-10. Player at door (x=2) is always safe.
-        # Clear visual: patrol oscillates right side, left path is open.
-        (7, 6): [Position(7, 6), Position(10, 6)],
+        # Section 2: P at (3,6) sweeps x=3-10, crossing the player's descent column.
+        # The player must wait (retreat up-left) until the patrol reaches the right
+        # end (x>=7), opening a safe window to slip down x=2 to the exit at (2,8).
+        (3, 6): [Position(3, 6), Position(10, 6)],
         # Section 3: P at (8,12) patrols x=8-10, left path is safe. Recovery node optional.
         (8, 12): [Position(8, 12), Position(10, 12)],
         # Section 4: P at (6,15) patrols x=6-10. Player gets exploit at (3,14),

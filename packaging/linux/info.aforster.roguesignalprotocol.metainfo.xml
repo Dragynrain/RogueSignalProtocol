@@ -15,7 +15,7 @@
   <description>
     <p>
       A turn-based stealth roguelike. You play an escaped digital consciousness
-      picking through hostile corporate networks. Runs take 10-15 minutes and
+      slipping through hostile corporate networks. Runs take 10-15 minutes and
       end with permadeath.
     </p>
     <p>Features:</p>
@@ -84,7 +84,7 @@
   </screenshots>
 
   <releases>
-    <release version="1.0.0" date="2026-05-18" type="stable">
+    <release version="1.0.0" date="2026-06-01" type="stable">
       <description>
         <p>1.0 release. New prologue tutorial, console window removed on Windows, save system and pathfinding polish, codebase reorganized into src/rsp package.</p>
       </description>

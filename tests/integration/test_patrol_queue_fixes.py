@@ -171,8 +171,12 @@ class TestPatrolWaypointAdvancement:
                     len(patrol.move_queue) == old_queue_length
                 ), "Waypoint advancement should not clear already-queued valid moves"
 
-    def test_waypoint_detection_uses_grid_distance(self, mock_game_map, mock_game_engine):
-        """Waypoint advancement should trigger when at waypoint (grid_distance == 0 or 1)."""
+    def test_waypoint_detection_requires_exact_arrival(self, mock_game_map, mock_game_engine):
+        """Waypoint advancement triggers only when exactly on the waypoint (grid_distance == 0).
+
+        Advancing while still 1 tile away flips the target before the queued move to the
+        endpoint runs, making the patrol overshoot and jerk back at each turnaround.
+        """
         with patch(
             "rsp.core.data.GameData.ENEMY_TYPES",
             {
@@ -194,20 +198,20 @@ class TestPatrolWaypointAdvancement:
             # Not at waypoint yet
             assert not patrol._should_advance_patrol_waypoint()
 
-            # At waypoint (exact position)
+            # Adjacent to waypoint (grid_distance = 1) - must NOT advance yet
+            patrol.position = Position(11, 10)
+            assert not patrol._should_advance_patrol_waypoint()
+
+            # At waypoint (exact position) - advances
             patrol.position = Position(12, 10)
             assert patrol._should_advance_patrol_waypoint()
 
-            # Adjacent to waypoint (grid_distance = 1)
-            patrol.position = Position(11, 10)
-            assert patrol._should_advance_patrol_waypoint()
 
+class TestPatrolLookahead:
+    """Test the _fill_patrol_lookahead queue builder (replaces _extend_patrol_queue)."""
 
-class TestPatrolQueueExtension:
-    """Test the _extend_patrol_queue method specifically."""
-
-    def test_extend_patrol_queue_fills_to_three(self, mock_game_map, mock_game_engine):
-        """_extend_patrol_queue should fill queue to 3 moves by chaining waypoints."""
+    def test_fills_queue_to_three(self, mock_game_map, mock_game_engine):
+        """_fill_patrol_lookahead should fill the queue to 3 moves by chaining waypoints."""
         with patch(
             "rsp.core.data.GameData.ENEMY_TYPES",
             {
@@ -232,17 +236,15 @@ class TestPatrolQueueExtension:
 
             mock_game_engine.enemies = [patrol]
 
-            # Start with partial queue
-            patrol.move_queue = [Position(11, 10)]  # 1 move
+            patrol._fill_patrol_lookahead(
+                mock_game_map, mock_game_engine.player, mock_game_engine
+            )
 
-            # Extend queue
-            patrol._extend_patrol_queue(mock_game_map, mock_game_engine)
+            # Chains across waypoints to reach the full 3-move lookahead.
+            assert len(patrol.move_queue) == 3
 
-            # Should have added more moves (up to 3 total)
-            assert len(patrol.move_queue) > 1, "Queue should be extended"
-
-    def test_extend_patrol_queue_skips_current_position(self, mock_game_map, mock_game_engine):
-        """_extend_patrol_queue should skip waypoints we're already at (distance == 0)."""
+    def test_rebuilds_from_current_position(self, mock_game_map, mock_game_engine):
+        """_fill_patrol_lookahead discards any stale queue and rebuilds from current pos."""
         with patch(
             "rsp.core.data.GameData.ENEMY_TYPES",
             {
@@ -256,27 +258,23 @@ class TestPatrolQueueExtension:
                 )
             },
         ):
-            patrol = Enemy(Position(12, 10), "patrol")
-            patrol.patrol_points = [
-                Position(12, 10),  # Waypoint 0 - we're already here!
-                Position(15, 10),  # Waypoint 1
-                Position(18, 10),  # Waypoint 2
-            ]
+            patrol = Enemy(Position(10, 10), "patrol")
+            patrol.patrol_points = [Position(13, 10), Position(16, 10)]
             patrol.patrol_index = 0
             patrol.state = EnemyState.UNAWARE
 
             mock_game_engine.enemies = [patrol]
 
-            # Queue is at waypoint 0 position already
-            patrol.move_queue = [Position(12, 10)]
+            # Stale move left over from a previous plan - must be discarded.
+            patrol.move_queue = [Position(99, 99)]
 
-            # Extend queue - should skip waypoint 0 (distance == 0) and path to waypoint 1
-            patrol._extend_patrol_queue(mock_game_map, mock_game_engine)
+            patrol._fill_patrol_lookahead(
+                mock_game_map, mock_game_engine.player, mock_game_engine
+            )
 
-            # Should have added moves toward waypoint 1, not stayed at waypoint 0
-            if len(patrol.move_queue) > 1:
-                # New moves should be progressing toward waypoint 1, not stuck at (12, 10)
-                assert patrol.move_queue[-1].x > 12, "Should be moving toward next waypoint"
+            assert Position(99, 99) not in patrol.move_queue
+            # First queued move steps from (10,10) toward waypoint (13,10): no teleport.
+            assert patrol.move_queue[0] == Position(11, 10)
 
 
 if __name__ == "__main__":

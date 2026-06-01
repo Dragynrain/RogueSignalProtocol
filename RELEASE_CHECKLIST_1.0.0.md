@@ -1,4 +1,4 @@
-# 1.0.0 Release Runbook - 2026-05-18
+# 1.0.0 Release Runbook - 2026-06-01
 
 Tailored to the current state. The generic master checklist is at `docs/RELEASE_CHECKLIST.md` if you need long-form detail on any step. Delete this file after the release is complete.
 
@@ -7,13 +7,13 @@ Tailored to the current state. The generic master checklist is at `docs/RELEASE_
 ## What's already done (skip these)
 
 - Version pinned at 1.0.0 in `game_rules.json`, README badges, all packaging files
-- CHANGELOG dated 2026-05-18 with full content + voice pass
+- CHANGELOG dated 2026-06-01 with full content + voice pass
 - `validate-release.py`: all 6 checks pass (`--no-cov` bug fixed)
 - Save migration: synthetic 0.9.2-shaped save loads with version warning, schema unchanged
 - `pip audit`: 16 CVEs, all in dev-only deps (no runtime exposure - pillow not imported)
 - Public-facing voice pass: launch announcement, READMEs, itch.io page (HTML+BBCode), CHANGELOG, roguebasin
 - 1.0 content updates on all 4 Reddit/forum drafts
-- Packaging fixes: metainfo date (2026-05-18), developer name (Adam not Alex), exploit count (13 not 12), Steam Deck wording ("tested" not "verified"), Flathub manifest URL filename, copyright 2026
+- Packaging fixes: metainfo date (2026-06-01), developer name (Adam not Alex), exploit count (13 not 12), Steam Deck wording ("tested" not "verified"), Flathub manifest URL filename, copyright 2026
 - Workflow `build_info.txt` cosmetic bug fixed (was hardcoded "Alpha")
 
 ---
