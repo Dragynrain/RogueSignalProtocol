@@ -51,7 +51,7 @@ modules:
     sources:
       - type: archive
         url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v1.0.0/RogueSignalProtocol-1.0.0-Linux.tar.gz
-        sha256: eb105a3243dd44e4ffb1e840541de902cdfd9279a60af22fd27f141165b23b78
+        sha256: 1060794cd0f1c7d30e91014bbbc5f3e168b23f74fdf304c09bd2d4e6e9fc75d9
         # Tarball has all files at the root (no wrapping dir); default strip of 1
         # would delete them, so keep all path components.
         strip-components: 0
