@@ -10,6 +10,7 @@ Copy the wiki markup below:
 | developer = [[User:Dragynrain|Dragynrain]]
 | theme = Cyberpunk, Stealth
 | influences =
+| status = Released
 | released = June 2026 (1.0)
 | updated = June 2026
 | licensing = [[MIT License]]
