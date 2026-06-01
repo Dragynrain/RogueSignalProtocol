@@ -78,8 +78,8 @@
       <caption>Tactical gameplay with enemy movement prediction</caption>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/explosion-aoe.png</image>
-      <caption>An area-of-effect exploit detonating mid-combat</caption>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/explosion.png</image>
+      <caption>Enemies explode when destroyed</caption>
     </screenshot>
     <screenshot>
       <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/gameplay-ascii.png</image>

@@ -23,6 +23,10 @@ Copy the wiki markup below:
 | repository = https://github.com/Dragynrain/RogueSignalProtocol
 }}
 
+[[File:RogueSignalProtocol-gameplay.png|thumb|Graphical tile mode. Each enemy shows its next 3 planned moves.]]
+[[File:RogueSignalProtocol-ascii.png|thumb|The same scene in classic ASCII mode.]]
+[[File:RogueSignalProtocol-combat.png|thumb|Destroyed enemies explode.]]
+
 '''Rogue Signal Protocol''' is a coffee-break turn-based roguelike focused on stealth. The player is a digital consciousness escaping hostile corporate networks, using stealth and exploits to reach the exit of each level.
 
 == Gameplay ==
@@ -50,14 +54,6 @@ All abilities (called "exploits") generate heat. Overheating causes self-damage,
 * Dual rendering: graphical tiles or ASCII, toggle in-game
 * Full gamepad support including Steam Deck
 * Keyboard and gamepad remapping
-
-== Screenshots ==
-
-<gallery>
-RogueSignalProtocol-gameplay.png|Graphical tile mode - each enemy shows its next 3 planned moves
-RogueSignalProtocol-ascii.png|The same scene in classic ASCII mode
-RogueSignalProtocol-combat.png|An area-of-effect exploit detonating mid-fight
-</gallery>
 
 == Story ==
 
@@ -92,15 +88,18 @@ RogueBasin cannot hot-link external images, so each file in the `<gallery>` must
 uploaded to RogueBasin itself via https://www.roguebasin.com/index.php?title=Special:Upload
 (requires being logged in). The wiki's File namespace is shared across all games, so
 keep the game-prefixed names below to avoid collisions. Upload these three, using the
-exact destination filenames so the gallery markup resolves:
+exact destination filenames so the [[File:...]] thumbnails resolve:
 
 | Upload this local file | As this RogueBasin filename |
 |---|---|
 | `docs/images/screenshots/gameplay-graphics.png` | `RogueSignalProtocol-gameplay.png` |
 | `docs/images/screenshots/gameplay-ascii.png` | `RogueSignalProtocol-ascii.png` |
-| `docs/images/screenshots/explosion-aoe.png` | `RogueSignalProtocol-combat.png` |
+| `docs/images/screenshots/explosion.png` | `RogueSignalProtocol-combat.png` |
 
-After the files exist on RogueBasin, the `== Screenshots ==` gallery renders automatically.
-Add more from `docs/images/screenshots/` the same way if you want (e.g. `title-screen.png`,
-`final-gateway.png`, `achievements.png`) - upload with a `RogueSignalProtocol-` prefix and
-add a matching `[[File:...]]` line to the gallery.
+The screenshots are placed as right-floating `[[File:...|thumb|...]]` thumbnails right after
+the {{Gameinfo}} box, so they stack under the info box in the top-right corner (the layout
+other RogueBasin game pages use) rather than in a mid-page gallery. After the files exist on
+RogueBasin, those thumbnails render automatically. Add more from `docs/images/screenshots/`
+the same way if you want (e.g. `title-screen.png`, `final-gateway.png`, `achievements.png`):
+upload with a `RogueSignalProtocol-` prefix and add another `[[File:...|thumb|...]]` line under
+the info box.

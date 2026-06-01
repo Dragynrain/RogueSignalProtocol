@@ -63,7 +63,7 @@ A turn-based stealth roguelike. You play an escaped digital consciousness slippi
   <img src="docs/images/screenshots/gameplay-graphics.png" width="45%" alt="Tactical gameplay with enemy movement prediction">
 </p>
 <p align="center">
-  <img src="docs/images/screenshots/explosion-aoe.png" width="45%" alt="Area-of-effect exploit detonating mid-combat">
+  <img src="docs/images/screenshots/explosion.png" width="45%" alt="Enemies explode when destroyed">
   <img src="docs/images/screenshots/gameplay-ascii.png" width="45%" alt="The same scene in classic ASCII/Unicode mode">
 </p>
 <p align="center">

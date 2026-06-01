@@ -234,7 +234,7 @@ git add . && git commit -m "Update wiki for v1.0.0" && git push
 
 These are part of the 1.0 launch (not deferred), but the steps below can only be done by a person.
 
-1. **Screenshots: DONE for launch.** 7 new 1.0 captures are wired into `metainfo.xml`, `README.md`, and the wiki gallery (`docs/wiki/Screenshots.md` + Home.md): title-screen, gameplay-graphics, explosion-aoe, gameplay-ascii, final-gateway, achievements, help-controls. Optional: capture 2-3 more (inventory, look mode, ascension viewer) to reach the 9-12 press-kit ideal. Framing press shots is a judgment call; Claude cannot drive the game to capture them.
+1. **Screenshots: DONE for launch.** 7 new 1.0 captures are wired into `metainfo.xml`, `README.md`, and the wiki gallery (`docs/wiki/Screenshots.md` + Home.md): title-screen, gameplay-graphics, explosion, gameplay-ascii, final-gateway, achievements, help-controls. Optional: capture 2-3 more (inventory, look mode, ascension viewer) to reach the 9-12 press-kit ideal. Framing press shots is a judgment call; Claude cannot drive the game to capture them.
 2. **Flathub: Linux test-build.** Run `flatpak-builder` on a Linux machine (dev box is Windows).
 3. **Flathub: record a video** of the Flatpak running (Flathub submission requirement).
 4. **Flathub: submit the PR** via the GitHub web UI - Flathub bans CLI *and* AI submissions, so the PR must be opened by a human in a browser. PR #7414 was rejected only as a beta; they invited a 1.0 resubmit.

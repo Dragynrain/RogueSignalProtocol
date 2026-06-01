@@ -14,9 +14,9 @@ Enemy movement prediction and firewall barriers. Each enemy telegraphs its next 
 
 ## Combat
 
-An area-of-effect exploit detonating mid-fight on a Government System level.
+A fight on a Government System network. Destroyed enemies explode.
 
-![Area-of-effect exploit detonating mid-combat](https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/explosion-aoe.png)
+![Enemies explode when destroyed](https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/explosion.png)
 
 ## Classic Glyph Mode
 
