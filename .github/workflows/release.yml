@@ -252,7 +252,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+        sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev xvfb
 
     - name: Verify required files
       run: |
@@ -282,11 +282,16 @@ jobs:
         pip install pyinstaller
 
     - name: Run tests
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
       run: |
-        # Run full test suite on Linux to catch platform-specific issues
-        # Pre-commit already runs tests locally, but this tests on Linux
-        # Use --no-cov to skip coverage (already enforced by pre-commit hook)
-        python -m pytest tests/ -v --tb=short --no-cov -x
+        # Run full test suite on Linux to catch platform-specific issues.
+        # Headless runner: use dummy SDL drivers and a virtual framebuffer (xvfb)
+        # so SDL/libtcod video init succeeds. Matches ci.yml; without this the
+        # gamepad end-to-end tests fail with "Could not initialize SDL: No
+        # available video device".
+        xvfb-run -a python -m pytest tests/ -v --tb=short --no-cov -x
 
     - name: Build executable with PyInstaller
       run: |
