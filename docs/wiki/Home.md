@@ -8,9 +8,18 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 
 **Current Version:** 1.0.0
 
+## Screenshots
+
+![Title screen - cyberspace stealth exfiltration](https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/title-screen.png)
+
+![Tactical gameplay with enemy movement prediction](https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/gameplay-graphics.png)
+
+More in the **[Screenshots](Screenshots)** gallery.
+
 ## Quick Links
 
 ### 🎮 Getting Started
+- **[Screenshots](Screenshots)** - See the game in action
 - **[Gameplay Mechanics](Gameplay-Mechanics)** - Core systems, rules, and mechanics
 - **[Keybindings](Keybindings)** - Complete keyboard and mouse control reference
 - **[UI and HUD Guide](UI-and-HUD-Guide)** - Understanding the interface and status displays

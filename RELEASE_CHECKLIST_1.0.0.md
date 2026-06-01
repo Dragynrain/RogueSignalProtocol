@@ -230,10 +230,29 @@ git add . && git commit -m "Update wiki for v1.0.0" && git push
 
 ---
 
+## HUMAN-ONLY TASKS (Claude cannot do these - they need you)
+
+These are part of the 1.0 launch (not deferred), but the steps below can only be done by a person.
+
+1. **Screenshots: DONE for launch.** 7 new 1.0 captures are wired into `metainfo.xml`, `README.md`, and the wiki gallery (`docs/wiki/Screenshots.md` + Home.md): title-screen, gameplay-graphics, explosion-aoe, gameplay-ascii, final-gateway, achievements, help-controls. Optional: capture 2-3 more (inventory, look mode, ascension viewer) to reach the 9-12 press-kit ideal. Framing press shots is a judgment call; Claude cannot drive the game to capture them.
+2. **Flathub: Linux test-build.** Run `flatpak-builder` on a Linux machine (dev box is Windows).
+3. **Flathub: record a video** of the Flatpak running (Flathub submission requirement).
+4. **Flathub: submit the PR** via the GitHub web UI - Flathub bans CLI *and* AI submissions, so the PR must be opened by a human in a browser. PR #7414 was rejected only as a beta; they invited a 1.0 resubmit.
+5. **itch.io: upload the screenshots** to the itch dashboard (Claude provides the page text; you upload the images).
+
+What Claude handles for the above: Flathub manifest sha256 patch (after Step 3) + manifest validation; wiring screenshots into `metainfo.xml` and marketing copy once captured.
+
+---
+
+## Active but post-launch-window (acceptable to trail the release)
+
+- **Flathub submission** (see HUMAN-ONLY tasks 2-4). Manifest at `packaging/linux/info.aforster.roguesignalprotocol.yml` has `PLACEHOLDER_UPDATE_AFTER_LINUX_BUILD` for sha256 - Claude patches it after Step 3. Then the Linux test-build, video, and web-UI PR are yours.
+- **Screenshot refresh: done for launch** (7 new 1.0 captures wired in). Optional stretch to 9-12 for the press kit (see HUMAN-ONLY task 1).
+
+---
+
 ## Deferred past launch day (acceptable)
 
-- **Flathub submission.** Manifest at `packaging/linux/info.aforster.roguesignalprotocol.yml` still has `PLACEHOLDER_UPDATE_AFTER_LINUX_BUILD` for sha256. After step 3, compute sha256 of the Linux tarball and patch it in. Then needs Linux environment to test-build, record video of it running, submit PR manually via GitHub web UI (Flathub bans CLI and AI submissions). Previous PR #7414 was rejected only because Flathub doesn't accept betas - they explicitly said resubmit at 1.0. Aim for week 1.
-- **Screenshot refresh** (have 5, press-kit ideal is 9-12). Can backfill.
 - **Trailer.** Raw `gameplay_full.mp4` / `gameplay_short.mp4` exist. Final cut per `marketing/TRAILER_PLAN.md`. Reddit posts work without it.
 - **VirusTotal scan** of the .exe for documentation purposes.
 

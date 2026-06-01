@@ -59,13 +59,17 @@ A turn-based stealth roguelike. You play an escaped digital consciousness slippi
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/screenshots/screenshot-1.png" width="45%" alt="Gameplay Screenshot 1">
-  <img src="docs/images/screenshots/screenshot-2.png" width="45%" alt="Gameplay Screenshot 2">
+  <img src="docs/images/screenshots/title-screen.png" width="45%" alt="Title screen">
+  <img src="docs/images/screenshots/gameplay-graphics.png" width="45%" alt="Tactical gameplay with enemy movement prediction">
 </p>
 <p align="center">
-  <img src="docs/images/screenshots/screenshot-3.png" width="30%" alt="Gameplay Screenshot 3">
-  <img src="docs/images/screenshots/screenshot-4.png" width="30%" alt="Gameplay Screenshot 4">
-  <img src="docs/images/screenshots/screenshot-5.png" width="30%" alt="Gameplay Screenshot 5">
+  <img src="docs/images/screenshots/explosion-aoe.png" width="45%" alt="Area-of-effect exploit detonating mid-combat">
+  <img src="docs/images/screenshots/gameplay-ascii.png" width="45%" alt="The same scene in classic ASCII/Unicode mode">
+</p>
+<p align="center">
+  <img src="docs/images/screenshots/final-gateway.png" width="30%" alt="Reaching the final gateway">
+  <img src="docs/images/screenshots/achievements.png" width="30%" alt="Achievements across combat, stealth, and ascension">
+  <img src="docs/images/screenshots/help-controls.png" width="30%" alt="In-game controls and objective reference">
 </p>
 
 ---

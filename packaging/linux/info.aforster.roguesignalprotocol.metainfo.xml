@@ -70,16 +70,32 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-1.png</image>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/title-screen.png</image>
+      <caption>Rogue Signal Protocol - cyberspace stealth exfiltration</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/gameplay-graphics.png</image>
       <caption>Tactical gameplay with enemy movement prediction</caption>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-2.png</image>
-      <caption>Stealth navigation through cyberspace</caption>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/explosion-aoe.png</image>
+      <caption>An area-of-effect exploit detonating mid-combat</caption>
     </screenshot>
     <screenshot>
-      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/screenshot-3.png</image>
-      <caption>Exploits and abilities system</caption>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/gameplay-ascii.png</image>
+      <caption>The same scene in classic ASCII and Unicode mode</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/final-gateway.png</image>
+      <caption>Reaching the final gateway to escape the network</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/achievements.png</image>
+      <caption>47 achievements across combat, stealth, and ascension</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/docs/images/screenshots/help-controls.png</image>
+      <caption>In-game controls and objective reference</caption>
     </screenshot>
   </screenshots>
 
