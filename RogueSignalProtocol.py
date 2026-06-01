@@ -123,6 +123,28 @@ else:
 
 
 if __name__ == "__main__":
+    # Packaging smoke test (used by CI against the assembled binary + assets).
+    # Reaching this point already proves the rsp package is bundled and the config
+    # loaded at import time - the exact failure mode the source test suite cannot
+    # catch (it imports rsp from src/, never from the frozen binary). We also load
+    # game content explicitly, then exit 0 without opening a window.
+    if "--self-test" in sys.argv:
+        try:
+            from rsp.core.config import GameBalance, GameConfig
+            from rsp.core.data import GameData, GameUpgrades
+
+            GameConfig.load_from_json()
+            GameBalance.load_from_json()
+            GameUpgrades._ensure_loaded()
+            # Touch content that the game reads at runtime so missing/corrupt data fails here.
+            assert GameData.ENEMY_TYPES, "No enemy types loaded"
+            print("SELF-TEST OK")
+            sys.exit(0)
+        except Exception as e:
+            logging.critical(f"SELF-TEST FAILED: {e}")
+            print(f"SELF-TEST FAILED: {e}", file=sys.stderr)
+            sys.exit(1)
+
     try:
         main()
     except Exception as e:

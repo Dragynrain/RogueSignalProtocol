@@ -155,6 +155,16 @@ jobs:
         Write-Host "All assets copied successfully."
       shell: powershell
 
+    - name: Smoke test (run the built binary)
+      run: |
+        # Launch the assembled binary headlessly to catch packaging breakage the
+        # source test suite cannot - e.g. a PyInstaller spec that fails to bundle
+        # the rsp package. The exe chdir's to its own dir, so dist/ assets are found.
+        dist\RogueSignalProtocol.exe --self-test
+        if ($LASTEXITCODE -ne 0) { Write-Error "Self-test failed (exit $LASTEXITCODE)"; exit 1 }
+        Write-Host "Self-test passed."
+      shell: powershell
+
     - name: Validate package structure
       run: |
         # Verify all critical files are present in dist/
@@ -372,6 +382,19 @@ jobs:
         cp packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml dist/
 
         echo "All assets copied successfully."
+
+    - name: Smoke test (run the built binary)
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
+      run: |
+        # Launch the assembled binary headlessly to catch packaging breakage the
+        # source test suite cannot - e.g. a PyInstaller spec that fails to bundle
+        # the rsp package (which shipped a broken 1.0.0 Linux build). The binary
+        # chdir's to its own dir, so dist/ assets are found.
+        cd dist
+        ./RogueSignalProtocol --self-test || { echo "Self-test failed"; exit 1; }
+        echo "Self-test passed."
 
     - name: Validate package structure
       run: |
