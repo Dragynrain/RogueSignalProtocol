@@ -96,31 +96,19 @@ set SHA256=%SHA256: =%
 echo SHA256: %SHA256%
 echo.
 
-REM Update PKGBUILD
+REM Update PKGBUILD (pkgver, _vertag, sha256) and normalize to LF.
+REM Delegated to a dedicated .ps1 invoked with -File and named parameters. The old
+REM inline "powershell -Command \"...\"" form had cmd mangle the escaped quotes in
+REM the sha256 replace, so the checksum was silently left stale and shipped to AUR.
+REM The script does the replacements in plain PowerShell (no cmd escaping), verifies
+REM the result, and exits non-zero on any mismatch.
 echo Updating PKGBUILD...
-
-REM Read current PKGBUILD and update version lines
-REM Use PowerShell for reliable text replacement
-powershell -NoProfile -Command ^
-    "$content = Get-Content '%PKGBUILD%' -Raw; " ^
-    "$content = $content -replace 'pkgver=[^\r\n]+', 'pkgver=%PKGVER%'; " ^
-    "$content = $content -replace '_vertag=[^\r\n]+', '_vertag=%VERTAG%'; " ^
-    "$content = $content -replace \"sha256sums=\('[^']+'\)\", \"sha256sums=('%SHA256%')\"; " ^
-    "$content | Set-Content '%PKGBUILD%' -NoNewline"
-
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-pkgbuild.ps1" -PkgBuild "%PKGBUILD%" -PkgVer "%PKGVER%" -VerTag "%VERTAG%" -Sha256 "%SHA256%"
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Failed to update PKGBUILD
+    echo ERROR: Failed to update/verify PKGBUILD
     exit /b 1
 )
-
-echo PKGBUILD updated successfully
-
-REM Convert to Unix line endings (important for AUR)
-echo Converting to Unix line endings...
-powershell -NoProfile -Command ^
-    "$content = Get-Content '%PKGBUILD%' -Raw; " ^
-    "$content = $content -replace \"`r`n\", \"`n\"; " ^
-    "[System.IO.File]::WriteAllText('%PKGBUILD%', $content)"
+echo PKGBUILD updated and verified
 
 REM Also convert .install file
 powershell -NoProfile -Command ^
@@ -153,6 +141,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo You may need to generate .SRCINFO manually
 ) else (
     echo .SRCINFO generated successfully
+    REM Verify the generated .SRCINFO carries the correct sha256 - fail loudly so a
+    REM wrong checksum can never reach AUR even if .SRCINFO generation goes wrong.
+    findstr /C:"sha256sums = %SHA256%" packaging\linux\.SRCINFO >nul
+    if !ERRORLEVEL! NEQ 0 (
+        echo ERROR: .SRCINFO sha256 does not match expected %SHA256%
+        exit /b 1
+    )
+    echo .SRCINFO sha256 verified
 )
 
 :skip_srcinfo
