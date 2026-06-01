@@ -16,6 +16,6 @@ pkgbase = rogue-signal-protocol-bin
 	conflicts = rogue-signal-protocol-git
 	options = !strip
 	source = rogue-signal-protocol-bin-1.0.0.tar.gz::https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v1.0.0/RogueSignalProtocol-1.0.0-Linux.tar.gz
-	sha256sums = 90ceae8bb18d137a17ffd86bfc81d168d8ca2e84de311672036cce79d30e6ef5
+	sha256sums = eb105a3243dd44e4ffb1e840541de902cdfd9279a60af22fd27f141165b23b78
 
 pkgname = rogue-signal-protocol-bin
