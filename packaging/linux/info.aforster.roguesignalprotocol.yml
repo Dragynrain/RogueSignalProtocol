@@ -51,19 +51,24 @@ modules:
         url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v1.0.0/RogueSignalProtocol-1.0.0-Linux.tar.gz
         sha256: eb105a3243dd44e4ffb1e840541de902cdfd9279a60af22fd27f141165b23b78
 
+      # Support files pinned to an immutable commit (not the mutable main branch),
+      # each with a sha256, as Flathub requires.
       - type: file
-        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/logo-256.png
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/b96cd69670e7538f920c98e22c4fe3c98783ee6f/packaging/linux/logo-256.png
         sha256: 5f753961c3550168d1fead02ad18cf6178f7ef24f35e4c39f9000d7f9d26fe5c
         dest-filename: logo-256.png
 
       - type: file
-        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/info.aforster.roguesignalprotocol.desktop
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/b96cd69670e7538f920c98e22c4fe3c98783ee6f/packaging/linux/info.aforster.roguesignalprotocol.desktop
+        sha256: 38a93a9195bf497b186c4e8f9c492325f29054ee5a234446e17b227dbb2c2313
         dest-filename: info.aforster.roguesignalprotocol.desktop
 
       - type: file
-        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/b96cd69670e7538f920c98e22c4fe3c98783ee6f/packaging/linux/info.aforster.roguesignalprotocol.metainfo.xml
+        sha256: 8b5b36a79e0ab1ad0cdf0722726719b98dfd2afbef02338c84914638aafc5bbf
         dest-filename: info.aforster.roguesignalprotocol.metainfo.xml
 
       - type: file
-        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/rogue-signal-protocol
+        url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/b96cd69670e7538f920c98e22c4fe3c98783ee6f/packaging/linux/rogue-signal-protocol
+        sha256: 8ed1bf0b28347e27dc77a279228fc7b728afd63dc085953a4d1b46ed2bcf32fb
         dest-filename: rogue-signal-protocol
