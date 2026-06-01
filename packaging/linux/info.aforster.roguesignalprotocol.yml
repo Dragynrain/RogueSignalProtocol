@@ -16,7 +16,7 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --socket=pulseaudio
-  - --device=input  # Gamepad/controller support
+  - --device=all  # Gamepad/controller + GPU access (input device type needs newer flatpak)
 
 modules:
   - name: RogueSignalProtocol
