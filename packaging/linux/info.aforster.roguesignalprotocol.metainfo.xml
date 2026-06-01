@@ -44,12 +44,9 @@
   <recommends>
     <control>keyboard</control>
     <control>pointing</control>
-    <control>gamepad</control>
   </recommends>
 
   <supports>
-    <control>keyboard</control>
-    <control>pointing</control>
     <control>gamepad</control>
   </supports>
 
