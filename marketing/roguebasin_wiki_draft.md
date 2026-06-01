@@ -51,6 +51,14 @@ All abilities (called "exploits") generate heat. Overheating causes self-damage,
 * Full gamepad support including Steam Deck
 * Keyboard and gamepad remapping
 
+== Screenshots ==
+
+<gallery>
+RogueSignalProtocol-gameplay.png|Graphical tile mode - each enemy shows its next 3 planned moves
+RogueSignalProtocol-ascii.png|The same scene in classic ASCII mode
+RogueSignalProtocol-combat.png|An area-of-effect exploit detonating mid-fight
+</gallery>
+
 == Story ==
 
 20+ narrative fragments are scattered across the levels and persist between deaths. Each run reveals more of the Project Chimera plot.
@@ -77,3 +85,22 @@ All abilities (called "exploits") generate heat. Overheating causes self-damage,
 - Categories at the bottom link the game to relevant lists
 - Create a user page `[[User:Dragynrain]]` if you want your name linked
 - You may need to create the page at: https://www.roguebasin.com/index.php?title=Rogue_Signal_Protocol
+
+### Screenshots (MediaWiki: upload first, then the gallery works)
+
+RogueBasin cannot hot-link external images, so each file in the `<gallery>` must be
+uploaded to RogueBasin itself via https://www.roguebasin.com/index.php?title=Special:Upload
+(requires being logged in). The wiki's File namespace is shared across all games, so
+keep the game-prefixed names below to avoid collisions. Upload these three, using the
+exact destination filenames so the gallery markup resolves:
+
+| Upload this local file | As this RogueBasin filename |
+|---|---|
+| `docs/images/screenshots/gameplay-graphics.png` | `RogueSignalProtocol-gameplay.png` |
+| `docs/images/screenshots/gameplay-ascii.png` | `RogueSignalProtocol-ascii.png` |
+| `docs/images/screenshots/explosion-aoe.png` | `RogueSignalProtocol-combat.png` |
+
+After the files exist on RogueBasin, the `== Screenshots ==` gallery renders automatically.
+Add more from `docs/images/screenshots/` the same way if you want (e.g. `title-screen.png`,
+`final-gateway.png`, `achievements.png`) - upload with a `RogueSignalProtocol-` prefix and
+add a matching `[[File:...]]` line to the gallery.
