@@ -49,9 +49,7 @@ modules:
     sources:
       - type: archive
         url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v1.0.0/RogueSignalProtocol-1.0.0-Linux.tar.gz
-        # TODO: Update sha256 after Linux build is uploaded (Phase 3.3)
-        # Get hash with: sha256sum RogueSignalProtocol-1.0.0-Linux.tar.gz
-        sha256: PLACEHOLDER_UPDATE_AFTER_LINUX_BUILD
+        sha256: eb105a3243dd44e4ffb1e840541de902cdfd9279a60af22fd27f141165b23b78
 
       - type: file
         url: https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/packaging/linux/logo-256.png
