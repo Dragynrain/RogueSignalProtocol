@@ -37,10 +37,12 @@ modules:
       # Source: https://github.com/Dragynrain/RogueSignalProtocol/blob/main/packaging/linux/rogue-signal-protocol
       - install -Dm755 rogue-signal-protocol /app/bin/
 
-      # Install desktop integration
-      - install -Dm644 info.aforster.roguesignalprotocol.desktop /app/share/applications/
+      # Install desktop integration. Use 'install -D -t DIR' (creates the target
+      # directory) rather than a trailing-slash DEST, which fails when the dir does
+      # not already exist. The icon line names a full DEST path, so it is fine.
+      - install -Dm644 info.aforster.roguesignalprotocol.desktop -t /app/share/applications/
       - install -Dm644 logo-256.png /app/share/icons/hicolor/256x256/apps/info.aforster.roguesignalprotocol.png
-      - install -Dm644 info.aforster.roguesignalprotocol.metainfo.xml /app/share/metainfo/
+      - install -Dm644 info.aforster.roguesignalprotocol.metainfo.xml -t /app/share/metainfo/
 
       # License
       - install -dm755 /app/share/licenses/info.aforster.roguesignalprotocol
