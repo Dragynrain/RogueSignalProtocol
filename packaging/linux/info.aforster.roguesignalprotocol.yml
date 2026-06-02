@@ -22,8 +22,9 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --socket=pulseaudio
-  - --device=dri    # GPU for SDL/tcod rendering
-  - --device=input  # gamepad/controller (Steam Deck, Xbox, PlayStation)
+  - --device=all    # GPU + gamepad/controllers. (--device=input is more granular but
+                    # isn't supported on Flatpak 1.14.x, so the Flathub linter requires a
+                    # --require-version pin or an exception; --device=all is backwards-compatible.)
 
 build-options:
   env:
