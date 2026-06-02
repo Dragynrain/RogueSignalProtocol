@@ -2,6 +2,15 @@
 
 All notable changes to Rogue Signal Protocol will be documented in this file.
 
+## [1.0.1] - 2026-06-01
+
+### Changed
+- Audio backend migrated from pygame to miniaudio. miniaudio is self-contained (bundled
+  WAV/OGG decoders, no external native dependencies) and builds from source, which is what
+  Flathub requires. Audio behavior is unchanged: same sound effects, music, fades, and volume
+  controls. This is the first release published on Flathub.
+- The startup fatal-error dialog now renders via tcod instead of pygame (one less dependency).
+
 ## [1.0.0] - 2026-06-01 - Official Release
 
 ### Added

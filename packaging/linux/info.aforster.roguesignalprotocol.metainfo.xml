@@ -97,6 +97,11 @@
   </screenshots>
 
   <releases>
+    <release version="1.0.1" date="2026-06-01" type="stable">
+      <description>
+        <p>Linux audio backend switched from pygame to miniaudio (self-contained, built from source). First Flathub release.</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-06-01" type="stable">
       <description>
         <p>1.0 release. New prologue tutorial, console window removed on Windows, save system and pathfinding polish, codebase reorganized into src/rsp package.</p>

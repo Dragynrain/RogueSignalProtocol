@@ -1,6 +1,6 @@
 ===============================================================================
                         ROGUE SIGNAL PROTOCOL
-                         Version 1.0.0
+                         Version 1.0.1
                     A Coffee Break Stealth Roguelike
 ===============================================================================
 
@@ -183,7 +183,7 @@ Linux data is stored in XDG-compliant locations:
 
 Distribution formats available:
 - AppImage: Portable, works on any distro
-- Flatpak: Via Flathub
+- Flatpak: Coming soon (Flathub submission in progress)
 - AUR: For Arch-based distros (rogue-signal-protocol-bin)
 
 Steam Deck: Runs natively. Add as non-Steam game for Gaming Mode.

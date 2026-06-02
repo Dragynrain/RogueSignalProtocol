@@ -1,0 +1,13 @@
+# Runtime-only dependencies for the Flathub build (NOT the dev requirements.txt).
+# Flathub builds from source: these are fed to flatpak-pip-generator to produce
+# python3-modules.json (pinned sdists/universal wheels + transitive deps). Keep this in
+# sync with the runtime imports in src/rsp/ - dev tooling (pytest, ruff, mypy, pyinstaller,
+# etc.) is intentionally excluded.
+#
+# Transitive deps (cffi, pycparser, numpy build backend) are resolved by the generator.
+tcod==19.6.0
+numpy==2.3.2
+pillow==11.3.0
+platformdirs==4.4.0
+miniaudio==1.71
+freetype-py==2.5.1

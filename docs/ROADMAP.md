@@ -10,7 +10,7 @@ These features have been completed and are available in the current version:
 
 - **Ascension System** - 20 difficulty levels with scaling modifiers
 - **Gamepad Support** - Full Xbox/PlayStation controller support
-- **Linux Support** - AppImage, tarball, Flatpak, and AUR packages
+- **Linux Support** - AppImage, tarball, and AUR packages (Flatpak via Flathub in progress)
 
 ---
 

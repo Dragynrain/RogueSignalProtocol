@@ -2,10 +2,10 @@
 
 # Rogue Signal Protocol
 
-**Version 1.0.0** - A coffee break cyberspace stealth roguelike built with Python and TCOD
+**Version 1.0.1** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)
+![Version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ---
@@ -127,10 +127,7 @@ cd RogueSignalProtocol
 ./RogueSignalProtocol
 ```
 
-**Flatpak (via Flathub):**
-```bash
-flatpak install flathub info.aforster.roguesignalprotocol
-```
+**Flatpak (via Flathub):** Coming soon - the Flathub submission is in progress. Use the AppImage in the meantime.
 
 **Arch Linux (AUR):**
 ```bash

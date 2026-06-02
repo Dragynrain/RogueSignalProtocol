@@ -1,5 +1,7 @@
 #!/bin/sh
-# Wrapper script for Rogue Signal Protocol
-# Changes to the game directory before executing (required for asset loading)
+# Rogue Signal Protocol launcher (Flatpak, build-from-source).
+# Change to the game directory so RogueSignalProtocol.py finds src/ and the assets,
+# then run it with the runtime's Python. The entry script adds src/ to sys.path and
+# resolves save data via platformdirs (~/.var/app/.../data).
 cd /app/lib/rogue-signal-protocol
-exec ./RogueSignalProtocol "$@"
+exec python3 RogueSignalProtocol.py "$@"
