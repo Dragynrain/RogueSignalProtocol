@@ -59,4 +59,4 @@ modules:
       # strip-components default (1) drops the GitHub-added top-level RogueSignalProtocol-1.0.1/ dir.
       - type: archive
         url: https://github.com/Dragynrain/RogueSignalProtocol/archive/refs/tags/v1.0.1.tar.gz
-        sha256: REPLACE_AFTER_TAGGING_v1.0.1
+        sha256: cfaa00d76bdcb8f6bc636f57508a9671bead1172a3c78f61ea3557b125fcdd99
