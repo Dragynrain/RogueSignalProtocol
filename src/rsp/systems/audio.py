@@ -1,83 +1,131 @@
 #!/usr/bin/env python3
 """
-Audio system managing sound effects and background music via pygame.
+Audio system managing sound effects and background music via miniaudio.
 
 This module handles:
-- Sound effect playback with priority queue (16 simultaneous channels)
+- Sound effect playback with priority queue (16 simultaneous voices)
 - Sound deduplication to prevent stacking/doubling (50ms cooldown)
 - Background music streaming with fade in/out
 - Volume management (master, music, SFX) synced with GameSettings
 - Sound preloading at startup for instant playback
-- Graceful fallback when pygame unavailable
+- Graceful fallback when miniaudio unavailable
 
-Key features:
-- Priority-based sound playback (higher priority interrupts lower)
-- Automatic deduplication prevents same sound playing multiple times simultaneously
-- Configurable audio directories (sound/, music/)
-- Master volume slider affects all audio (music and SFX)
-- Music loops infinitely or plays once based on loops parameter
-- Safe initialization with fallback to silent mode if pygame missing
-
-Technical details:
-- Uses pygame.mixer with 22050 Hz, 16-bit, stereo, 512 buffer
-- 16 channels for simultaneous sound effects
-- 50ms cooldown per sound prevents stacking (configurable via set_sound_cooldown)
-- Music volume set from settings immediately after init (pygame defaults to 0.0)
+Backend notes:
+- miniaudio is self-contained (bundled decoders for WAV/OGG/FLAC/MP3) and builds from
+  source with no external native dependencies, which is what Flathub requires.
+- A single miniaudio PlaybackDevice is opened at 22050 Hz, 16-bit, stereo. All active
+  sounds plus music are mixed together in software (numpy) inside the device callback.
+- Decoding is done up front with miniaudio.decode_file, producing interleaved int16
+  samples that are reshaped to (frames, 2) numpy arrays and summed at playback time.
 """
 
 import logging
 import os
 import random
+import threading
 import time
+
+import numpy as np
 
 from rsp.core.errors import GameErrorHandler
 
 # Audio system
 try:
-    import pygame
+    import miniaudio
 
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
-    logging.warning("pygame not available. Sound will be disabled.")
+    logging.warning("miniaudio not available. Sound will be disabled.")
 
 # Import game settings
 from rsp.core.config import GameConfig, GameSettings
 
 # Audio system constants
-AUDIO_MAX_CHANNELS = 16  # Simultaneous sound effect channels
+AUDIO_MAX_CHANNELS = 16  # Simultaneous sound effect voices
 AUDIO_FREQUENCY = 22050  # Sample rate in Hz
-AUDIO_SAMPLE_SIZE = -16  # 16-bit signed audio
 AUDIO_CHANNELS = 2  # Stereo output
-AUDIO_BUFFER_SIZE = 512  # Buffer size in samples
+AUDIO_BUFFER_MSEC = 50  # Device buffer size in milliseconds (low latency for SFX)
 AUDIO_SOUND_COOLDOWN = 0.05  # 50ms cooldown to prevent sound stacking
+
+
+class _Voice:
+    """A single playing sound effect: a decoded buffer with a playhead and gain."""
+
+    __slots__ = ("samples", "pos", "gain")
+
+    def __init__(self, samples: np.ndarray, gain: float):
+        self.samples = samples  # (frames, 2) int16
+        self.pos = 0
+        self.gain = gain
+
+
+class _MusicVoice:
+    """Background music: a decoded buffer with looping and linear fade support."""
+
+    __slots__ = ("samples", "pos", "gain", "loops_left", "fade_from", "fade_to", "fade_total", "fade_done", "stopping")
+
+    def __init__(self, samples: np.ndarray, gain: float, loops: int):
+        self.samples = samples  # (frames, 2) int16
+        self.pos = 0
+        self.gain = gain
+        # loops: -1 = infinite, 0 = play once, N = play N+1 times
+        self.loops_left = loops
+        # Linear fade state (in frames). When fade_total == 0 there is no fade.
+        self.fade_from = gain
+        self.fade_to = gain
+        self.fade_total = 0
+        self.fade_done = 0
+        self.stopping = False  # True once a fade-out completes -> remove
+
+    def start_fade(self, from_gain: float, to_gain: float, fade_ms: int):
+        self.fade_from = from_gain
+        self.fade_to = to_gain
+        self.fade_total = int(fade_ms / 1000.0 * AUDIO_FREQUENCY)
+        self.fade_done = 0
+
+    def current_gain(self, block_frames: int) -> float:
+        """Gain for the next block; advances the fade by block_frames."""
+        if self.fade_total <= 0:
+            return self.gain
+        t = min(1.0, self.fade_done / self.fade_total)
+        g = self.fade_from + (self.fade_to - self.fade_from) * t
+        self.fade_done += block_frames
+        if self.fade_done >= self.fade_total:
+            self.fade_total = 0
+            self.gain = self.fade_to
+        return g
 
 
 class SoundManager:
     """
-    Audio manager for sound effects and background music using pygame.mixer.
+    Audio manager for sound effects and background music using miniaudio.
 
     Responsibilities:
     - Preload sound effects at startup (instant playback)
     - Play sounds with priority queue (interrupts lower priority)
     - Stream background music with fade in/out
     - Volume management synced with GameSettings
-    - Graceful degradation when pygame unavailable
+    - Graceful degradation when miniaudio unavailable
 
-    Key systems:
-    - 16 simultaneous sound channels for layered effects
-    - Priority-based playback (e.g., player death has priority 10)
-    - Configurable audio directories (defaults: sound/, music/)
-    - Volume hierarchy: master volume * (music/sfx volume)
+    The public interface matches the previous pygame-backed implementation so the rest
+    of the game does not change: preload_sounds, load_sound, play_sound, play_music,
+    stop_music, is_music_playing, update, update_volumes, set_sound_cooldown, cleanup.
 
     Attributes:
         settings: GameSettings instance for volume preferences
-        enabled: Whether pygame audio is available
-        sounds: Dict mapping sound keys to pygame.mixer.Sound objects
+        enabled: Whether the audio device is available
+        sounds: Dict mapping sound keys to decoded (frames, 2) int16 numpy arrays
         current_music: Currently playing music filename
         music_playing: Whether music is currently playing
-        max_channels: Number of simultaneous sound channels (16)
+        max_channels: Number of simultaneous sound voices (16)
     """
+
+    # Class-level registry mirroring pygame's single global music stream: only one
+    # SoundManager plays music at a time. The menu and in-game engine each own a separate
+    # SoundManager/device, so this lets them see one another's music (e.g. don't restart
+    # menu music while level music is still playing).
+    _music_owner = None
 
     # Centralized audio directory configuration
     @property
@@ -99,33 +147,103 @@ class SoundManager:
         self.sounds = {}
         self.current_music = None
         self.music_playing = False
-        self.max_channels = AUDIO_MAX_CHANNELS  # Allow more simultaneous sound effects
+        self.max_channels = AUDIO_MAX_CHANNELS
         self._sound_last_played = {}  # Track last play time for each sound
-        self._sound_cooldown = (
-            AUDIO_SOUND_COOLDOWN  # 50ms cooldown to prevent stacking (configurable)
-        )
+        self._sound_cooldown = AUDIO_SOUND_COOLDOWN
+        self._music_cache = {}  # filename -> decoded (frames, 2) int16
+
+        # Mixer state shared with the audio callback thread (guarded by _lock).
+        self._lock = threading.Lock()
+        self._voices = []  # list[_Voice]
+        self._music = None  # _MusicVoice or None
+        self._device = None
 
         if self.enabled:
             try:
-                pygame.mixer.pre_init(
-                    frequency=AUDIO_FREQUENCY,
-                    size=AUDIO_SAMPLE_SIZE,
-                    channels=AUDIO_CHANNELS,
-                    buffer=AUDIO_BUFFER_SIZE,
+                self._device = miniaudio.PlaybackDevice(
+                    output_format=miniaudio.SampleFormat.SIGNED16,
+                    nchannels=AUDIO_CHANNELS,
+                    sample_rate=AUDIO_FREQUENCY,
+                    buffersize_msec=AUDIO_BUFFER_MSEC,
                 )
-                pygame.mixer.init()
-                pygame.mixer.set_num_channels(self.max_channels)
-
-                # CRITICAL: Set initial volume from settings immediately after init
-                # pygame.mixer starts at volume 0.0 by default
-                music_vol = self._get_effective_music_volume()
-                pygame.mixer.music.set_volume(music_vol)
+                generator = self._mix_stream()
+                next(generator)  # prime the generator
+                self._device.start(generator)
                 logging.debug(
-                    f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}"
+                    f"Audio: Initialized miniaudio device - {self.max_channels} voices, "
+                    f"{AUDIO_FREQUENCY}Hz stereo"
                 )
-            except (pygame.error, OSError) as e:
+            except Exception as e:
                 GameErrorHandler.handle_error(e, "sound_init", "Sound initialization failed")
                 self.enabled = False
+                self._device = None
+
+    # ------------------------------------------------------------------ mixing
+
+    def _mix_stream(self):
+        """miniaudio playback generator: yields (frames, 2) int16 blocks.
+
+        Runs on miniaudio's audio thread. Receives the required frame count from the
+        yield and mixes all active voices plus music into a single block.
+        """
+        frames = yield np.zeros((0, AUDIO_CHANNELS), dtype=np.int16)
+        while True:
+            block = self._render(int(frames))
+            frames = yield block
+
+    def _render(self, frames: int) -> np.ndarray:
+        if frames <= 0:
+            return np.zeros((0, AUDIO_CHANNELS), dtype=np.int16)
+
+        acc = np.zeros((frames, AUDIO_CHANNELS), dtype=np.float32)
+
+        with self._lock:
+            # Sound effects
+            still_active = []
+            for v in self._voices:
+                end = v.pos + frames
+                chunk = v.samples[v.pos:end]
+                n = chunk.shape[0]
+                if n > 0:
+                    acc[:n] += chunk.astype(np.float32) * v.gain
+                v.pos = end
+                if v.pos < v.samples.shape[0]:
+                    still_active.append(v)
+            self._voices = still_active
+
+            # Music (with looping + fade)
+            m = self._music
+            if m is not None:
+                g = m.current_gain(frames)
+                written = 0
+                while written < frames:
+                    end = m.pos + (frames - written)
+                    chunk = m.samples[m.pos:end]
+                    n = chunk.shape[0]
+                    if n > 0:
+                        acc[written:written + n] += chunk.astype(np.float32) * g
+                    m.pos += n
+                    written += n
+                    if m.pos >= m.samples.shape[0]:
+                        # Reached end of track
+                        if m.loops_left == -1:
+                            m.pos = 0  # infinite loop
+                        elif m.loops_left > 0:
+                            m.loops_left -= 1
+                            m.pos = 0
+                        else:
+                            break  # finished
+                # Drop music if it finished playing or a fade-out completed
+                finished = m.pos >= m.samples.shape[0] and m.loops_left == 0
+                if (m.stopping and m.fade_total == 0) or finished:
+                    self._music = None
+                    self.music_playing = False
+                    self.current_music = None
+
+        np.clip(acc, -32768.0, 32767.0, out=acc)
+        return acc.astype(np.int16)
+
+    # ------------------------------------------------------------------ volume
 
     def _get_effective_music_volume(self) -> float:
         """Calculate effective music volume including optional boost.
@@ -138,16 +256,19 @@ class SoundManager:
         """
         base_vol = self.settings.music_volume * self.settings.master_volume
         if self.settings.get_effective_music_boost():
-            # Apply 1.5x boost (capped at 1.0)
             return min(1.0, base_vol * 1.5)
         return base_vol
 
     def update_volumes(self):
-        """Update volumes from settings (includes Linux music boost)"""
-        if self.enabled:
-            new_vol = self._get_effective_music_volume()
-            pygame.mixer.music.set_volume(new_vol)
-            logging.debug(f"Audio: Updated music volume to {new_vol:.2f}")
+        """Update volumes from settings (includes Linux music boost)."""
+        if not self.enabled:
+            return
+        new_vol = self._get_effective_music_volume()
+        with self._lock:
+            if self._music is not None and self._music.fade_total == 0:
+                self._music.gain = new_vol
+                self._music.fade_to = new_vol
+        logging.debug(f"Audio: Updated music volume to {new_vol:.2f}")
 
     def set_sound_cooldown(self, cooldown_seconds: float):
         """
@@ -160,6 +281,8 @@ class SoundManager:
         self._sound_cooldown = max(0.0, cooldown_seconds)
         logging.debug(f"Audio: Sound cooldown set to {self._sound_cooldown*1000:.1f}ms")
 
+    # ------------------------------------------------------------------ loading
+
     def preload_sounds(self):
         """
         Preload all sound effects at startup for instant playback.
@@ -167,19 +290,10 @@ class SoundManager:
         Loads all game sound effects into memory to avoid disk I/O during
         gameplay. Missing sound files are logged as warnings but don't
         crash the game (graceful degradation).
-
-        Organized categories:
-        - Movement and actions (player_move, player_attack, stealth_attack)
-        - Combat and alerts (enemy_attack, enemy_alert, admin_spawn)
-        - Item interactions (item_pickup_*, item_use_*)
-        - Environmental (node_activate)
-        - Player status (player_death, virus_damage, overheat)
-        - Exploits (exploit_* for each ability)
         """
         if not self.enabled:
             return
 
-        # Define all sound effects that should be loaded
         sound_files = {
             # Movement and actions
             "player_move": "player_move.wav",
@@ -229,7 +343,6 @@ class SoundManager:
             "level_complete": "level_complete.wav",
         }
 
-        # Load each sound file
         logging.debug(f"Audio: Preloading {len(sound_files)} sound effects")
         loaded_count = 0
         for sound_id, filename in sound_files.items():
@@ -237,8 +350,18 @@ class SoundManager:
                 loaded_count += 1
         logging.debug(f"Audio: Preloaded {loaded_count}/{len(sound_files)} sounds successfully")
 
+    def _decode(self, path: str) -> np.ndarray:
+        """Decode an audio file to a (frames, 2) int16 numpy array at the device rate."""
+        decoded = miniaudio.decode_file(
+            path,
+            output_format=miniaudio.SampleFormat.SIGNED16,
+            nchannels=AUDIO_CHANNELS,
+            sample_rate=AUDIO_FREQUENCY,
+        )
+        return np.asarray(decoded.samples, dtype=np.int16).reshape(-1, AUDIO_CHANNELS)
+
     def load_sound(self, sound_id: str, filename: str) -> bool:
-        """Load a sound effect from file"""
+        """Load and decode a sound effect from file."""
         if not self.enabled:
             return False
 
@@ -248,29 +371,27 @@ class SoundManager:
                 logging.error(f"MISSING AUDIO FILE: Sound file not found: {sound_path}")
                 return False
 
-            self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
+            self.sounds[sound_id] = self._decode(sound_path)
             file_size = os.path.getsize(sound_path)
             logging.debug(f"Audio: Loaded sound '{sound_id}' from {filename} ({file_size} bytes)")
             return True
-        except (pygame.error, OSError) as e:
+        except Exception as e:
             GameErrorHandler.handle_error(e, "sound_load", f"Failed to load {sound_id}")
             return False
 
+    # ------------------------------------------------------------------ playback
+
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """
-        Play a loaded sound effect with channel management and deduplication.
+        Play a loaded sound effect with voice management and deduplication.
 
         Prevents the same sound from playing multiple times within a short time window
-        (50ms by default) to avoid stacking/doubling. This is especially important for
-        sounds triggered multiple times per frame (e.g., multiple enemies alerting).
+        (50ms by default) to avoid stacking/doubling.
 
         Args:
             sound_id: ID of the sound to play
             volume_modifier: Volume multiplier (0.0-1.0+)
-            priority: Priority level (0-10, higher interrupts lower)
-
-        Returns:
-            pygame.mixer.Channel if sound played, None otherwise
+            priority: Priority level (0-10, higher interrupts lower when voices are full)
         """
         if not self.enabled:
             return None
@@ -279,119 +400,140 @@ class SoundManager:
         current_time = time.time()
         last_played = self._sound_last_played.get(sound_id, 0)
         time_since_last = current_time - last_played
-
         if time_since_last < self._sound_cooldown:
-            # Sound played too recently, skip to prevent stacking
             logging.debug(
-                f"Audio: Skipped '{sound_id}' (cooldown: {time_since_last*1000:.1f}ms < {self._sound_cooldown*1000:.1f}ms)"
+                f"Audio: Skipped '{sound_id}' (cooldown: {time_since_last*1000:.1f}ms "
+                f"< {self._sound_cooldown*1000:.1f}ms)"
             )
             return None
 
-        sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
+        samples = self.sounds[sound_id]  # Let it fail if sound doesn't exist
 
         # Update last played time AFTER validating sound exists
         self._sound_last_played[sound_id] = current_time
 
         final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
-        sound.set_volume(final_volume)
+        voice = _Voice(samples, final_volume)
 
-        # Find available channel for simultaneous playback
-        channel = pygame.mixer.find_channel()
-
-        if channel is None:
-            # All channels busy - handle based on priority
-            if priority >= 8:
-                # Critical priority: stop oldest channel (channel 0)
-                channel = pygame.mixer.Channel(0)
-                channel.stop()
-            elif priority >= 5:
-                # High priority: stop a random channel
-                channel_id = random.randint(0, self.max_channels - 1)
-                channel = pygame.mixer.Channel(channel_id)
-                channel.stop()
-            else:
-                # Normal/Low priority: just play on any channel, let pygame handle mixing
-                return sound.play()
-
-        return channel.play(sound)
+        with self._lock:
+            if len(self._voices) >= self.max_channels:
+                # Voices full: high priority steals a slot, otherwise drop the oldest.
+                if priority >= 8:
+                    self._voices.pop(0)
+                elif priority >= 5:
+                    self._voices.pop(random.randint(0, len(self._voices) - 1))
+                else:
+                    self._voices.pop(0)
+            self._voices.append(voice)
+        return voice
 
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
-        """Play background music (OGG format recommended)"""
+        """Play background music (OGG or WAV)."""
         if not self.enabled:
             return
 
         music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
-
-        # Check if file exists first
         if not os.path.exists(music_path):
             logging.error(f"MISSING AUDIO FILE: Music file not found: {music_path}")
             return
 
         try:
-            pygame.mixer.music.load(music_path)
+            samples = self._music_cache.get(filename)
+            if samples is None:
+                samples = self._decode(music_path)
+                self._music_cache[filename] = samples
 
-            # Apply volume from settings (includes Linux boost, capped at 1.0)
             volume = self._get_effective_music_volume()
-            pygame.mixer.music.set_volume(volume)
-
+            voice = _MusicVoice(samples, volume, loops)
             if fade_in_ms > 0:
-                pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
-            else:
-                pygame.mixer.music.play(loops)
+                voice.start_fade(0.0, volume, fade_in_ms)
 
+            # Single global music stream: stop any other manager's music first.
+            prev = SoundManager._music_owner
+            if prev is not None and prev is not self:
+                prev.stop_music()
+
+            with self._lock:
+                self._music = voice
             self.current_music = filename
             self.music_playing = True
+            SoundManager._music_owner = self
+
             loop_info = "loop" if loops == -1 else f"{loops} times"
             logging.debug(
-                f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)"
+                f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, "
+                f"fade_in={fade_in_ms}ms)"
             )
-        except (pygame.error, OSError) as e:
+        except Exception as e:
             GameErrorHandler.handle_error(e, "music_play", f"Failed to play {filename}")
             self.current_music = None
             self.music_playing = False
 
     def stop_music(self, fade_out_ms: int = 0):
-        """Stop background music"""
+        """Stop background music, optionally fading out."""
         if not self.enabled:
             return
 
         try:
             logging.debug(f"Audio: Stopping music (fade_out={fade_out_ms}ms)")
-            if fade_out_ms > 0:
-                pygame.mixer.music.fadeout(fade_out_ms)
-            else:
-                pygame.mixer.music.stop()
-            self.music_playing = False
-            self.current_music = None
-        except pygame.error as e:
+            with self._lock:
+                m = self._music
+                if m is None:
+                    pass
+                elif fade_out_ms > 0:
+                    m.start_fade(m.current_gain(0), 0.0, fade_out_ms)
+                    m.stopping = True
+                else:
+                    self._music = None
+            if fade_out_ms <= 0:
+                self.music_playing = False
+                self.current_music = None
+                if SoundManager._music_owner is self:
+                    SoundManager._music_owner = None
+        except Exception as e:
             GameErrorHandler.handle_error(e, "music_stop", "Failed to stop music")
 
     def is_music_playing(self) -> bool:
-        """Check if music is currently playing"""
-        if not self.enabled:
+        """Check if any music is currently playing (single global music stream)."""
+        owner = SoundManager._music_owner
+        if owner is None or not owner.enabled:
             return False
-        return pygame.mixer.music.get_busy()
+        with owner._lock:
+            return owner._music is not None
 
     def update(self):
-        """Update sound system (call each frame)"""
-        if self.enabled and self.music_playing and not pygame.mixer.music.get_busy():
-            # Music stopped playing
-            self.music_playing = False
-            self.current_music = None
+        """Update sound system (call each frame). Music end is detected in the mixer."""
+        if not self.enabled:
+            return
+        with self._lock:
+            if self.music_playing and self._music is None:
+                self.music_playing = False
+                self.current_music = None
+                if SoundManager._music_owner is self:
+                    SoundManager._music_owner = None
 
     def cleanup(self):
-        """Clean up sound system"""
-        if self.enabled:
-            pygame.mixer.music.stop()
-            pygame.mixer.stop()
-            pygame.mixer.quit()
+        """Clean up sound system."""
+        if not self.enabled:
+            return
+        try:
+            with self._lock:
+                self._voices = []
+                self._music = None
+            if SoundManager._music_owner is self:
+                SoundManager._music_owner = None
+            if self._device is not None:
+                self._device.close()
+                self._device = None
+        except Exception as e:
+            logging.debug(f"Audio cleanup error (non-fatal): {e}")
 
 
 class NullSoundManager:
     """
     Null object pattern for SoundManager - does nothing but implements same interface.
 
-    Used in headless mode for testing to avoid needing pygame/audio systems.
+    Used in headless mode for testing to avoid needing an audio device.
     All methods are no-ops but maintain the same signature as SoundManager.
     """
 

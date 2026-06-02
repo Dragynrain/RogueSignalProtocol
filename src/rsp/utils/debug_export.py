@@ -152,13 +152,13 @@ class DebugExporter:
         except ImportError:
             info_lines.append("TCOD Version: Not installed")
 
-        # Add pygame version
+        # Add miniaudio version (audio backend)
         try:
-            import pygame
+            import miniaudio
 
-            info_lines.append(f"Pygame Version: {pygame.version.ver}")
+            info_lines.append(f"miniaudio Version: {miniaudio.__version__}")
         except ImportError:
-            info_lines.append("Pygame Version: Not installed")
+            info_lines.append("miniaudio Version: Not installed")
 
         info_lines.append("")
 

@@ -329,44 +329,28 @@ class TestApplicationDirectory:
 
 
 class TestFatalErrorDisplay:
-    """Tests for fatal error display (pygame-based, cross-platform)."""
+    """Tests for fatal error display (tcod-based windowed dialog, console fallback).
+
+    The windowed (tcod) path opens a real window, so these tests force it to fail and
+    verify the exit-code contract and the console fallback. The GUI path is validated
+    manually.
+    """
 
     @patch("sys.exit")
-    def test_show_fatal_error_exits_with_code_1(self, mock_exit):
-        """Test that fatal error exits with code 1."""
-        # Mock pygame to avoid actually displaying a window
-        with patch.dict("sys.modules", {"pygame": MagicMock()}):
-            # Re-import to pick up mocked pygame
-            import importlib
+    @patch("tcod.context.new", side_effect=RuntimeError("no display"))
+    def test_show_fatal_error_exits_with_code_1(self, mock_new, mock_exit):
+        """Fatal error always exits with code 1, even if the window cannot open."""
+        game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
 
-            importlib.reload(game_file_paths)
-
-            game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
-
-            # Should exit with code 1
-            mock_exit.assert_called_once_with(1)
+        mock_exit.assert_called_once_with(1)
 
     @patch("sys.exit")
     @patch("builtins.print")
-    def test_show_fatal_error_fallback_to_console(self, mock_print, mock_exit):
-        """Test that fatal error falls back to console if pygame fails."""
-        # Make pygame import fail
-        with patch.dict("sys.modules", {"pygame": None}):
-            # Force ImportError by removing pygame from modules
-            import sys as sys_module
+    @patch("tcod.context.new", side_effect=RuntimeError("no display"))
+    def test_show_fatal_error_fallback_to_console(self, mock_new, mock_print, mock_exit):
+        """Falls back to console output when the windowed dialog cannot be shown."""
+        game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
 
-            original_pygame = sys_module.modules.get("pygame")
-            sys_module.modules["pygame"] = None
-
-            try:
-                # This should fall back to console print
-                game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
-            finally:
-                # Restore pygame
-                if original_pygame is not None:
-                    sys_module.modules["pygame"] = original_pygame
-
-        # Should fall back to print
         assert mock_print.called
         printed_text = " ".join(str(call[0][0]) for call in mock_print.call_args_list)
         assert "Test error message" in printed_text

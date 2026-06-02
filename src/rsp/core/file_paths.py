@@ -160,88 +160,72 @@ def is_portable_mode() -> bool:
 def show_fatal_error_and_exit(message: str, title: str = "Rogue Signal Protocol - Error") -> None:
     """Display a fatal error message and exit the application.
 
-    Uses pygame for cross-platform error display. Falls back to console if pygame fails.
+    Uses tcod for cross-platform error display (a visible window, which matters on
+    Windows where the console is hidden). Falls back to console if tcod fails.
 
     Args:
         message: Error message to display
         title: Dialog title
     """
-    # Try pygame-based error screen (cross-platform)
+    # Try a windowed error screen via tcod (no audio/extra deps needed)
     try:
-        import pygame
+        import tcod.console
+        import tcod.context
+        import tcod.event
 
-        pygame.init()
-        screen = pygame.display.set_mode((640, 480))
-        pygame.display.set_caption(title)
+        width, height = 72, 22
+        max_width = width - 4
+        console = tcod.console.Console(width, height)
 
-        # Colors
-        bg_color = (40, 40, 40)
+        # Word-wrap the message (honoring explicit newlines) to the console width.
+        lines = []
+        for paragraph in message.split("\n"):
+            if not paragraph:
+                lines.append("")
+                continue
+            current_line = ""
+            for word in paragraph.split():
+                test_line = f"{current_line} {word}".strip()
+                if len(test_line) <= max_width:
+                    current_line = test_line
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                    current_line = word
+            if current_line:
+                lines.append(current_line)
+
         text_color = (255, 100, 100)
         instruction_color = (180, 180, 180)
 
-        # Fonts
-        try:
-            title_font = pygame.font.Font(None, 36)
-            message_font = pygame.font.Font(None, 24)
-        except Exception as e:
-            logging.debug(f"Default font failed, falling back to system font: {e}")
-            title_font = pygame.font.SysFont("arial", 28)
-            message_font = pygame.font.SysFont("arial", 18)
+        with tcod.context.new(columns=width, rows=height, title=title) as context:
+            running = True
+            while running:
+                console.clear()
+                console.print(2, 1, title[:max_width], fg=text_color)
+                y_offset = 3
+                for line in lines:
+                    if y_offset >= height - 2:
+                        break
+                    console.print(2, y_offset, line, fg=text_color)
+                    y_offset += 1
+                console.print(
+                    2, height - 2, "Press any key or close the window to exit",
+                    fg=instruction_color,
+                )
+                context.present(console)
 
-        # Render title
-        title_surface = title_font.render(title, True, text_color)
-
-        # Word-wrap message into lines
-        words = message.split()
-        lines = []
-        current_line = ""
-        max_width = 580
-
-        for word in words:
-            test_line = current_line + " " + word if current_line else word
-            test_surface = message_font.render(test_line, True, text_color)
-            if test_surface.get_width() <= max_width:
-                current_line = test_line
-            else:
-                if current_line:
-                    lines.append(current_line)
-                current_line = word
-        if current_line:
-            lines.append(current_line)
-
-        # Render instruction
-        instruction = "Press any key or click to exit"
-        instruction_surface = message_font.render(instruction, True, instruction_color)
-
-        # Event loop
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    running = False
-
-            # Draw
-            screen.fill(bg_color)
-            screen.blit(title_surface, (30, 30))
-
-            y_offset = 80
-            for line in lines:
-                line_surface = message_font.render(line, True, text_color)
-                screen.blit(line_surface, (30, y_offset))
-                y_offset += 28
-
-            screen.blit(instruction_surface, (30, 440))
-            pygame.display.flip()
-
-        pygame.quit()
+                for event in tcod.event.wait():
+                    if isinstance(
+                        event,
+                        (tcod.event.Quit, tcod.event.KeyDown, tcod.event.MouseButtonDown),
+                    ):
+                        running = False
+                        break
 
     except Exception as e:
-        # Fallback to console print if pygame fails
-        logging.warning(f"Pygame error dialog failed: {e}, falling back to console")
+        # Fallback to console print if the windowed dialog fails
+        logging.warning(f"Windowed error dialog failed: {e}, falling back to console")
         print(f"\n{'=' * 60}")
         print(f"FATAL ERROR: {title}")
         print(f"{'=' * 60}")

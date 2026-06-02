@@ -55,8 +55,8 @@ class TestGameComponentIntegration(unittest.TestCase):
         """Test that SoundManager can be imported and initialized."""
         from rsp.systems.audio import SoundManager
 
-        with patch("pygame.mixer.init") as mock_mixer_init:
-            mock_mixer_init.return_value = True
+        # Construct without opening a real audio device (AUDIO_AVAILABLE off).
+        with patch("rsp.systems.audio.AUDIO_AVAILABLE", False):
             sound_manager = SoundManager()
             self.assertIsInstance(sound_manager, SoundManager)
 

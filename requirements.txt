@@ -14,6 +14,7 @@ linkify-it-py==2.0.3
 markdown-it-py==4.0.0
 mdit-py-plugins==0.5.0
 mdurl==0.1.2
+miniaudio==1.71
 mutmut==3.3.1
 numpy==2.3.2
 packaging==25.0
@@ -24,7 +25,8 @@ pluggy==1.6.0
 psutil==7.1.0
 py-cpuinfo==9.0.0
 pycparser==2.22
-pygame==2.6.1
+# pygame removed: audio backend migrated to miniaudio (self-contained, builds from source
+# for Flathub). See PLAN_FLATHUB.md.
 Pygments==2.19.2
 pyinstaller==6.15.0
 pyinstaller-hooks-contrib==2025.8

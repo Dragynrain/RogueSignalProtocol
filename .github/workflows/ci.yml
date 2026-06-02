@@ -29,7 +29,7 @@ jobs:
     - name: Verify environment
       run: |
         python -c "import sys; print(f'Python: {sys.version}')"
-        python -c "import pygame; print(f'pygame: {pygame.version.ver}')"
+        python -c "import miniaudio; print(f'miniaudio: {miniaudio.__version__}')"
         python -c "import tcod; print(f'tcod: {tcod.__version__}')"
 
     - name: Run tests
@@ -65,7 +65,7 @@ jobs:
     - name: Verify environment
       run: |
         python -c "import sys; print(f'Python: {sys.version}')"
-        python -c "import pygame; print(f'pygame: {pygame.version.ver}')"
+        python -c "import miniaudio; print(f'miniaudio: {miniaudio.__version__}')"
         python -c "import tcod; print(f'tcod: {tcod.__version__}')"
 
     - name: Run tests

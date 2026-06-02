@@ -562,33 +562,28 @@ def handle_menu_navigation(
 
     # Create sound manager if not provided
     if menu_sound_manager is None:
-        # Detect headless/test mode: if SDL video isn't initialized, use NullSoundManager
-        try:
-            import pygame
+        # Detect headless/test mode via the dummy SDL video driver. Otherwise create a real
+        # SoundManager, which self-disables if no audio device is available.
+        import os
 
-            if pygame.display.get_surface() is None:
-                # Headless mode (no display) - use null audio
-                from rsp.systems.audio import NullSoundManager
+        from rsp.systems.audio import NullSoundManager
 
-                menu_sound_manager = NullSoundManager(settings)
-            else:
-                menu_sound_manager = SoundManager(settings)
-        except Exception as e:
-            # Pygame not initialized or error - use null audio
-            logging.warning(f"Audio initialization failed, continuing without sound: {e}")
-            from rsp.systems.audio import NullSoundManager
-
+        if os.environ.get("SDL_VIDEODRIVER") == "dummy":
             menu_sound_manager = NullSoundManager(settings)
+        else:
+            try:
+                menu_sound_manager = SoundManager(settings)
+            except Exception as e:
+                logging.warning(f"Audio initialization failed, continuing without sound: {e}")
+                menu_sound_manager = NullSoundManager(settings)
 
     # DO NOT start menu music if level music is already playing
     # Level music should continue playing when player returns to menu
     try:
-        import pygame
-
-        from rsp.systems.audio import AUDIO_AVAILABLE
-
-        # Only play menu music if NO music is currently playing
-        if AUDIO_AVAILABLE and not pygame.mixer.music.get_busy():
+        # Only play menu music if NO music is currently playing (e.g. level music
+        # continuing while the player is in a menu). is_music_playing() reports the
+        # single global music stream across all sound managers.
+        if not menu_sound_manager.is_music_playing():
             menu_sound_manager.play_music("main_menu.ogg", loops=-1, fade_in_ms=1000)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")

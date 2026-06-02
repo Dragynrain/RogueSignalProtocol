@@ -80,10 +80,13 @@ This document describes the code quality tools installed and configured for Rogu
 **Manual usage:**
 ```bash
 # Generate JSON dependency data
-.venv/Scripts/pydeps.exe RogueSignalProtocol.py --show-deps --max-bacon 3 > dependencies.json
+# PYTHONPATH=src is required so pydeps can statically resolve the rsp.* package
+# (RogueSignalProtocol.py only adds src/ to sys.path at runtime). Without it, the
+# entire rsp subtree is silently omitted from the output.
+PYTHONPATH=src .venv/Scripts/pydeps.exe RogueSignalProtocol.py --show-deps --max-bacon 3 --no-output > docs/dependencies.json
 
 # Generate visual graph (requires Graphviz installation)
-.venv/Scripts/pydeps.exe RogueSignalProtocol.py -o architecture.svg --max-bacon 2
+PYTHONPATH=src .venv/Scripts/pydeps.exe RogueSignalProtocol.py -o architecture.svg --max-bacon 2
 ```
 
 **Note:** Visual graphs require [Graphviz](https://graphviz.org/download/) to be installed separately.
