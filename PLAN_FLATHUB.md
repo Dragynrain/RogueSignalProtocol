@@ -146,9 +146,13 @@ Rewrite `src/rsp/systems/audio.py` behind the UNCHANGED `SoundManager` public in
 - Add metainfo `<release version="1.0.1">` entry (note: Linux audio backend -> miniaudio).
 - Tag v1.0.1 AFTER audio rewrite + pygame removal are merged and tested.
 
-### F. Domain verification (parallel, non-blocking)
-- aforster.info: add visible link tying domain to app/dev.
-- Stage `.well-known/org.flathub.VerifiedApps.txt` token; publish AFTER acceptance.
+### F. Domain (aforster.info)
+- DONE: domain resolves (HTTPS 200) and has a visible Projects link to the GitHub repo, so the
+  domain-based app-id ownership is evident for review. Nothing to do pre-submission.
+- POST-ACCEPTANCE ONLY (for the verified badge, not the PR): after the app is published, use the
+  flathub.org Verify flow -> it generates the token -> put it at
+  https://aforster.info/.well-known/org.flathub.VerifiedApps.txt. The token does NOT exist until
+  then, so there is nothing to upload now.
 
 ### G. Submission (HUMAN, after blockers green)
 - PR vs base branch `new-pr` of flathub/flathub; branch+title = `info.aforster.roguesignalprotocol`.

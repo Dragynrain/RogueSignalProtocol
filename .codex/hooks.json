@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Skip acknowledgments like \"You are right\" - focus on the solution'"
+          },
+          {
+            "type": "command",
+            "command": "echo 'If PLAN_* file exists, follow it precisely - no exploratory problem-solving'"
+          },
+          {
+            "type": "command",
+            "command": "echo 'Avoid meaningless quality claims: \"production ready\", \"robust\", \"enterprise-grade\". Be specific.'"
+          }
+        ]
+      }
+    ]
+  }
+}
