@@ -12,6 +12,7 @@ import pytest
 
 from scripts.build_trailer import (
     EditConfig,
+    cta_layout,
     build_edit_decisions,
     build_timeline,
     ffmpeg_clip_args,
@@ -193,3 +194,27 @@ def test_music_filtergraph_ramp_crossfades_then_normalizes():
     # Normalize after the mix so both tracks land at the same target.
     assert fg.index("acrossfade") < fg.index("loudnorm")
     assert fg.endswith("[aout]")
+
+
+def test_cta_layout_shows_whole_portrait_on_the_right():
+    layout = cta_layout(size=(1920, 1080), art_size=(1440, 1440))
+    x, y, w, h = layout["art"]
+    assert (y, h) == (0, 1080)  # full height, nothing cropped
+    assert w == 1080  # aspect preserved
+    assert x + w == 1920  # right-aligned
+
+
+def test_cta_text_column_stays_clear_of_the_face():
+    # The portrait's subject is centered, so its middle third is the face.
+    layout = cta_layout(size=(1920, 1080), art_size=(1440, 1440))
+    ax, _, aw, _ = layout["art"]
+    face_left = ax + aw / 3
+    left, right = layout["text"]
+    assert 0 < left < right <= face_left - 40
+
+
+def test_cta_layout_without_art_centers_the_text():
+    layout = cta_layout(size=(1920, 1080), art_size=None)
+    assert layout["art"] is None
+    left, right = layout["text"]
+    assert left == pytest.approx(1920 - right)

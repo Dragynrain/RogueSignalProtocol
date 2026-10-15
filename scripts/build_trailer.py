@@ -217,20 +217,52 @@ def _cover_fit(img, size):
     return img.crop((left, top, left + tw, top + th))
 
 
+def cta_layout(size, art_size, margin=110) -> dict:
+    """Place the closing card's art and text column.
+
+    The title art is a centered portrait, so cover-fitting it to 16:9 crops
+    to the face and any centered text lands on it. Instead the whole portrait
+    sits at full height against the right edge, and the text gets a column on
+    the left that stops short of the portrait's middle third (the face).
+
+    Returns {"art": (x, y, w, h) or None, "text": (left, right)}.
+    """
+    sw, sh = size
+    if not art_size:
+        return {"art": None, "text": (margin, sw - margin)}
+    aw = round(art_size[0] * sh / art_size[1])
+    ax = sw - aw
+    face_left = ax + aw / 3
+    return {"art": (ax, 0, aw, sh), "text": (margin, int(face_left - 60))}
+
+
 def _render_cta_png(cta: dict, out_path: Path, size=(1920, 1080)) -> None:
-    """Render the closing card over title-screen art, darkened for legibility,
-    with a clear title hierarchy."""
-    from PIL import Image, ImageDraw, ImageFont
+    """Render the closing card: title art on the right, text on the left."""
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
     bg_path = cta.get("bg")
+    art = None
     if bg_path and Path(bg_path).exists():
-        base = _cover_fit(Image.open(bg_path).convert("RGB"), size).convert("RGBA")
+        art = Image.open(bg_path).convert("RGB")
+    layout = cta_layout(size, art.size if art else None)
+
+    if art is not None:
+        # Backdrop: the same art, blurred and dimmed, so the frame has no
+        # hard bars beside the portrait.
+        base = _cover_fit(art, size).filter(ImageFilter.GaussianBlur(28)).convert("RGBA")
+        base = Image.alpha_composite(base, Image.new("RGBA", size, (4, 6, 10, 205)))
+        ax, ay, aw, ah = layout["art"]
+        portrait = art.resize((aw, ah), Image.LANCZOS).convert("RGBA")
+        # Feather the portrait's left edge into the backdrop.
+        feather = int(aw * 0.28)
+        alpha = Image.new("L", (aw, ah), 255)
+        ramp = ImageDraw.Draw(alpha)
+        for i in range(feather):
+            ramp.line([(i, 0), (i, ah)], fill=int(255 * i / feather))
+        portrait.putalpha(alpha)
+        base.alpha_composite(portrait, (ax, ay))
     else:
         base = Image.new("RGBA", size, (6, 8, 10, 255))
-
-    # Darken so text reads, a touch heavier at the bottom.
-    shade = Image.new("RGBA", size, (4, 6, 10, 140))
-    base = Image.alpha_composite(base, shade)
     draw = ImageDraw.Draw(base)
 
     def font(px):
@@ -239,52 +271,60 @@ def _render_cta_png(cta: dict, out_path: Path, size=(1920, 1080)) -> None:
         except Exception:
             return ImageFont.load_default()
 
-    # (text, size, color, stroke) rows, drawn as a centered vertical block.
     cyan = (64, 224, 255, 255)
     amber = (255, 196, 0, 255)
     white = (240, 244, 248, 255)
     gray = (168, 176, 184, 255)
-    spec = [
-        (cta.get("title", ""), 92, cyan, 4),
-        (cta.get("tagline", ""), 44, white, 2),
-        (cta.get("note", ""), 44, amber, 2),
-        (cta.get("platforms", ""), 38, gray, 2),
-        (cta.get("url", ""), 44, cyan, 2),
-    ]
-    spec = [r for r in spec if r[0]]
+    left, right = layout["text"]
+    col_w = right - left
 
-    # Keep each line well within a title-safe width.
-    max_w = int(size[0] * 0.78)
-    rows = []
-    for text, px, color, stroke in spec:
-        while px > 20 and draw.textlength(text, font=font(px)) > max_w:
+    # Title wraps onto as many lines as the column needs at full size; the
+    # other rows shrink to fit on one line.
+    rows = []  # (text, px, color, stroke, gap_after)
+    title_rows = 0
+    title = cta.get("title", "")
+    if title:
+        title_px = 96
+        lines = _wrap_to_width(draw, title, font(title_px), col_w)
+        while title_px > 40 and any(draw.textlength(ln, font=font(title_px)) > col_w for ln in lines):
+            title_px -= 4
+            lines = _wrap_to_width(draw, title, font(title_px), col_w)
+        for i, ln in enumerate(lines):
+            rows.append((ln, title_px, cyan, 4, 18 if i < len(lines) - 1 else 64))
+        title_rows = len(lines)
+    for key, px, color in (
+        ("tagline", 40, white),
+        ("note", 40, amber),
+        ("platforms", 34, gray),
+        ("url", 36, cyan),
+    ):
+        text = cta.get(key, "")
+        if not text:
+            continue
+        while px > 20 and draw.textlength(text, font=font(px)) > col_w:
             px -= 2
-        rows.append((text, px, color, stroke))
+        rows.append((text, px, color, 2, 30 if key == "note" else 22))
 
-    gap = 26
-    heights = []
-    for text, px, _c, _s in rows:
-        f = font(px)
-        bbox = draw.textbbox((0, 0), text, font=f, stroke_width=_s)
-        heights.append(bbox[3] - bbox[1])
-    # Extra breathing room under the title.
-    total = sum(heights) + gap * (len(rows) - 1) + (28 if len(rows) > 1 else 0)
-    # Sit the block low so it clears the artwork's face, with a title-safe
-    # bottom margin.
-    bottom_margin = 96
-    y = size[1] - total - bottom_margin
-    for i, (text, px, color, stroke) in enumerate(rows):
-        f = font(px)
-        w = draw.textlength(text, font=f)
+    heights = [
+        draw.textbbox((0, 0), t, font=font(px), stroke_width=st)[3] for t, px, _c, st, _g in rows
+    ]
+    total = sum(heights) + sum(r[4] for r in rows[:-1])
+    y = (size[1] - total) // 2
+    for i, ((text, px, color, stroke, gap_after), h) in enumerate(zip(rows, heights)):
         draw.text(
-            ((size[0] - w) / 2, y),
+            (left, y),
             text,
-            font=f,
+            font=font(px),
             fill=color,
             stroke_width=stroke,
             stroke_fill=(0, 0, 0, 255),
         )
-        y += heights[i] + gap + (28 if i == 0 else 0)
+        y += h
+        if title_rows and i == title_rows - 1:
+            # Accent rule between the title and the details.
+            rule_y = y + gap_after // 2 - 3
+            draw.rectangle([left, rule_y, left + 140, rule_y + 5], fill=amber)
+        y += gap_after
     base.convert("RGB").save(out_path)
 
 
