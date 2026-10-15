@@ -76,6 +76,9 @@ scripts/diagnostics/
 # Large video files
 marketing/*.mp4
 
+# Press kit zip (attached to GitHub releases instead)
+marketing/RogueSignalProtocol_presskit.zip
+
 # Local secrets (butler creds, etc.)
 .secrets/
 
