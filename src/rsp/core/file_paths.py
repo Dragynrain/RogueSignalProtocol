@@ -115,6 +115,26 @@ def initialize_data_directories() -> bool:
     return False
 
 
+def use_sandbox_data_directory(directory: Path) -> bool:
+    """Point all user data (saves, logs, metrics) at a throwaway directory.
+
+    For tooling that drives the real game, such as trailer capture, so a
+    scripted run never touches the player's save, progress, or metrics.
+    Call instead of initialize_data_directories().
+
+    Returns:
+        True if the directory is writable and now in use, False otherwise
+    """
+    global _data_directory, _is_portable_mode
+
+    directory = Path(directory)
+    if not _test_write_permission(directory / "logs"):
+        return False
+    _data_directory = directory
+    _is_portable_mode = True
+    return True
+
+
 def get_data_directory() -> Path:
     """Get the base directory for all user data (saves, logs, metrics).
 

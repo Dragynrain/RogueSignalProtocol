@@ -93,6 +93,22 @@ class TestFilePathsInitialization:
         with pytest.raises(RuntimeError, match="initialize_data_directories"):
             game_file_paths.is_portable_mode()
 
+    def test_use_sandbox_directory_redirects_all_user_data(self, tmp_path):
+        """Sandbox mode points saves/logs/metrics at a throwaway directory."""
+        sandbox = tmp_path / "sandbox"
+
+        assert game_file_paths.use_sandbox_data_directory(sandbox) is True
+
+        assert game_file_paths.get_data_directory() == sandbox
+        assert (sandbox / "logs").is_dir()
+
+    def test_use_sandbox_directory_fails_when_unwritable(self, tmp_path, monkeypatch):
+        """An unwritable sandbox reports failure and leaves state untouched."""
+        monkeypatch.setattr(game_file_paths, "_test_write_permission", lambda d: False)
+
+        assert game_file_paths.use_sandbox_data_directory(tmp_path) is False
+        assert game_file_paths._data_directory is None
+
     def test_get_mode_description_portable(self, tmp_path, monkeypatch):
         """Test mode description for portable mode."""
         monkeypatch.setattr(game_file_paths, "get_application_directory", lambda: tmp_path)

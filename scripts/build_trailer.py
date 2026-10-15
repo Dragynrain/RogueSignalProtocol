@@ -369,47 +369,54 @@ def _run(args: list[str]) -> None:
     subprocess.run(args, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def _mux_music_ramp(ffmpeg, video, out_path, music1, music2, ramp_at, total_dur, crossfade):
-    """Lay music1 under the cut, crossfading into music2 at `ramp_at` seconds
-    (the tension track entering at escalation), with a fade-out at the end."""
-    xf = crossfade
-    l1 = ramp_at + xf  # music1 plays until the crossfade completes
-    l2 = (total_dur - ramp_at) + xf  # music2 covers the remainder (+overlap)
+# Streaming platforms (YouTube, itch embeds) play around -14 LUFS. Raw game
+# tracks sit far lower, so the trailer would sound quiet next to anything else.
+LOUDNORM = "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000"
+
+
+def music_filtergraph(total_dur: float, ramp_at: float | None = None, crossfade: float = 2.0) -> str:
+    """Audio filtergraph for the music bed, ending in [aout].
+
+    Input 1 is the opening track. With `ramp_at`, input 2 (the tension track)
+    crossfades in at that time. Either way the bed fades out over the last
+    second and is loudness-normalized after mixing.
+    """
     fade_out_st = max(0.0, total_dur - 1.0)
-    filtergraph = (
+    tail = f"afade=t=out:st={fade_out_st:.2f}:d=1,{LOUDNORM}[aout]"
+    if ramp_at is None:
+        return f"[1:a]{tail}"
+    l1 = ramp_at + crossfade  # music1 plays until the crossfade completes
+    l2 = (total_dur - ramp_at) + crossfade  # music2 covers the remainder (+overlap)
+    return (
         f"[1:a]atrim=0:{l1:.2f}[a1];"
         f"[2:a]atrim=0:{l2:.2f}[a2];"
-        f"[a1][a2]acrossfade=d={xf}:c1=tri:c2=tri[ax];"
-        f"[ax]afade=t=out:st={fade_out_st:.2f}:d=1[aout]"
+        f"[a1][a2]acrossfade=d={crossfade}:c1=tri:c2=tri[ax];"
+        f"[ax]{tail}"
     )
-    _run(
-        [
-            ffmpeg,
-            "-y",
-            "-i",
-            str(video),
-            "-stream_loop",
-            "-1",
-            "-i",
-            str(music1),
-            "-stream_loop",
-            "-1",
-            "-i",
-            str(music2),
-            "-filter_complex",
-            filtergraph,
-            "-map",
-            "0:v:0",
-            "-map",
-            "[aout]",
-            "-c:v",
-            "copy",
-            "-c:a",
-            "aac",
-            "-shortest",
-            str(out_path),
-        ]
-    )
+
+
+def _mux_music(ffmpeg, video, out_path, tracks, filtergraph):
+    """Lay looped music tracks under the silent cut using `filtergraph`."""
+    args = [ffmpeg, "-y", "-i", str(video)]
+    for track in tracks:
+        args += ["-stream_loop", "-1", "-i", str(track)]
+    args += [
+        "-filter_complex",
+        filtergraph,
+        "-map",
+        "0:v:0",
+        "-map",
+        "[aout]",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-shortest",
+        str(out_path),
+    ]
+    _run(args)
 
 
 def assemble(
@@ -586,45 +593,19 @@ def assemble(
                 else None
             )
             if ramp_at is not None:
-                _mux_music_ramp(
+                _mux_music(
                     ffmpeg,
                     silent_cut,
                     out_path,
-                    music,
-                    ramp_music,
-                    ramp_at,
-                    total_dur,
-                    cfg.crossfade,
+                    [music, ramp_music],
+                    music_filtergraph(total_dur, ramp_at, cfg.crossfade),
                 )
                 print(
                     f"  music: {music.name} -> {ramp_music.name} ramp at {ramp_at:.1f}s "
                     f"('{cfg.ramp_label}')"
                 )
             else:
-                _run(
-                    [
-                        ffmpeg,
-                        "-y",
-                        "-i",
-                        str(silent_cut),
-                        "-stream_loop",
-                        "-1",
-                        "-i",
-                        str(music),
-                        "-filter_complex",
-                        f"[1:a]afade=t=out:st={max(0, total_dur - 1):.2f}:d=1[a]",
-                        "-map",
-                        "0:v:0",
-                        "-map",
-                        "[a]",
-                        "-c:v",
-                        "copy",
-                        "-c:a",
-                        "aac",
-                        "-shortest",
-                        str(out_path),
-                    ]
-                )
+                _mux_music(ffmpeg, silent_cut, out_path, [music], music_filtergraph(total_dur))
                 print(f"  music: {music.name} (single track)")
     finally:
         shutil.rmtree(work, ignore_errors=True)

@@ -15,6 +15,7 @@ from scripts.build_trailer import (
     build_edit_decisions,
     build_timeline,
     ffmpeg_clip_args,
+    music_filtergraph,
     time_before_label,
     timeline_durations,
 )
@@ -175,3 +176,20 @@ def test_time_before_missing_label_is_none():
 
 
 pytestmark = pytest.mark.unit
+
+
+def test_music_filtergraph_single_track_fades_and_normalizes():
+    fg = music_filtergraph(total_dur=20.0)
+    assert "afade=t=out:st=19.00:d=1" in fg
+    assert "loudnorm=I=-14" in fg
+    assert fg.endswith("[aout]")
+
+
+def test_music_filtergraph_ramp_crossfades_then_normalizes():
+    fg = music_filtergraph(total_dur=20.0, ramp_at=10.0, crossfade=2.0)
+    assert "[1:a]atrim=0:12.00[a1]" in fg
+    assert "[2:a]atrim=0:12.00[a2]" in fg
+    assert "acrossfade=d=2.0" in fg
+    # Normalize after the mix so both tracks land at the same target.
+    assert fg.index("acrossfade") < fg.index("loudnorm")
+    assert fg.endswith("[aout]")
