@@ -78,3 +78,14 @@ marketing/*.mp4
 
 # Local secrets (butler creds, etc.)
 .secrets/
+
+# Cinematic intermediates and unused takes (kept locally)
+marketing/cinematic/assembled_*.mp4
+marketing/cinematic/k1_lab_s22.png
+marketing/cinematic/k1_lab_s33.png
+marketing/cinematic/k2_emptylab_s2.png
+marketing/cinematic/k3_avatar_s1.png
+marketing/cinematic/k4_emptycyber_s2.png
+marketing/cinematic/k5_avatar_med_s1.png
+marketing/cinematic/v2_create_s101.mp4
+marketing/cinematic/v3_hands_s101.mp4
