@@ -567,9 +567,7 @@ class GameTurnManager:
                 if getattr(self.game_engine, "prologue_mode", False):
                     if enemy.position != old_pos:  # Enemy actually moved
                         # Only trigger if player can actually see this enemy
-                        player_pos = Position(
-                            self.game_engine.player.x, self.game_engine.player.y
-                        )
+                        player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
                         vision = self.game_engine.player.get_vision_range()
                         if self.game_engine.game_map.can_see_position(
                             player_pos, enemy.position, vision
@@ -578,9 +576,7 @@ class GameTurnManager:
                                 show_prologue_thought,
                             )
 
-                            show_prologue_thought(
-                                "turn_based_observe", self.game_engine
-                            )
+                            show_prologue_thought("turn_based_observe", self.game_engine)
 
         # Show inventory attack warning dialogue if player was attacked while in inventory
         if player_attacked_in_inventory:
@@ -891,6 +887,9 @@ class GameTurnManager:
             admin.state = EnemyState.HOSTILE
             admin.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
             self.game_engine.admin_spawned = True
+            self.game_engine.tag_recording_event(
+                "admin_spawn", x=spawn_position.x, y=spawn_position.y
+            )
 
             # Track metrics
             from rsp.systems.metrics import track

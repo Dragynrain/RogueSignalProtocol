@@ -1,0 +1,480 @@
+#!/usr/bin/env python3
+"""
+Auto-play trailer capture driver.
+
+Stands up the real rendered game (window, tileset, SDL renderer, tile manager,
+engine) exactly as the normal launch path does, attaches a FrameRecorder, then
+plays a curated run while every frame is captured through the real render
+pipeline.
+
+The run is genuine gameplay, not staged particle bursts: the player moves
+through the level (vision cones + enemy movement-prediction arrows render),
+slips into a blind spot while a patrol advances along its predicted path, then
+earns its kills by bump-attacking enemies and firing a real exploit, before
+trace rises, the Admin Avatar spawns and pursues, and the run ends.
+
+Each narrative beat is marked as a segment (with its full-screen text card) so
+scripts/build_trailer.py can cut per beat and interleave the cards instead of
+merging everything into one blob.
+
+Output (default marketing/capture, override with --out):
+    frame_000001.png ...        one PNG per presented frame
+    events.json                 fps/size manifest + segments + event tags
+
+Run (graphics mode is required for sprites/particles):
+    .venv/Scripts/python.exe scripts/capture_trailer_footage.py --frames 900
+
+A game window opens, plays itself, and closes. No interaction required.
+"""
+
+import argparse
+import logging
+import os
+import sys
+import threading
+import time
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+import tcod  # noqa: E402
+
+from rsp.core.config import GameConfig, GameSettings  # noqa: E402
+from rsp.core.engine import GameEngine  # noqa: E402
+from rsp.core.file_paths import initialize_data_directories  # noqa: E402
+from rsp.core.loop import initialize_tcod_context  # noqa: E402
+from rsp.entities.base import Position  # noqa: E402
+from rsp.rendering.core import GameRenderer  # noqa: E402
+from rsp.rendering.tiles import TileManager  # noqa: E402
+from rsp.systems.frame_recorder import FrameRecorder  # noqa: E402
+
+FPS = 30
+FRAME_DT = 1.0 / FPS
+
+
+def _sign(n):
+    n = int(n)  # coerce numpy scalars; numpy booleans can't be subtracted
+    return (n > 0) - (n < 0)
+
+
+class TrailerDriver:
+    """Plays scripted-but-genuine gameplay beats, rendering every frame."""
+
+    def __init__(self, game, renderer, console, context, recorder, frame_budget):
+        self.game = game
+        self.renderer = renderer
+        self.console = console
+        self.context = context
+        self.recorder = recorder
+        self.frame_budget = frame_budget
+        self.frames_rendered = 0
+
+    # --- frame pump -------------------------------------------------------
+
+    def render_frames(self, count):
+        """Render `count` frames through the real pipeline (capture happens via
+        the installed present() hook). Advances particle animation each frame."""
+        for _ in range(count):
+            if self.frames_rendered >= self.frame_budget:
+                return
+            # Never let a confirmation/story modal wedge the scripted run.
+            try:
+                if self.game.dialogue_state.is_active():
+                    self.game.dialogue_state.close()
+            except Exception:
+                pass
+            # Kill achievement popups before they render over the gameplay.
+            try:
+                mgr = getattr(self.game, "achievement_popup_manager", None)
+                if mgr is not None:
+                    mgr.active_popup = None
+                    mgr.popup_queue.clear()
+                from rsp.systems.achievements import AchievementManager
+
+                AchievementManager.clear_pending_popups()
+            except Exception:
+                pass
+            ps = getattr(self.game, "particle_system", None)
+            if ps is not None:
+                ps.update(FRAME_DT)
+            self.renderer.render_game(self.console, self.game, self.context)
+            self.frames_rendered += 1
+            for _ in tcod.event.get():
+                pass
+
+    def budget_left(self):
+        return self.frames_rendered < self.frame_budget
+
+    # --- world helpers ----------------------------------------------------
+
+    def _player_pos(self):
+        return self.game.player.x, self.game.player.y
+
+    def walkable(self, x, y):
+        pos = Position(x, y)
+        try:
+            return self.game.game_map.is_valid_position(pos) and not self.game.game_map.is_wall(pos)
+        except Exception:
+            return False
+
+    def _occupied(self, x, y):
+        try:
+            return self.game._get_enemy_at(Position(x, y)) is not None
+        except Exception:
+            return False
+
+    def find_floor(self, min_r, max_r, blind=None):
+        """Return a free walkable tile between radii of the player, optionally
+        constrained to blind-spot (True) or non-blind (False) tiles. Skips tiles
+        occupied by an enemy or the player."""
+        px, py = self._player_pos()
+        for r in range(min_r, max_r + 1):
+            for dx in range(-r, r + 1):
+                for dy in range(-r, r + 1):
+                    if max(abs(dx), abs(dy)) != r:
+                        continue
+                    x, y = px + dx, py + dy
+                    if (x, y) == (px, py) or not self.walkable(x, y) or self._occupied(x, y):
+                        continue
+                    if blind is not None:
+                        try:
+                            if self.game.game_map.is_blind_spot(Position(x, y)) != blind:
+                                continue
+                        except Exception:
+                            if blind:
+                                continue
+                    return x, y
+        return None
+
+    def spawn(self, x, y, enemy_type):
+        try:
+            if not self.walkable(x, y):
+                return None
+            return self.game.enemy_manager.spawn_enemy(Position(x, y), enemy_type)
+        except Exception as e:
+            logging.warning("[DRIVER] spawn %s failed: %s", enemy_type, e)
+            return None
+
+    def step_player_toward(self, tx, ty, hold=8):
+        """One real player move toward a target (a turn is processed)."""
+        px, py = self._player_pos()
+        dx, dy = _sign(tx - px), _sign(ty - py)
+        if dx == 0 and dy == 0:
+            return
+        try:
+            self.game.move_player(dx, dy)
+        except Exception as e:
+            logging.warning("[DRIVER] move failed: %s", e)
+        self.render_frames(hold)
+
+    def advance_turns(self, n, hold=10):
+        """Process real game turns (enemy AI moves) with frames rendered."""
+        for _ in range(n):
+            if not self.budget_left():
+                return
+            try:
+                self.game.process_turn()
+            except Exception as e:
+                logging.warning("[DRIVER] process_turn failed: %s", e)
+            self.render_frames(hold)
+
+    # --- beats ------------------------------------------------------------
+
+    def _pin_trace_zero(self):
+        """Hold trace at 0 during the stealth phases so the HUD stays calm and
+        the Admin never spawns early. Released at the 'loud' phase."""
+        try:
+            self.game.player.trace_level = 0
+        except Exception:
+            pass
+
+    def _visible_enemy(self):
+        """A patrol/enemy the player can currently see (so its arrows render)."""
+        try:
+            for e in self.game.enemies:
+                if self.game.player.can_see_enemy(e, self.game.game_map):
+                    return e
+        except Exception:
+            pass
+        return None
+
+    def _adjacent_enemy(self):
+        px, py = self._player_pos()
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                try:
+                    e = self.game._get_enemy_at(Position(px + dx, py + dy))
+                except Exception:
+                    e = None
+                if e is not None:
+                    return e
+        return None
+
+    def _force_aware(self, enemy):
+        """Lock an enemy onto the player's current tile so it actively pursues
+        (same mechanism the Admin Avatar uses). Makes its prediction arrows
+        point at the player and keeps it following."""
+        if enemy is None:
+            return
+        try:
+            from rsp.entities.enums import EnemyState
+
+            enemy.state = EnemyState.HOSTILE
+            enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
+        except Exception as e:
+            logging.warning("[DRIVER] could not force awareness: %s", e)
+
+    def _longest_open_dir(self, max_len=9):
+        """Cardinal direction with the most consecutive walkable tiles ahead."""
+        px, py = self._player_pos()
+        best, best_len = (1, 0), -1
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            n = 0
+            while n < max_len and self.walkable(px + dx * (n + 1), py + dy * (n + 1)):
+                n += 1
+            if n > best_len:
+                best, best_len = (dx, dy), n
+        return best, best_len
+
+    def phase_infiltrate(self):
+        """Phase 1: slip into the network. A patrol is nearby but unaware; the
+        HUD stays calm (trace pinned to 0). Opens with the tagline."""
+        self.recorder.begin_segment(
+            "infiltrate", overlay="A coffee break cyberspace stealth roguelike"
+        )
+        self._pin_trace_zero()
+        spot = self.find_floor(4, 6, blind=False)
+        if spot:
+            self.spawn(spot[0], spot[1], "patrol")
+        self.advance_turns(1, hold=4)
+        self._pin_trace_zero()
+        self.render_frames(40)  # calm cold open + tagline
+        (dx, dy), _ = self._longest_open_dir()
+        for _ in range(2):
+            px, py = self._player_pos()
+            self.step_player_toward(px + dx, py + dy, hold=12)
+            self._pin_trace_zero()
+
+    def phase_read(self):
+        """Phase 2: a patrol shows its next-3-moves arrows; the player reads
+        them and routes around, still undetected."""
+        self.recorder.begin_segment("read", overlay="See their next moves. Plan around them.")
+        self._pin_trace_zero()
+        if self._visible_enemy() is None:
+            spot = self.find_floor(3, 5, blind=False)
+            if spot:
+                self.spawn(spot[0], spot[1], "patrol")
+        self.advance_turns(1, hold=6)
+        self._pin_trace_zero()
+        self.render_frames(45)  # hold on the prediction arrows - the hook
+        (dx, dy), _ = self._longest_open_dir()
+        for _ in range(3):
+            px, py = self._player_pos()
+            self.step_player_toward(px + dx, py + dy, hold=12)
+            self._pin_trace_zero()
+        self.render_frames(10)
+
+    def phase_strike(self):
+        """Phase 3: break line of sight into a blind spot, then take an enemy
+        down from cover."""
+        self.recorder.begin_segment("strike", overlay="Hit from the dark, not head-on.")
+        self._pin_trace_zero()
+        blind = self.find_floor(1, 3, blind=True)
+        if blind:
+            for _ in range(3):
+                if self._player_pos() == blind:
+                    break
+                self.step_player_toward(blind[0], blind[1], hold=12)
+                self._pin_trace_zero()
+        self.render_frames(18)
+        target = self._adjacent_enemy()
+        if target is None:
+            spot = self.find_floor(1, 2, blind=False)
+            if spot:
+                target = self.spawn(spot[0], spot[1], "bot")
+        if target is not None:
+            for _ in range(6):
+                if target not in self.game.enemies:
+                    break
+                self.step_player_toward(target.x, target.y, hold=10)
+                self._pin_trace_zero()
+        self.render_frames(32)  # takedown explosion blooms
+
+    def phase_spend(self):
+        """Phase 4: fire a real exploit - heat and RAM tick up."""
+        self.recorder.begin_segment("spend", overlay="Exploits cost heat and RAM.")
+        self._pin_trace_zero()
+        try:
+            self.game.player.inventory_manager.equipped_exploits = [
+                "code_injection",
+                *self.game.player.inventory_manager.equipped_exploits,
+            ]
+        except Exception as e:
+            logging.warning("[DRIVER] equip failed: %s", e)
+        targets = []
+        for off in [(3, 0), (3, 1), (4, -1)]:
+            d0 = abs(off[0]) + abs(off[1])
+            spot = self.find_floor(d0, d0 + 1, blind=False)
+            if spot:
+                e = self.spawn(spot[0], spot[1], "bot")
+                if e:
+                    targets.append(e)
+        self.render_frames(26)  # captioned pause, then the detonation
+        if targets:
+            try:
+                self.game.exploit_system.execute_exploit(
+                    "code_injection", Position(targets[0].x, targets[0].y)
+                )
+            except Exception as e:
+                logging.warning("[DRIVER] exploit failed: %s", e)
+        self.render_frames(32)
+
+    def phase_loud(self):
+        """Phase 5: it goes loud. Trace climbs, nearby enemies lock on, the
+        Admin Avatar spawns and hunts."""
+        self.recorder.begin_segment("loud", overlay="Draw too much heat and the Admin hunts you.")
+        chasers = [
+            e for e in self.game.enemies if self.game.player.can_see_enemy(e, self.game.game_map)
+        ][:3]
+        if not chasers and self.game.enemies:
+            chasers = self.game.enemies[:3]
+        for e in chasers:
+            self._force_aware(e)
+        try:
+            self.game.player.trace_level = GameConfig.MAX_TRACE_LEVEL
+            self.game.game_session.turn_manager._check_admin_spawn()
+        except Exception as e:
+            logging.warning("[DRIVER] admin spawn failed: %s", e)
+        self.render_frames(25)
+        (dx, dy), run_len = self._longest_open_dir()
+        for _ in range(max(3, min(run_len - 1, 6))):
+            for e in chasers:
+                self._force_aware(e)
+            px, py = self._player_pos()
+            self.step_player_toward(px + dx, py + dy, hold=13)
+
+    def phase_end(self):
+        """Phase 6: the run ends - permadeath."""
+        self.recorder.begin_segment("end", overlay="Permadeath. Die once and the save is gone.")
+        self.render_frames(22)
+        try:
+            self.game.player.cpu = 0
+            self.game.death_handler.check_death("combat", "admin")
+        except Exception as e:
+            logging.warning("[DRIVER] death failed: %s", e)
+        self.render_frames(50)
+
+    def run(self):
+        for phase in (
+            self.phase_infiltrate,
+            self.phase_read,
+            self.phase_strike,
+            self.phase_spend,
+            self.phase_loud,
+            self.phase_end,
+        ):
+            try:
+                phase()
+            except Exception as e:
+                logging.warning("[DRIVER] phase %s failed: %s", phase.__name__, e)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Capture trailer footage automatically.")
+    parser.add_argument("--out", default=None, help="Output directory for frames + events.json")
+    parser.add_argument("--frames", type=int, default=900, help="Max frames to capture")
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=150.0,
+        help="Wall-clock seconds before the watchdog force-finalizes",
+    )
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.WARNING, format="%(message)s")
+
+    if not initialize_data_directories():
+        sys.exit("Failed to initialize data directories.")
+    GameConfig.load_from_json()
+
+    out_dir = Path(args.out) if args.out else REPO_ROOT / "marketing" / "capture"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    settings = GameSettings()
+    settings.graphics_mode = "graphics"
+
+    context = initialize_tcod_context(settings)
+    win = getattr(context, "sdl_window", None)
+    if win is not None:
+        try:
+            win.restore()
+            win.size = (1920, 1080)
+        except Exception as e:
+            logging.warning("[DRIVER] could not force 1080p window: %s", e)
+
+    console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+
+    tile_manager = TileManager(context, settings)
+    tile_manager.preload_common_tiles()
+
+    game = GameEngine(settings=settings, load_save=False)
+    game.tile_manager = tile_manager
+    if game.dialogue_state.is_active():
+        game.dialogue_state.close()
+
+    # Suppress confirmation modals that would block scripted actions.
+    try:
+        game.friendly_fire_confirmed = True
+        settings.dialogue_preferences = {
+            "show_system_crash_warning": False,
+            "show_friendly_fire_warning": False,
+        }
+        if hasattr(game, "settings"):
+            game.settings.show_achievement_popups = False
+    except Exception as e:
+        logging.warning("[DRIVER] could not suppress modals: %s", e)
+
+    renderer = GameRenderer(settings, tile_manager=tile_manager, context=context)
+
+    recorder = FrameRecorder(out_dir, enabled=True, fps=FPS)
+    game.frame_recorder = recorder
+    recorder.install()
+
+    print(f"[DRIVER] Capturing up to {args.frames} frames -> {out_dir}", flush=True)
+    start = time.time()
+
+    # Safety net: if any beat wedges, always write whatever we captured and
+    # force-exit (SDL/tcod can otherwise keep the process alive after close()).
+    def watchdog():
+        time.sleep(args.timeout)
+        print(f"[DRIVER] Watchdog fired after {args.timeout}s; finalizing.", flush=True)
+        try:
+            recorder.finalize()
+        except Exception:
+            pass
+        os._exit(0)
+
+    threading.Thread(target=watchdog, daemon=True).start()
+
+    try:
+        TrailerDriver(game, renderer, console, context, recorder, args.frames).run()
+    finally:
+        recorder.finalize()
+        try:
+            context.close()
+        except Exception:
+            pass
+
+    print(
+        f"[DRIVER] Done: {recorder.frame_count} frames in {time.time() - start:.1f}s -> {out_dir}",
+        flush=True,
+    )
+    # Force-exit past any lingering SDL/audio threads that block a clean return.
+    os._exit(0)
+
+
+if __name__ == "__main__":
+    main()

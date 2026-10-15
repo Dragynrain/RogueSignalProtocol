@@ -125,6 +125,7 @@ class PlayerDeathHandler:
             ),
         )
 
+        self.game.tag_recording_event("player_death", cause=cause, source=source)
         self._handle_death(event)
         return True
 
@@ -155,7 +156,9 @@ class PlayerDeathHandler:
         # 2. Force-close any active dialogues and clear queue - death has highest priority
         try:
             if self.game.dialogue_state.is_active() or self.game.dialogue_state.dialogue_queue:
-                logging.warning(f"{event.cause.title()} death with dialogue active/queued - force-closing all")
+                logging.warning(
+                    f"{event.cause.title()} death with dialogue active/queued - force-closing all"
+                )
                 self.game.dialogue_state.close_and_clear_queue()
         except Exception as e:
             logging.error(f"Death handler: Failed to close dialogue: {e}")

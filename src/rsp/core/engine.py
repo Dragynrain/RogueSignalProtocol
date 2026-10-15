@@ -91,7 +91,9 @@ class GameEngine:
         self.prologue_restart_pending = False  # Flag for dialogue handler
         self.prologue_spotted_in_blind_spot = False  # Visibility feedback flag
         self.prologue_death_count = 0  # Track total deaths for analytics
-        self.prologue_section_deaths: dict[int, int] = {}  # Track death count per section (for escalating hints)
+        self.prologue_section_deaths: dict[int, int] = (
+            {}
+        )  # Track death count per section (for escalating hints)
 
         # Initialize ascension system
         self.ascension_level = ascension_level
@@ -130,6 +132,11 @@ class GameEngine:
         # Initialize death handler (centralized player death handling)
         self.death_handler = PlayerDeathHandler(self)
         self.pending_death_dialogue = False  # Deferred death dialogue flag
+
+        # Optional trailer frame recorder (see rsp.systems.frame_recorder).
+        # None in normal play; set by the capture loop. Highlight events are
+        # tagged through tag_recording_event() so game code stays decoupled.
+        self.frame_recorder = None
 
         # Apply ascension modifiers to player
         # A10: Player vision override (15 -> 12)
@@ -548,9 +555,7 @@ class GameEngine:
                 if (
                     getattr(self, "prologue_mode", False)
                     and self.game_map.gateway
-                    and self.game_map.has_line_of_sight(
-                        self.player.position, self.game_map.gateway
-                    )
+                    and self.game_map.has_line_of_sight(self.player.position, self.game_map.gateway)
                 ):
                     from rsp.systems.prologue_thoughts import show_prologue_thought
 
@@ -786,6 +791,16 @@ class GameEngine:
 
         track_highest_heat(self.player.heat, game=self)
 
+    def tag_recording_event(self, event_type: str, **meta) -> None:
+        """Tag a highlight event for the trailer recorder, if one is attached.
+
+        No-op during normal play (self.frame_recorder is None). Keeps game
+        systems decoupled from the recorder implementation.
+        """
+        recorder = self.frame_recorder
+        if recorder is not None:
+            recorder.tag_event(event_type, **meta)
+
     def trigger_death_particles(self, enemy_type: str, world_x: int, world_y: int) -> None:
         """
         Trigger particle explosion effect for enemy death (if enabled).
@@ -798,6 +813,7 @@ class GameEngine:
             world_x: World X coordinate for explosion
             world_y: World Y coordinate for explosion
         """
+        self.tag_recording_event("enemy_explosion", enemy_type=enemy_type, x=world_x, y=world_y)
         if (
             hasattr(self, "particle_system")
             and self.particle_system is not None
