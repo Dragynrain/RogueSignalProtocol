@@ -253,8 +253,7 @@ def _render_cta_png(cta: dict, out_path: Path, size=(1920, 1080)) -> None:
     ]
     spec = [r for r in spec if r[0]]
 
-    # Keep each line well within a safe width so the slow push-in (which crops
-    # the edges as it zooms) never clips the text.
+    # Keep each line well within a title-safe width.
     max_w = int(size[0] * 0.78)
     rows = []
     for text, px, color, stroke in spec:
@@ -270,8 +269,8 @@ def _render_cta_png(cta: dict, out_path: Path, size=(1920, 1080)) -> None:
         heights.append(bbox[3] - bbox[1])
     # Extra breathing room under the title.
     total = sum(heights) + gap * (len(rows) - 1) + (28 if len(rows) > 1 else 0)
-    # Sit the block low so it clears the artwork's face, with a safe bottom
-    # margin (the push-in crops the very edges).
+    # Sit the block low so it clears the artwork's face, with a title-safe
+    # bottom margin.
     bottom_margin = 96
     y = size[1] - total - bottom_margin
     for i, (text, px, color, stroke) in enumerate(rows):
@@ -452,13 +451,9 @@ def assemble(
                 secs = item.get("seconds", cfg.cta_seconds)
                 cta_png = work / f"cta_{i:03d}.png"
                 _render_cta_png(item, cta_png)
-                nframes = int(secs * fps)
-                # Fade in from black + a slow push-in so it is not a dead still.
-                vf = (
-                    f"zoompan=z='min(zoom+0.00022,1.035)':d={nframes}:"
-                    f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps={fps},"
-                    f"fade=t=in:st=0:d=0.5"
-                )
+                # Fade in from black and hold. No push-in: zoompan snaps its
+                # crop to whole pixels, so a slow zoom reads as jitter.
+                vf = "fade=t=in:st=0:d=0.5"
                 _run(
                     [
                         ffmpeg,
