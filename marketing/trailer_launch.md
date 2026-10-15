@@ -171,7 +171,12 @@ Over the next week (one or two a day, not all at once, so you can answer comment
 10. Add the trailer link to IndieDB, IGDB, RogueBasin, and the GamingOnLinux and Lutris database entries where they have a video field
 11. Update the Rogue Temple 1.0 thread with the link
 
-Press and creators (after the press kit is live, see `docs/PRESSKIT.md`):
+Press and creators, once the press kit is live:
+- Page: https://dragynrain.github.io/RogueSignalProtocol/presskit/ (GitHub Pages, serving `main` from `/docs`)
+- Zip: attach `marketing/RogueSignalProtocol_presskit.zip` to the latest GitHub release. The page links to `releases/latest/download/`, so it has to be on the newest release.
+- After the YouTube upload, rebuild both so the trailer embeds: `python scripts/build_presskit.py --youtube <URL>`. Edit `marketing/presskit/presskit.html`, not the built page.
+- For email, put the page and zip links in the message rather than attaching the zip. It's 34 MB, over Gmail's 25 MB attachment limit. The zip has `presskit.html`, which works offline, and `presskit.txt` for anyone who wants plain text.
+
 12. Alpha Beta Gamer and Free Game Planet (same admin, one email each)
 13. GamingOnLinux editorial
 14. Roguelike YouTubers from the marketing plan (Splattercat, Nookrium, Retromation, RhapsodyPlays). One short email each with the trailer link and the press kit.

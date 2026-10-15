@@ -4,7 +4,9 @@
 
 Everything here is free to use in articles, videos, and streams. No need to ask first. Monetizing videos of the game is fine.
 
-Download all assets in one file: [RogueSignalProtocol_presskit.zip](https://github.com/Dragynrain/RogueSignalProtocol/releases) (attached to the latest release)
+The full press kit page is at https://dragynrain.github.io/RogueSignalProtocol/presskit/
+
+Download all assets in one file: [RogueSignalProtocol_presskit.zip](https://github.com/Dragynrain/RogueSignalProtocol/releases/latest/download/RogueSignalProtocol_presskit.zip)
 
 ## Factsheet
 
