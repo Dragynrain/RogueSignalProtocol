@@ -86,7 +86,7 @@ Body:
 ```
 It took a while, but there's finally a trailer.
 
-[YouTube link here]
+https://youtu.be/qHE5JH8n0I8
 
 Most of it is real gameplay, recorded by a script that plays the game and captures specific moments: an enemy's queued path, a sneak attack from a blind spot, an exploit that runs the heat up, the Admin showing up, and a death screen. Then another script cuts the clips together with captions and the end card. Doing it that way meant I could re-record the whole thing after a bug fix instead of trying to replay a lucky run by hand.
 
@@ -106,7 +106,7 @@ Comments, Discord, and GitHub issues all reach me. If the trailer made you want 
 ### Discord (your server)
 
 ```
-The trailer is up: [YouTube link]
+The trailer is up: https://youtu.be/qHE5JH8n0I8
 
 35 seconds, mostly real gameplay. If you want to help, a like or a share does more for a small game than you'd think.
 ```
@@ -116,7 +116,7 @@ The trailer is up: [YouTube link]
 ```
 Rogue Signal Protocol finally has a trailer. Turn-based stealth roguelike, enemies show you their next three moves, death deletes your save. Free and open source on Windows, Linux, and Steam Deck.
 
-[YouTube link]
+https://youtu.be/qHE5JH8n0I8
 
 #roguelike #indiedev #gamedev #linuxgaming
 ```

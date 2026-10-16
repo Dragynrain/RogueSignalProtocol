@@ -28,7 +28,7 @@ Download all assets in one file: [RogueSignalProtocol_presskit.zip](https://gith
 ## Links
 
 - Download: https://dragynrain.itch.io/rogue-signal-protocol
-- Trailer: [YouTube link]
+- Trailer: https://youtu.be/qHE5JH8n0I8
 - Source: https://github.com/Dragynrain/RogueSignalProtocol
 - Wiki: https://github.com/Dragynrain/RogueSignalProtocol/wiki
 - Discord: https://discord.gg/5fykUtECqz
@@ -63,7 +63,7 @@ The game can be played with graphical sprites or classic ASCII glyphs, and both 
 
 ## Trailer
 
-[YouTube link]
+https://youtu.be/qHE5JH8n0I8
 
 35 seconds, 1080p. The first 13 seconds are an AI-generated cinematic opening. Everything after that is real gameplay, captured by a script that plays the game.
 
