@@ -40,13 +40,13 @@ Rogue Signal Protocol is a free, open source stealth roguelike where every enemy
 
 ## Long description
 
-You play Echo Variant, a hacker whose mind was uploaded into a corporate network as part of an experiment called Project Chimera. The experiment didn't let you go. Each run is an attempt to get out through three procedurally generated network levels, past security programs that hunt for you.
+You play Echo Variant, a hacker whose mind was uploaded into a corporate network for an experiment called Project Chimera, and nobody let you back out. Each run is an attempt to get out through three procedurally generated network levels, past security programs that hunt for you.
 
-There's no randomness in combat or movement. Attacks always land and damage is fixed, so if a run goes wrong, it went wrong because of a decision you made. What makes that fair is the movement queue: every enemy draws the next three tiles it plans to step on, right on the map. You read the queues, find the gaps in their vision, and strike from blind spots.
+There's no randomness in combat or movement. Attacks always land and damage is fixed, so if a run goes wrong, it went wrong because of a decision you made. The movement queue keeps that fair: every enemy draws the next three tiles it plans to step on, right on the map, so you can find the gaps in its vision and hit it from a blind spot.
 
 Exploits give you ranged attacks and tricks, but each one costs RAM and builds heat. Play loud for too long and your trace climbs until the Admin Avatar spawns. It has 250 HP, tracks you perfectly, and hits for 45. It can be beaten, but most runs go better if it never shows up.
 
-The game can be played with graphical sprites or classic ASCII glyphs, and both modes play the same.
+You can play with graphical sprites or classic ASCII glyphs. The rules are the same in both.
 
 ## Features
 
@@ -88,7 +88,7 @@ Full-resolution PNGs are in [`images/screenshots/`](images/screenshots/) and in 
 
 ## About the developer
 
-Rogue Signal Protocol is made by one person, Adam Forster, who publishes as Dragynrain. Early builds went up on itch.io in late 2025 and 1.0 came out in June 2026, with player feedback from itch.io, Discord, and GitHub feeding most of the changes along the way.
+Rogue Signal Protocol is made by one person, Adam Forster, who publishes as Dragynrain. Early builds went up on itch.io in late 2025 and 1.0 came out in June 2026. Most of the changes in between came from player feedback on itch.io, Discord, and GitHub.
 
 ## Credits and AI use
 
